@@ -1,0 +1,82 @@
+%DATAGUI
+%%   ******************************  AUTOMATION - PROBE STATION MEASUREMENTS *************************************
+% Summer intership 2015 - University of California Berkeley
+% Pister's Group - Swarm Lab
+% Home institution - Universidade Federal de Ouro Preto
+% Exchange program - Ciencias sem Fronteiras 
+% Sponsors - CAPES 
+%            CNPq
+%            Brazilian Federal Government     
+% Student: Jesssica Ferreira Soares
+% Advisor: David Burnett
+% Email: jekasores@yahoo.com.br
+%        JFerreiraSoares01@wildcats.jwu.edu
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%DESCRIPTION : This function gets images from a pre recorded video 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
+function [array_pixel,array_micro] = read_video(displacement_obj, handles, data)
+global vid_height;
+global vid_width;
+vid_height = 1024;
+vid_width = 1280;
+disp(sprintf('\t\t\t##### READ VIDEO #####\n\n'));
+
+%% **************** INPUT DATA ********************
+pixelsize = 3.6*10^(-6); %defined by cameras's manufacturer 
+%Soon to be 5.86*10^-6
+
+%while (exist(video_name,'file') ~= 2)
+    %video_name = input('This video does not exist! Type the name again: ','s');
+    %video_name = strcat(video_name, '.avi');
+%end
+
+%precision = input('Enter with the precision in pixels: ');
+%displacement= input('Enter with the maximum displacement in pixels: ');
+%
+%% **************** GRAB FRAME *********************
+warning('off', 'images:initSize:adjustingMag');
+axes = handles.img_viewer;
+handles.img_viewer = vision.VideoFileReader(displacement_obj.get_vid_path());
+set(handles.data_table, 'Data', data);
+i = 1;
+displacement = displacement_obj.get_max_displacement();
+precision = displacement_obj.get_pixel_precision();
+im = 
+while ~isDone(handles.img_viewer)
+    if(~displacement_obj.paused())
+        %EXTRACT FRAME
+        frame = step(handles.img_viewer);
+
+        %IMAGE TREATMENT
+        gray = rgb2gray(frame);
+        gray = imresize(gray, [vid_height, vid_width]);
+        if i==1
+            max_displacement = min(size(gray));
+            while (displacement > max_displacement)
+                displacement= input('Enter a new value displacement in pixels! It should respect the frame dimension. New value: ');
+            end
+            %CROP TEMPLATE
+            [template,rect, xtemp, ytemp] = get_template(gray, handles.img_viewer);
+            count = 1;  
+            i = i + 1;
+        else  
+            %CALCULATE DISPLACEMENT
+            [xoffSet, yoffSet, dispx,dispy,x,y, c1] = meas_displacement(template,rect,gray, xtemp, ytemp, precision, displacement, axes);
+            %UPDATE DATA TABLE
+            %UPDATE TABLE CAUSING ISSUES
+            updateTable(dispx,dispy,handles.data_table);
+            %DRAW RECTANGLE IN OBJECT      
+            if(strcmp(displacement_obj.get_vid_colorspace(), 'rgb'))
+                draw_rect(frame, xoffSet, yoffSet, template, axes, vid_height, vid_width);
+            else
+                draw_rect(gray, xoffSet, yoffSet, template, axes, vid_height, vid_width);
+            end
+            array_pixel(count,:) = [x,y];
+            array_micro(count,:) = [dispx,dispy];
+            count = count+1;
+        end
+    end
+end
+
