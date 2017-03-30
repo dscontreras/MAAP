@@ -2,17 +2,39 @@ classdef Displacement < Operation
     %VIDPLAY Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (SetAccess = private) 
-        vid_path;
+    properties (Access = private) 
+        vid_src;
+        %rgb, intensity, none
         vid_colorspace;
         axes;
         pixel_precision;
         max_displacement;
         valid;
+        template; rect; xtemp; ytemp;
+        current_frame;
+        table;
+        img_cover;
+        pause_button;
+        table_data;
+        stop_check_callback = @check_stop;
+        im;
+        in_buffer;
     end
 
     properties (SetAccess = public)
         pause_bool;
+        outputs = {};
+        inputs = {};
+    end
+    
+    properties (Constant)
+        VID_HEIGHT = 1024;
+        VID_WIDTH = 1280;
+        rx_data = {};
+        insertion_type = 'end';
+        num_args_in = 0;
+        num_args_out = 0;
+        dependents = {};
     end
     
     methods(Static)
@@ -22,27 +44,55 @@ classdef Displacement < Operation
     end
 
     methods
-        function obj = Displacement(path, axes, colorspace, pixel_precision, max_displacement)
-            obj.vid_path = path;
+        function obj = Displacement(src, axes, table, img_cover, pause_button, colorspace, pixel_precision, max_displacement)
+            obj.vid_src = src;
             obj.axes = axes;
+            obj.table = table;
+            obj.img_cover = img_cover;
+            obj.pause_button = pause_button;
             obj.vid_colorspace = colorspace;
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_displacement = str2double(max_displacement);
+            obj.startup();
+            obj.in_buffer = {};
         end
 
-        function execute(obj, handles)
-            set(handles.image_cover, 'Visible', 'Off');
-            set(handles.pause_vid, 'Visible', 'On');
-            table_data = {'DispX'; 'DispY'};
-            [array_pixel, array_micro] = read_video(obj, handles, table_data);
-            set(handles.pause_vid, 'Visible', 'Off');
-            figure;plot(array_pixel);title('Object displacement - Subpixel');
-            legend('Displacement in X','Displacement in Y','Location','southwest')
-            xlabel('Frames') % x-axis label
-            ylabel('Pixels') % y-axis label
-            drawnow;
-            set(handles.image_cover, 'Visible', 'On');
+        %For carrying out one time method calls that should be done before
+        %calling of execute
+        function startup(obj)
+            set(obj.img_cover, 'Visible', 'Off');
+            set(obj.pause_button, 'Visible', 'On');
+            obj.initialize_algorithm();
+            obj.table_data = {'DispX'; 'DispY'};
+            obj.im = zeros(obj.vid_src.get_resolution());
+            obj.im = imshow(obj.im);
+        end
+        
+        function initialize_algorithm(obj)
+            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+        end
+        
+        function execute(obj)
+              disp('ACQUIRE FRAME AND MEAS_DISPLACEMENT')
+              tic;
+              obj.current_frame = grab_frame(obj.vid_src, obj);
+              if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
+                [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+              else
+                [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
+              end
+              disp(toc);
+              disp('DRAW_RECT');
+              tic;
+              draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
+              disp(toc);
+              %updateTable(dispx, dispy, obj.table);
+              disp('DRAWNOW');
+              tic;
+              drawnow;
+              disp(toc);
         end
 
         function valid = validate(obj, handles)
@@ -76,7 +126,6 @@ classdef Displacement < Operation
 
         function valid = valid_max_displacement(obj)
             valid = true;
-            vidReader = vision.VideoFileReader(obj.vid_path);
             frame = vidReader.step();
             if(size(frame, 2) < obj.max_displacement || isnan(obj.max_displacement))
                 valid = false;
@@ -128,6 +177,18 @@ classdef Displacement < Operation
         
         function max_displacement = get_max_displacement(obj)
            max_displacement = obj.max_displacement;
+        end
+        
+        function bool = check_stop(obj)
+            if(~obj.valid || obj.terminated)
+                bool = true;
+            else
+                bool = obj.vid_src.finished();
+            end
+        end
+        
+        function vid_source = get.vid_src(obj)
+            vid_source = obj.vid_src;
         end
     end
     

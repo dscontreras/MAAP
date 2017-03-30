@@ -6,6 +6,7 @@ classdef StreamSource < VideoSource
     properties
         inputcam;
         options;
+        end_btn;
     end
     
     methods
@@ -14,7 +15,7 @@ classdef StreamSource < VideoSource
         %camname: the identifier of the camera to be used as an image
         %acquisition device
         %options: cell array of camera options in the order:
-        %(FramesPerTrigger, triggerconfig)
+        %(FramesPerTrigger, triggertype, trigger repeat)
         %Outputs:
         %Object of class StreamSource
         function obj = StreamSource(camname, opts)
@@ -26,7 +27,8 @@ classdef StreamSource < VideoSource
                 if(nargin > 1)
                     obj.options = opts;
                 else
-                    obj.options = {1, 'immediate'};
+                    disp('auto options');
+                    obj.options = {1, 'manual', Inf};
                 end
             catch E
                 %If camname does not actually correctly identify any image
@@ -41,14 +43,9 @@ classdef StreamSource < VideoSource
             %configure the camera according to options
             obj.inputcam.FramesPerTrigger = obj.options{1};
             triggerconfig(obj.inputcam, obj.options{2});
+            obj.inputcam.TriggerRepeat = obj.options{3};
             %now start the camera
             start(obj.inputcam);
-            %If we configure the trigger mode to manual, then we need to
-            %call trigger(obj.inputcam) when we want to begin collecting
-            %data
-            if(strcmp(obj.options{2}, 'manual'))
-                trigger(obj.inputcam);
-            end
         end
         
         %extractFrame
@@ -59,20 +56,10 @@ classdef StreamSource < VideoSource
         %conjunction with a gather(frame) operation, since the location of
         %the array is inside the GPU
         function frame = extractFrame(obj)
-            frame = gpuArray(getdata(obj.inputcam, 1, 'uint8'));
-        end
-        
-        %extractFrameAndTrigger
-        %Description: extract a single frame from the source stream
-        %Params:
-        %obj
-        %Output: A frame matrix of uint8 type.  Any use of frame must be in
-        %conjunction with a gather(frame) operation, since the location of
-        %the array is inside the GPU
-        function frame = extractFrameAndTrigger(obj)
             trigger(obj.inputcam);
             frame = gpuArray(getdata(obj.inputcam, 1, 'uint8'));
         end
+
         %extractFrames
         %Description: extract a single frame from the source stream
         %Params
@@ -95,6 +82,20 @@ classdef StreamSource < VideoSource
         %obj
         function start(obj)
             start(obj.inputcam);
+        end
+        
+        function bool = finished(obj)
+            if(get(obj.end_btn, 'Value') == 1)
+                bool = true;
+            else
+                bool = false;
+            end
+        end
+        
+        function resolution = get_resolution(obj)
+            trigger(obj.inputcam);
+            frame = obj.extractFrame();
+            resolution = size(frame);
         end
     end
     

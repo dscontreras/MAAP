@@ -5,12 +5,14 @@ classdef FileSource < VideoSource
     properties
         filepath;
         videoReader;
+        resolution_meters;
         options;
     end
     
     methods
-        function obj = FileSource(filein)
+        function obj = FileSource(filein, resolution_meters)
             obj.filepath = filein;
+            obj.resolution_meters = resolution_meters;
             try
                 obj.videoReader = VideoReader(filein);
             catch E
@@ -22,11 +24,25 @@ classdef FileSource < VideoSource
         end
         
         function frame = extractFrame(obj)
-            %ERROR HERE WHITE FRAMES OUTPUTTED.  FIX.
-            frame = gpuArray(uint8(readFrame(obj.videoReader) * 255));
-            
+            frame = gpuArray(readFrame(obj.videoReader));
         end
         
+        function bool = finished(obj)
+            if(hasFrame(obj.videoReader))
+                bool = false;
+            else
+                bool = true;
+            end
+        end
+        
+        function resolution = get_resolution(obj)
+               if(hasFrame(obj.videoReader))
+                   frame = readFrame(obj.videoReader);
+                   resolution = size(frame);
+               else
+                   error('obj.videoReader has no frames to read.');
+               end
+        end
     end
     
 end

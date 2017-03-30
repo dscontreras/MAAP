@@ -38,12 +38,11 @@ pixelsize = 3.6*10^(-6); %defined by cameras's manufacturer
 %% **************** GRAB FRAME *********************
 warning('off', 'images:initSize:adjustingMag');
 axes = handles.img_viewer;
-handles.img_viewer = vision.VideoFileReader(displacement_obj.get_vid_path());
+handles.img_viewer = get(displacement_obj, 'src');
 set(handles.data_table, 'Data', data);
 i = 1;
 displacement = displacement_obj.get_max_displacement();
 precision = displacement_obj.get_pixel_precision();
-im = 
 while ~isDone(handles.img_viewer)
     if(~displacement_obj.paused())
         %EXTRACT FRAME
@@ -65,7 +64,6 @@ while ~isDone(handles.img_viewer)
             %CALCULATE DISPLACEMENT
             [xoffSet, yoffSet, dispx,dispy,x,y, c1] = meas_displacement(template,rect,gray, xtemp, ytemp, precision, displacement, axes);
             %UPDATE DATA TABLE
-            %UPDATE TABLE CAUSING ISSUES
             updateTable(dispx,dispy,handles.data_table);
             %DRAW RECTANGLE IN OBJECT      
             if(strcmp(displacement_obj.get_vid_colorspace(), 'rgb'))

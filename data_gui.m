@@ -1002,34 +1002,36 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         pixel_precision = getappdata(0, 'pixel_precision');
         max_displacement = getappdata(0, 'maximum_displacement');
         colorspace = 'rgb';
-        pixtag = 'pixel_precision';
-        disptag = 'maximum_displacement';
-        tags = {pixtag, disptag};
-        strtags = string(tags);
-        displacement_checks = displacement_prechecks(pixel_precision, max_displacement);
-        check_failed = false;
-        checks_failed = [];
-        for i = 1:length(displacement_checks)
-            %If the displacement check has failed
-            if(displacement_checks(i) == 1)
-                disp('Displacement Check Failed');
-                set(handles.vid_error_tag, 'Visible', 'On');
-                checks_failed = [checks_failed strtags(i)];
-                check_failed = true;
-            end
-        end
+%         pixtag = 'pixel_precision';
+%         disptag = 'maximum_displacement';
+%         tags = {pixtag, disptag};
+%         strtags = string(tags);
+%         displacement_checks = displacement_prechecks(pixel_precision, max_displacement);
+%         check_failed = false;
+%         checks_failed = [];
+%         for i = 1:length(displacement_checks)
+%             %If the displacement check has failed
+%             if(displacement_checks(i) == 1)
+%                 disp('Displacement Check Failed');
+%                 set(handles.vid_error_tag, 'Visible', 'On');
+%                 checks_failed = [checks_failed strtags(i)];
+%                 check_failed = true;
+%             end
+%         end
         %If all checks pass
-        if(~check_failed)    
-            displacement = Displacement(path, handles.img_viewer, colorspace, pixel_precision, max_displacement);
-            displacement_valid = displacement.validate(handles);
+%         if(~check_failed)   
+            src = FileSource(path);
+            displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
+            %displacement_valid = displacement.validate(handles);
             %operation_queue = ();
-            add_to_queue(displacement);
-            for i = 1:length(operation_queue)
-                queue_step(handles);
-            end
-        else
-            set(handles.vid_error_tag, 'String', 'Error: The Following Variable is necessary to the process, yet not set: ' + checks_failed + 'Set it before proceeding.');
-        end
+%             add_to_queue(displacement);
+%             for i = 1:length(operation_queue)
+%                 queue_step(handles);
+%             end
+            displacement.execute();
+%         else
+%             set(handles.vid_error_tag, 'String', 'Error: The Following Variable is necessary to the process, yet not set: ' + checks_failed + 'Set it before proceeding.');
+%         end
     end
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB

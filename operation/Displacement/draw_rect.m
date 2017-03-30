@@ -11,31 +11,15 @@
 % Advisor: David Burnett
 % Email: jekasores@yahoo.com.br
 %        JFerreiraSoares01@wildcats.jwu.edu
+%Modified for Program use by Will Fehrnstrom
+%Email: wfehrnstrom@gmail.com
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %DESCRIPTION : This function draws a rectangle around the template.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-function draw_rect(RGB, xoffSet, yoffSet, template, hAxes, vid_height, vid_width)
-    disp('Assignment:');
-    tic;
-    axes = hAxes;
-    disp(toc);
-    disp('imresize:');
-    tic;
-    RGB = imresize(RGB, [vid_height vid_width]);
-    disp(toc);
-    disp('imshow:');
-    tic;
-    imshow(RGB, 'Parent', axes); 
-    disp(toc);
-    disp('imrect:');
-    tic;
-    imrect(axes,[xoffSet, yoffSet, size(template,2), size(template,1)]); %draw a rectangle on axes, with rectangle: [x, y, w, h]
-    disp(toc);
-    disp('drawnow:');
-    tic;
-    drawnow; 
-    disp(toc);
+function draw_rect(RGB, im, xoffSet, yoffSet, template, hAxes)
+    set(im, 'CData', gather(RGB));
+    imrect(hAxes,[xoffSet, yoffSet, size(template,2), size(template,1)]); %draw a rectangle on axes, with rectangle: [x, y, w, h]
 end
 

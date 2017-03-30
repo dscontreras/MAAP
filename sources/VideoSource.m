@@ -15,5 +15,12 @@ classdef VideoSource < handle
         end
     end
     
+    methods 
+        function resolution = get_resolution()
+            
+        end
+        
+    end
+    
 end
 
