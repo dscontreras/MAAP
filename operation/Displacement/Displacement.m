@@ -7,6 +7,7 @@ classdef Displacement < Operation
         %rgb, intensity, none
         vid_colorspace;
         axes;
+        error_tag;
         pixel_precision;
         max_displacement;
         valid;
@@ -44,10 +45,11 @@ classdef Displacement < Operation
     end
 
     methods
-        function obj = Displacement(src, axes, table, img_cover, pause_button, colorspace, pixel_precision, max_displacement)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, colorspace, pixel_precision, max_displacement)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
+            obj.error_tag = error;
             obj.img_cover = img_cover;
             obj.pause_button = pause_button;
             obj.vid_colorspace = colorspace;
@@ -65,7 +67,7 @@ classdef Displacement < Operation
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
             obj.table_data = {'DispX'; 'DispY'};
-            obj.im = zeros(obj.vid_src.get_resolution());
+            obj.im = zeros(obj.vid_src.get_num_pixels());
             obj.im = imshow(obj.im);
         end
         
@@ -79,9 +81,9 @@ classdef Displacement < Operation
               tic;
               obj.current_frame = grab_frame(obj.vid_src, obj);
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
-                [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+                [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
               else
-                [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
+                [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
               end
               disp(toc);
               disp('DRAW_RECT');
@@ -95,30 +97,30 @@ classdef Displacement < Operation
               disp(toc);
         end
 
-        function valid = validate(obj, handles)
+        function valid = validate(obj, error_tag)
             valid = true;
-            if(~FileSystemParser.is_file(obj.vid_path))
-                err = Error(Displacement.name(), 'Not passed a valid path on the filesystem', handles.vid_error_tag);
+            if(~FileSystemParser.is_file(obj.vid_src.filepath))
+                err = Error(Displacement.name(), 'Not passed a valid path on the filesystem', error_tag);
                 valid = false;
             end
             if(~valid_color_space(obj))
-                err = Error(Displacement.name(), 'Invalid Color Space', handles.vid_error_tag);
+                err = Error(Displacement.name(), 'Invalid Color Space', error_tag);
                 valid = false;
             end
             if(~valid_max_displacement(obj))
-                err = Error(Displacement.name(), 'Max Displacement too large', handles.vid_error_tag);
+                err = Error(Displacement.name(), 'Max Displacement too large', error_tag);
                 valid = false;
             end
             if(valid)
-                set(handles.vid_error_tag, 'Visible', 'Off');
+                set(error_tag, 'Visible', 'Off');
             end
         end
 
         function valid = valid_color_space(obj)
-            valid_spaces = ['rgb', 'intensity', 'none'];
+            valid_spaces = {'rgb', 'intensity', 'none'};
             valid = false;
             for i = 1:length(valid_spaces)
-                if(strcmp(obj.vid_colorspace, valid_spaces(i)))
+                if(strcmp(obj.vid_colorspace, valid_spaces{i}))
                     valid = true;
                 end
             end
@@ -126,8 +128,7 @@ classdef Displacement < Operation
 
         function valid = valid_max_displacement(obj)
             valid = true;
-            frame = vidReader.step();
-            if(size(frame, 2) < obj.max_displacement || isnan(obj.max_displacement))
+            if(size(obj.current_frame, 2) < obj.max_displacement || isnan(obj.max_displacement))
                 valid = false;
             end 
         end
@@ -180,7 +181,7 @@ classdef Displacement < Operation
         end
         
         function bool = check_stop(obj)
-            if(~obj.valid || obj.terminated)
+            if(~obj.validate(obj.error_tag))
                 bool = true;
             else
                 bool = obj.vid_src.finished();

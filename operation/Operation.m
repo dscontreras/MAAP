@@ -1,4 +1,4 @@
-classdef Operation < handle
+classdef (Abstract) Operation < handle
     %OPERATION Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -37,16 +37,16 @@ classdef Operation < handle
         dependents = {};
     end
     
-    properties
-        %Outputs defines the names of the outputs of the execute function
-        %NOTE: IT IS CRITICAL THAT THE ORDER OF OUTPUTS IS THE SAME AS THE
-        %ACTUAL ORDER THAT VARIABLES ARE RETURNED FROM EXECUTE()
-        outputs = {};
-        %Inputs defines the names of the outputs of the execute function
-        %NOTE: IT IS CRITICAL THAT THE ORDER OF INPUTS IS THE SAME AS THE
-        %ACTUAL ORDER THAT VARIABLES ARE PASSED INTO EXECUTE()
-        inputs = {};
-    end
+%     properties
+%         %Outputs defines the names of the outputs of the execute function
+%         %NOTE: IT IS CRITICAL THAT THE ORDER OF OUTPUTS IS THE SAME AS THE
+%         %ACTUAL ORDER THAT VARIABLES ARE RETURNED FROM EXECUTE()
+%         outputs = {};
+%         %Inputs defines the names of the outputs of the execute function
+%         %NOTE: IT IS CRITICAL THAT THE ORDER OF INPUTS IS THE SAME AS THE
+%         %ACTUAL ORDER THAT VARIABLES ARE PASSED INTO EXECUTE()
+%         inputs = {};
+%     end
 
     methods
         %METHOD: stop_on

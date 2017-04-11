@@ -35,7 +35,7 @@ classdef FileSource < VideoSource
             end
         end
         
-        function resolution = get_resolution(obj)
+        function resolution = get_num_pixels(obj)
                if(hasFrame(obj.videoReader))
                    frame = readFrame(obj.videoReader);
                    resolution = size(frame);

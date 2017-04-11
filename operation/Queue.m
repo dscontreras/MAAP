@@ -19,7 +19,7 @@ classdef Queue < handle
         function obj = Queue(operation_list)
             if(nargin > 0)
                 for i = 1:length(operation_list)
-                    add_to_queue(operation_list{i});
+                    obj.add_to_queue(operation_list{i});
                 end
             else
                 obj.condition_evals = {};

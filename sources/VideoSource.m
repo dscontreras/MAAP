@@ -9,6 +9,10 @@ classdef VideoSource < handle
         function source = getSourceType(src)
             if(isa(src, 'vision.VideoFileReader'))
                 source = 'file';
+            elseif(isa(src, 'FileSource'))
+                source = 'file';
+            elseif(isa(src, 'StreamSource'))
+                source = 'stream';
             elseif(isa(src, 'videoinput'))
                 source = 'stream';
             end

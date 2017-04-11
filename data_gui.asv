@@ -1022,19 +1022,15 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
 %         if(~check_failed)   
             cam_resolution = 5.86 * (10^(-6));
             src = FileSource(path, cam_resolution);
-            displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
-            arr = {displacement};
-            q = Queue(arr);
-            q.execute();
+            displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
             %displacement_valid = displacement.validate(handles);
             %operation_queue = ();
 %             add_to_queue(displacement);
 %             for i = 1:length(operation_queue)
 %                 queue_step(handles);
 %             end
-%             while(~displacement.check_stop())
-%                 displacement.execute();
-%             end
+            wh
+            displacement.execute();
 %         else
 %             set(handles.vid_error_tag, 'String', 'Error: The Following Variable is necessary to the process, yet not set: ' + checks_failed + 'Set it before proceeding.');
 %         end
