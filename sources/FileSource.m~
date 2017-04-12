@@ -14,7 +14,7 @@ classdef FileSource < VideoSource
         function obj = FileSource(filein, resolution_meters)
             obj.filepath = filein;
             obj.resolution_meters = resolution_meters;
-            obj.gpu_supported = obj.determine_gpu_support();
+            obj.gpu_supported = obj.determine
             try
                 obj.videoReader = VideoReader(filein);
             catch E
@@ -26,9 +26,7 @@ classdef FileSource < VideoSource
         end
         
         function frame = extractFrame(obj)
-            if(obj.gpu_supported)
-                frame = gpuArray(readFrame(obj.videoReader));
-            end
+            frame = gpuArray(readFrame(obj.videoReader));
         end
         
         function bool = finished(obj)
@@ -47,7 +45,6 @@ classdef FileSource < VideoSource
                    error('obj.videoReader has no frames to read.');
                end
         end
-        
     end
     
 end

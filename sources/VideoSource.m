@@ -1,8 +1,9 @@
-classdef VideoSource < handle
+classdef (Abstract) VideoSource < handle
     %VIDEOSOURCE Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties
+    properties 
+        gpu_supported;
     end
     
     methods (Static)
@@ -24,6 +25,13 @@ classdef VideoSource < handle
             
         end
         
+        function gpu_supported = determine_gpu_support(obj)
+            if(strcmp(SysInfo.get_os(), 'Windows'))
+                gpu_supported = true;
+            else
+                gpu_supported = false;
+            end
+        end
     end
     
 end
