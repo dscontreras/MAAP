@@ -2,7 +2,7 @@ classdef (Abstract) VideoSource < handle
     %VIDEOSOURCE Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties 
+    properties (Abstract)
         gpu_supported;
     end
     

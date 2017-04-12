@@ -28,6 +28,8 @@ classdef FileSource < VideoSource
         function frame = extractFrame(obj)
             if(obj.gpu_supported)
                 frame = gpuArray(readFrame(obj.videoReader));
+            else
+                frame = readFrame(obj.videoReader);
             end
         end
         

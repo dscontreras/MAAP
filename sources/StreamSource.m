@@ -7,6 +7,7 @@ classdef StreamSource < VideoSource
         inputcam;
         options;
         end_btn;
+        gpu_supported;
     end
     
     methods
@@ -24,6 +25,7 @@ classdef StreamSource < VideoSource
                 %Set the input camera of the stream source to a videoinput
                 %with identifier camname
                 obj.inputcam = videoinput(camname);
+                obj.gpu_supported = obj.determine_gpu_support();
                 if(nargin > 1)
                     obj.options = opts;
                 else
@@ -57,7 +59,11 @@ classdef StreamSource < VideoSource
         %the array is inside the GPU
         function frame = extractFrame(obj)
             trigger(obj.inputcam);
-            frame = gpuArray(getdata(obj.inputcam, 1, 'uint8'));
+            if(obj.gpu_supported)
+                frame = gpuArray(getdata(obj.inputcam, 1, 'uint8'));
+            else
+                frame = getdata(obj.inputcam, 1, 'uint8');
+            end
         end
 
         %extractFrames
