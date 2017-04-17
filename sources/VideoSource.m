@@ -21,10 +21,6 @@ classdef (Abstract) VideoSource < handle
     end
     
     methods 
-        function resolution = get_resolution()
-            
-        end
-        
         function gpu_supported = determine_gpu_support(obj)
             if(strcmp(SysInfo.get_os(), 'Windows'))
                 gpu_supported = true;

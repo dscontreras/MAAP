@@ -4,7 +4,6 @@ classdef Displacement < Operation
     
     properties (Access = private) 
         vid_src;
-        %rgb, intensity, none
         vid_colorspace;
         axes;
         error_tag;
