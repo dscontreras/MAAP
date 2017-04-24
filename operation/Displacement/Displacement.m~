@@ -80,17 +80,13 @@ classdef Displacement < Operation
               tic;
               obj.current_frame = grab_frame(obj.vid_src, obj);
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
-                if(obj.vid_src.gpu_supported)
+                if(vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
                 else
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
                 end
               else
-                if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
-                else
-                    meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
-                end
+                [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
               end
               disp(toc);
               disp('DRAW_RECT');
