@@ -97,73 +97,6 @@ function varargout = data_gui_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-
-% --------------------------------------------------------------------
-function FileMenu_Callback(hObject, eventdata, handles)
-% hObject    handle to FileMenu (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --------------------------------------------------------------------
-function OpenMenuItem_Callback(hObject, eventdata, handles)
-% hObject    handle to OpenMenuItem (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-file = uigetfile('*.fig');
-if ~isequal(file, 0)
-    open(file);
-end
-
-% --------------------------------------------------------------------
-function PrintMenuItem_Callback(hObject, eventdata, handles)
-% hObject    handle to PrintMenuItem (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-printdlg(handles.figure1)
-
-% --------------------------------------------------------------------
-function CloseMenuItem_Callback(hObject, eventdata, handles)
-% hObject    handle to CloseMenuItem (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
-                     ['Close ' get(handles.figure1,'Name') '...'],...
-                     'Yes','No','Yes');
-if strcmp(selection,'No')
-    return;
-end
-
-delete(handles.figure1)
-
-
-
-% --- Executes on selection change in popupmenu1.
-function popupmenu1_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = get(hObject,'String') returns popupmenu1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu1
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-     set(hObject,'BackgroundColor','white');
-end
-
-set(hObject, 'String', {'plot(rand(5))', 'plot(sin(1:0.01:25))', 'bar(1:.5:10)', 'plot(membrane)', 'surf(peaks)'});
-
-
-
 % --- Executes on selection change in img_options.
 %Brief: This function executes whenever there is a selection change within
 %the video input selection listbox that doubles as a file system parser
@@ -529,76 +462,6 @@ function img_viewer_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: place code in OpeningFcn to populate img_viewer
-
-
-
-function edit11_Callback(hObject, eventdata, handles)
-% hObject    handle to edit11 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit11 as text
-%        str2double(get(hObject,'String')) returns contents of edit11 as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit11_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit11 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function edit10_Callback(hObject, eventdata, handles)
-% hObject    handle to edit10 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit10 as text
-%        str2double(get(hObject,'String')) returns contents of edit10 as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit10_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit10 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function frame_step_edit_displacement_Callback(hObject, eventdata, handles)
-% hObject    handle to frame_step_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of frame_step_edit_displacement as text
-%        str2double(get(hObject,'String')) returns contents of frame_step_edit_displacement as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function frame_step_edit_displacement_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to frame_step_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
 
 
 function maximum_displacement_edit_displacement_Callback(hObject, eventdata, handles)
@@ -1001,43 +864,15 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         path = getappdata(0, 'vid_path');
         pixel_precision = getappdata(0, 'pixel_precision');
         max_displacement = getappdata(0, 'maximum_displacement');
-        colorspace = 'rgb';
-%         pixtag = 'pixel_precision';
-%         disptag = 'maximum_displacement';
-%         tags = {pixtag, disptag};
-%         strtags = string(tags);
-%         displacement_checks = displacement_prechecks(pixel_precision, max_displacement);
-%         check_failed = false;
-%         checks_failed = [];
-%         for i = 1:length(displacement_checks)
-%             %If the displacement check has failed
-%             if(displacement_checks(i) == 1)
-%                 disp('Displacement Check Failed');
-%                 set(handles.vid_error_tag, 'Visible', 'On');
-%                 checks_failed = [checks_failed strtags(i)];
-%                 check_failed = true;
-%             end
-%         end
-        %If all checks pass
-%         if(~check_failed)   
-            cam_resolution = 5.86 * (10^(-6));
-            src = FileSource(path, cam_resolution);
-            displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
-            arr = {displacement};
-            q = Queue(arr);
+        colorspace = 'rgb';  
+        cam_resolution = 5.86 * (10^(-6));
+        src = FileSource(path, cam_resolution);
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
+        arr = {displacement};
+        q = Queue(arr);
+        while ~q.finished()
             q.execute();
-            %displacement_valid = displacement.validate(handles);
-            %operation_queue = ();
-%             add_to_queue(displacement);
-%             for i = 1:length(operation_queue)
-%                 queue_step(handles);
-%             end
-%             while(~displacement.check_stop())
-%                 displacement.execute();
-%             end
-%         else
-%             set(handles.vid_error_tag, 'String', 'Error: The Following Variable is necessary to the process, yet not set: ' + checks_failed + 'Set it before proceeding.');
-%         end
+        end
     end
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1061,7 +896,6 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
 setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
-setappdata(0, 'frame_step', get(handles.frame_step_edit_displacement, 'String'));
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
@@ -1115,18 +949,6 @@ if(length(operation_queue) > 0)
     current_operation = item_up;
     item_up.execute(handles);
 end
-
-%if(strcmp(item_up.name(), 'Displacement: '))
-    %table_data = {'DispX'; 'DispY'};
-    %[array_pixel, array_micro] = read_video(vid_name, pixel_precision, max_displacement, handles, table_data);
-    %figure;plot(array_pixel);title('Object displacement - Subpixel');
-    %legend('Displacement in X','Displacement in Y','Location','southwest')
-    %xlabel('Frames') % x-axis label
-    %ylabel('Pixels') % y-axis label
-    %set(handles.image_cover, 'Visible', 'On');
-%elseif(strcmp(item_up.name(), 'VideoPlayer: '))
-    %item_up.execute
-%end
     
 function add_to_queue(operation)
 global operation_queue;
