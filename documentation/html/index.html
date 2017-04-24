@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset = "utf-8">
+  <meta name = "description" content = "Microanalyze documentation">
+  <meta name = "keywords" content = "Documentation, Microanalyze, Docs, Code, Help">
+  <meta name = "author" content = "Will Fehrnstrom">
+  <title>Microanalyze Reference</title>
+</head>
+<body>
+  <h1 style = "text-decoration: underline"><strong>Microanalyze Documentation and Reference</strong></h1>
+  <h2 style = "text-decoration: underline">Introduction</h2>
+  <p>This documentation is intended to help you navigate both the ins and outs of using Microanalyze to greatly
+    reduce time and effort in your microscope data collection efforts.  I hope you find it useful.  You should
+    email me at wfehrnstromdev@gmail.com with any questions you might have!</p>
+  <h2 style = "text-decoration: underline">Table of Contents</h2>
+  <p> This documentation is split up into two different sections: one section for application users, and the other
+    for coders wishing to extend the functionality of microanalyze.</p>
+  <ul>
+    <li><h3>Users</h3>
+      <ol>
+
+      </ol>
+    </li>
+
+    <li><h3>Coders</h3>
+      <ol>
+        <li><a href = "#code_user_interface">User Interface</a></li>
+        <li><a href = "#code_sources">Sources<a></li>
+        <li><a href = "#code_operations">Operations and the Queue System</a></li>
+        <li><a href = "#code_filesystem">Filesystem Parser and Navigation</a></li>
+      </ol>
+    </li>
+    <li><h3>Additional References</h3>
+      <ol>
+        <li><a href = "https://github.com/wfehrnstrom/microscopeanalysis">Github Page</a></li>
+        <li><a href = "https://www.mathworks.com/help/matlab/">Matlab Documentation Home Page</a></li>
+      </ol>
+    </li>
+  </ul>
+  <a id = "code_user_interface">
+    <h2 style = "text-decoration: underline">User Interface</h2>
+    <h3 style = "text-decoration: underline">Overview</h3>
+      <p>
+        This application's GUI was created using Matlab Guide.  There are two built-in GUI elements: data_gui, and settings_gui.
+        data_gui is the main graphical user interface, where the user selects the many different operations they want to perform.
+        settings_gui is where users can update certain settings, like their home-directory.  settings_gui is currently partially
+        implemented.  Each gui .m file generates a .fig file to go with it, which stores the physical locations of the ui elements.
+      </p>
+    <h3 style = "text-decoration: underline">Data GUI</h3>
+      <ul>
+        <li>
+          <h4>Global Variables</h4>
+          <p>There are a number of global variables declared within data_gui.</p>
+          <ul>
+            <li>
+              <h4>top_level<h4>
+              <p>top_level is a global variable that is a flag indicating whether the filesystem parser tree element is at the top level of the user's
+                filesystem.  This variable prevents the file system parser class from going out of bounds and attempting to go past
+                the top of the user's filesystem.</p>
+            </li>
+            <li>
+              <h4>current_operation</h4>
+              <p>current_operation stores a copy of the current operation being performed by microanalyze.  It is of the type operation.</p>
+            </li>
+            <li>
+              <h4>keymap</h4>
+              <p>keymap stores a map where a key is a keyboard character and a value is a function handle to be executed on
+                that keypress.</p>
+            </li>
+            <li>
+              <h4>parser</h4>
+              <p>FileSystemParser responsible for controlling user navigation of filesystem in filetree.</p>
+          </ul>
+        </li>
+        <li>
+          <h4>Functions</h4>
+          <ul>
+            <li>
+              <h4>Boilerplate Functions:</h4>
+              <p>These functions have not been modified from their boilerplate generation.</p>
+              <ul>
+                <li>data_gui_OutputFcn</li>
+                <li>img_options_CreateFcn</li>
+                <li>begin_preview_Callback(UNIMPLEMENTED)</li>
+                <li>input_type_CreateFcn</li>
+                <li>key_to_trigger_edit_trigger_Callback(UNIMPLEMENTED)</li>
+                <li>key_to_trigger_edit_trigger_CreateFcn</li>
+                <li>frames_on_trigger_edit_trigger_Callback(UNIMPLEMENTED)</li>
+                <li>frames_on_trigger_edit_trigger_CreateFcn</li>
+                <li>file_destination_edit_trigger_Callback(UNIMPLEMENTED)</li>
+                <li>file_destination_edit_trigger_CreateFcn</li>
+                <li>time_between_frames_edit_trigger_Callback(UNIMPLEMENTED)</li>
+                <li>time_between_frames_edit_trigger_CreateFcn</li>
+                <li>file_type_edit_trigger_Callback(UNIMPLEMENTED)</li>
+                <li>file_type_edit_trigger_CreateFcn</li>
+                <li>voltage_check_Callback(UNIMPLEMENTED)</li>
+                <li>img_viewer_CreateFcn</li>
+                <li>maximum_displacement_edit_displacement_Callback(UNIMPLEMENTED)</li>
+                <li>maximum_displacement_edit_displacement_CreateFcn</li>
+                <li>pixel_precision_edit_displacement_Callback(UNIMPLEMENTED)</li>
+                <li>pixel_precision_edit_displacement_CreateFcn</li>
+                <li>file_type_edit_frame_Callback(UNIMPLEMENTED)</li>
+                <li>file_type_edit_frame_CreateFcn</li>
+                <li>destination_edit_frame_Callback(UNIMPLEMENTED)</li>
+                <li>destination_edit_frame_CreateFcn</li>
+                <li>num_frames_edit_frame_Callback(UNIMPLEMENTED)</li>
+                <li>num_frames_edit_frame_CreateFcn</li>
+                <li>time_between_frames_edit_frame_Callback(UNIMPLEMENTED)</li>
+                <li>time_between_frames_edit_frame_CreateFcn</li>
+                <li>file_type_edit_video_Callback(UNIMPLEMENTED)</li>
+                <li>file_type_edit_video_CreateFcn</li>
+                <li>capture_type_edit_video_Callback(UNIMPLEMENTED)</li>
+                <li>capture_type_edit_video_CreateFcn</li>
+                <li>destination_edit_video_Callback(UNIMPLEMENTED)</li>
+                <li>destination_edit_video_CreateFcn</li>
+                <li>frame_rate_edit_video_Callback(UNIMPLEMENTED)</li>
+                <li>frame_rate_edit_video_CreateFcn</li>
+                <li>capture_length_edit_video_Callback(UNIMPLEMENTED)</li>
+                <li>capture_length_edit_video_CreateFcn</li>
+                <li>still_photo_check_Callback(UNIMPLEMENTED)</li>
+                <li>file_path_edit_Callback(UNIMPLEMENTED)</li>
+                <li>file_path_edit_CreateFcn</li>
+
+              </ul>
+            </li>
+            <h4>Implemented/Partially Implented Functions</h4>
+            <li>
+              <h4>data_gui(varargin)</h4>
+              <h5>params:</h5>
+              <p>varargin: command line inputs to data_gui.m. pass along this input to gui_mainfcn.  If the first index of varargin is a character, then matlab assumes that this string is a function handle to run as the gui callback.</p>
+              <h5>outputs:</h5>
+              <p>varargout: optional outputs from gui_mainfcn(varargin)</p>
+              <h5>description:</h5>
+              <p>This function looks at whether any arguments have been passed into data_gui from the cli and optionally configures a gui callback. It also optionally assings values to varargout from the execution of gui_mainfcn.</p>
+            </li>
+            <li>
+              <h4>data_gui_OpeningFcn</h4>
+              <h5>params:</h5>
+              <p>hObject: A figure object that is the parent of all figure components.</p>
+              <p>eventdata: undefined at the current time.</p>
+              <p>handles: a list of all the different component objects employed by the figure(or hObject).</p>
+              <p>varargin: command line inputs to data_gui.m.</p>
+              <h5>description:</p>
+              <p>sets handles.output to the current figure.  initializes keymap and adds 'q' to the keymap.
+                q is used to exit the application.  It is partially implemented. Sets top level to true, and initializes
+                max_displacement and pixel_precision in application memory.</p>
+            </li>
+            <li>
+              <h4>img_options_Callback</h4>
+              <h5>params:</h5>
+              <p>img_options: file tree object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>img_options_Callback is the function most central to filetree navigation within data_gui.
+                At a basic level, every time img_options_Callback is called by the filetree object, the user
+                has just selected a value in the filetree.  This value can be a selection of stream or file, or it can be an object on
+                the user's filesystem.  img_options_Callback has many if else's because it is checking for all possible things the user can
+                select, and checking whether those filetypes are supported.  If the user wants to grab a file, then img_options_Callback
+                constructs a global FileSystemParser, parser, to navigate the filesystem.
+            </li>
+            <li>
+              <h4>displacement_check_Callback</h4>
+              <h5>params:</h5>
+              <p>displacement_switch: checkbox enabling displacement operation to be performed.  Located in Operations Panel.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p> executes on clicking of the displacement checkbox under operations.  May be deprecated in favor of a more
+                extensible approach.  Toggles the visibility of the displacement operation details panel in the lower left hand corner of
+                the application.</p>
+            </li>
+            <li>
+              <h4>capture_check_Callback</h4>
+              <h5>params:</h5>
+              <p>capture_check: checkbox enabling photo and video capture operation to be performed.  Located in Operations Panel.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p> executes on clicking of the capture checkbox under operations.  May be deprecated in favor of a more
+                extensible approach.  Toggles the visibility of the capture operation details panel in the lower left hand corner of
+                the application.</p>
+            </li>
+            <li>
+              <h4>toggle_visibility</h4>
+              <h5>params:</h5>
+              <p>switch_obj: checkbox/switch that causes the target panel to become visible/invisible</p>
+              <p>panel_obj: The panel obj being set to visible/invisible by a checkbox or switch of some kind</p>
+              <h5>description:</h5>
+              <p>based on the condition of a switch, a panel is either shown or not shown.  If the switch is on, then
+              the panel is visible.  If it is set to off then the panel is invisible.</p>
+            </li>
+            <li>
+              <h4>item_toggle_visibility</h4>
+              <h5>params:</h5>
+              <p>item: item whose visibility is being toggled.</p>
+              <h5>description:</h5>
+              <p>change the visibility of the object to the opposite of it's current visibility condition(eg. if visible make invisible).</p>
+            </li>
+            <li>
+              <h4>video_record_check_Callback</h4>
+              <h5>params:</h5>
+              <p>video_record_check: checkbox object being toggled.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>function that executes when the video record checkbox is toggled under still_selection.  This function toggles the
+              visibility of a settings panel in the lower left of the GUI.</p>
+            </li>
+            <li>
+              <h4>settings_Callback</h4>
+              <h5>params:</h5>
+              <p>hObject: button that leads to settings gui.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>function that executes when the go to settings button is clicked.  It starts the program settings_gui.</p>
+            </li>
+            <li>
+              <h4>disp_error</h4>
+              <h5>params:</h5>
+              <p>msg: message to display graphically on the error text.</p>
+              <p>error_tag: the text_label object that actually will graphically contain the error text.</p>
+              <h5>description:</h5>
+              <p>make the error label visible, and then show the error message in the label.</p>
+            </li>
+            <li>
+              <h4>clear_error</h4>
+              <h5>params:</h5>
+              <p>error_tag: the graphics label that displays the error in the GUI.</p>
+              <h5>description:</h5>
+              <p>makes the error_tag object invisble on the GUI.</p>
+            </li>
+            <li>
+              <h4>play_video_Callback(DEPRECATED/OUTDATED)</h4>
+              <h5>params:</h5>
+              <p>play_vid_btn: the button pressed to play the vid</p>
+              <p>eventdata: unimplemented</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>Adds a Video playing operation to the queue, and steps once through the queue.  For an empty queue, it plays the video right away.</p>
+            </li>
+            <li>
+              <h4>preview_start_Callback(DEPRECATED/OUTDATED)</h4>
+              <h5>params:</h5>
+              <p>btn: the button pressed to preview the stream.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>if there is a camera to stream from, retrieve the images coming from that camera and display them on the image_viewer.</p>
+            </li>
+            <li>
+              <h4>begin_operation_btn_Callback</h4>
+              <h5>params:</h5>
+              <p>begin_operation_btn: the button pressed to begin image associated operations like displacement.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>execute a displacement operation on the chosen file input.</p>
+            </li>
+            <li>
+              <h4>save_frame_capture_options_Callback</h4>
+              <h5>params:</h5>
+              <p>save_options_btn: the matlab button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>set all application data pertaining to frame capturing.  Store these variables as application wide.</p>
+            </li>
+            <li>
+              <h4>save_displacement_options_Callback</h4>
+              <h5>params:</h5>
+              <p>save_options_btn: the matlab button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>set all application data pertaining to displacement operations.  Store these variables as application wide.</p>
+            </li>
+            <li>
+              <h4>save_video_options_Callback</h4>
+              <h5>params:</h5>
+              <p>save_options_btn: the matlab button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>set all application data pertaining to video recording.  Store these variables as application wide.</p>
+            </li>
+            <li>
+              <h4>save_trigger_options_Callback</h4>
+              <h5>params:</h5>
+              <p>save_options_btn: the matlab button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>set all application data pertaining to pictures taken by trigger.  Store these variables as application wide.</p>
+            </li>
+            <li>
+              <h4>check_operations(DEPRECATED/OUTDATED)</h4>
+              <h5>params:</h5>
+              <p>displacement_check: the checkbox indicating whether a displacement operation will take place.</p>
+              <p>capture_check: the checkbox indicating whether a photo/video capture operation will take place.</p>
+              <p>voltage_check: the checkbox indicating whether a voltage measurement operation will take place.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>check which operations we'll be carrying out.  If we aren't carrying out any operations, then hide the begin operation button.</p>
+            </li>
+            <li>
+              <h4>get_operations(DEPRECATED/OUTDATED)</h4>
+              <h5>params:</h5>
+              <p>displacement_check: the checkbox indicating whether a displacement operation will take place.</p>
+              <p>capture_check: the checkbox indicating whether a photo/video capture operation will take place.</p>
+              <p>voltage_check: the checkbox indicating whether a voltage measurement operation will take place.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>outputs:</h5>
+              <p>operations: regular (non-cell) array of boolean values indicating whether the operation is to be performed or not.
+                only defined for displacement, media capture, and voltage capture</p>
+              <h5>description:</h5>
+              <p>get a list of all the operations we'll be performing.  Store it in a regular(non-cell) array.</p>
+            </li>
+            <li>
+              <h4>vid_path_enter_btn_Callback</h4>
+              <h5>params:</h5>
+              <p>vid_path_enter_box: MATLAB GUI Object representing an edit box.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>store the path to the analyzable video we are accessing in application memory.</p>
+            </li>
+            <li>
+              <h4>pause_vid_Callback</h4>
+              <h5>params:</h5>
+              <p>pause_vid_btn: MATLAB GUI button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>On the pause video button's click, if the video is paused then unpause it, otherwise pause it.</p>
+            </li>
+            <li>
+              <h4>map_keypress</h4>
+              <h5>params:</h5>
+              <p>key: the key char that is pressed to trigger a certain function handle.</p>
+              <p>func: the function handle called when a certain key is pressed.</p>
+              <h5>description:</h5>
+              <p>map a certain key character to a user defined callback function.</p>
+            </li>
+            <li>
+              <h4>q_press_handle(OUTDATED)</h4>
+              <h5>params:</h5>
+              <p>params: unimplemented.</p>
+              <h5>description:</h5>
+              <p>Set the preview_done flag in application memory to true.</p>
+            </li>
+          </ul>
+          <h3 style = "text-decoration: underline">Settings GUI</h3>
+          <ul>
+            <li>
+              <h4>Boilerplate Functions:</h4>
+              <ul>
+                <li>settings_gui(varargin)</li>
+                <li>settings_gui_OpeningFcn(hObject, eventdata, handles, varargin)</li>
+                <li>settings_gui_OutputFcn(hObject, eventdata, handles)</li>
+                <li>start_path_edit_Callback(hObject, eventdata, handles)(UNIMPLEMENTED)</li>
+                <li>start_path_edit_CreateFcn(hObject, eventdata, handles)</li>
+              </ul>
+            </li>
+            <h4>Implemented/Partially Implemented Functions</h4>
+            <li>
+              <h4>start_path_submit_Callback(btn, eventdata, handles)</h4>
+              <h5>params:</h5>
+              <p>btn: MATLAB GUI button object.</p>
+              <p>eventdata: unimplemented.</p>
+              <p>handles: a list of all the different component objects employed by the figure.</p>
+              <h5>description:</h5>
+              <p>sets sys_start_path application wide data.  sys_start_path specifies what directory the filesystemparser should consider
+              start directory.</p>
+            </li>
+          </ul>
+        </li>
+      </ul>
+  </a>
+  <a id = "code_sources">
+    <h2 style = "text-decoration: underline">Sources</h2>
+    <h3 style = "text-decoration: underline">Overview</h3>
+    <p>
+      Microanalyze uses two different video sources to analyze: file based sources, and stream based sources.  A file based source is
+      just what it sounds like: a video file.  The only file type tested and supported on mac is .mov.  The only file type tested and supported on windows is .avi.
+      A stream based source is any video data source that actually is actively requested by the application
+      in real time.  Stream based sources are almost always video cameras.  In our case, the stream based sources we'll be using are video inputs from a microscope.
+      Currently, the only camera type fully supported is the pointgrey blackfly camera.  The only ptgrey blackfly camera actively tested is the
+      BLFY-U3-23S6C.
+    </p>
+    <h3 style = "text-decoration: underline">Inheritance Diagram</h3>
+    <img src="img/srcs_diag.png" width = 600px></img>
+    <h3 style = "text-decoration: underline">VideoSource(Abstract Class)</h3>
+    <ul>
+      <h4>Properties:</h4>
+      <ul>
+        <li>gpu_supported: Boolean flag.  If the gpu is supported on this particular system, then the flag is set to true.
+          Currently the process for figuring out whether the gpu is supported is rather simplistic.  If the OS is Mac, then GPU is not supported, and if it's Windows then the GPU
+          is supported.  This is wrong in many cases, and will be replaced "soon".  Ha, soon.  Pssshh.</li>
+      </ul>
+      <h4>Methods(Static):</h4>
+      <ul>
+        <li>
+          <h4>getSourceType</h4>
+          <h5>params:</h5>
+          <p>src: any data source whose type the user/coder wants to determine</p>
+          <h5>description:</h5>
+          <p>getSourceType determines what type of source a given input is, classfying it either as a stream type or a file type.  If it does not fit the
+          bill for either a stream or a file type, it is classified as unknown.</p>
+        </li>
+        <li>
+          <h4>determine_gpu_support</h4>
+          <h5>output:</h5>
+          <p>gpu_supported: boolean flag indicating whether gpu operations are supported on this particular computer.</p>
+          <h5>description:</h5>
+          <p>At current, if the computer is a windows computer, gpu operations will be supported.  Otherwise they will not be supported.</p>
+        </li>
+      </ul>
+    </ul>
+    <h3 style = "text-decoration: underline">FileSource</h3>
+    <ul>
+      <h4>Properties:</h4>
+      <ul>
+        <li>
+          filepath: a string that contains the path to the file on the user's filesystem.  This filepath is defined as absolute, not relative to the application's directory.
+        </li>
+        <li>
+          videoReader: the  VideoReader object used by FileSource to extract frames and interface between the raw information contained within the file and the user.
+        </li>
+        <li>
+          resolution_meters: The pixel resolution of the video in meters.
+        </li>
+        <li>
+          options: additional options specified by the user(UNIMPLEMENTED).
+        </li>
+        <li>
+          gpu_supported: flag indicating whether gpu support is enabled for this computer.  Should probably not be a member variable, but it is.
+        </li>
+      </ul>
+      <h4>Methods</h4>
+      <ul>
+        <li>
+          <h4>FileSource(Constructor)</h4>
+          <h5>params:</h5>
+          <p>file_in: a string containing the absolute path to the video file.</p>
+          <p>resolution_meters: The resolution of the video file.</p>
+          <h5>description:</h5>
+          <p>Constructor for a FileSource.  If the constructor fails to make a valid VideoReader with the filepath as input, the constructor will redirect to the command line, where the user can manually input the absolute path.</p>
+        </li>
+        <li>
+          <h4>extractFrame</h4>
+          <h5>output:</h5>
+          <p>output frame from videoReader.  Either gpuAray, or regular image matrix.</p>
+          <h5>description:</h5>
+          <p>if gpu is supported on running device, then this will return a gpuArray image.  Otherwise, it will return a regular image array.</p>
+        </li>
+        <li>
+          <h4>finished</h4>
+          <h5>output:</h5>
+          <p>boolean flag indicating whether the end of the video referred to by the FileSource has been reached.</p>
+          <h5>description:</h5>
+          <p>determines whether the video referred to by the file source is finished.  Checks this by calling the hasFrame() method.</p>
+        </li>
+        <li>
+          <h4>get_num_pixels</h4>
+          <h5>output:</h5>
+          <p>The dimensions in a given frame of the video, contained in an array with the notation [height width].  The dimensions should not change.</p>
+          <h5>description:</h5>
+          <p>retrieves the dimensions of a given frame in the video.</p>
+        </li>
+      </ul>
+    </ul>
+  </a>
+  <a id = "code_operations">
+    <h2 style = "text-decoration: underline">Operations and the Queue System</h2>
+  </a>
+  <a id = "code_filesystem">
+    <h2 style = "text-decoration: underline">Filesystem Parser and Navigation</h2>
+  </a>
+</body>
+</html>
