@@ -464,29 +464,6 @@ function img_viewer_CreateFcn(hObject, eventdata, handles)
 % Hint: place code in OpeningFcn to populate img_viewer
 
 
-function frame_step_edit_displacement_Callback(hObject, eventdata, handles)
-% hObject    handle to frame_step_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of frame_step_edit_displacement as text
-%        str2double(get(hObject,'String')) returns contents of frame_step_edit_displacement as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function frame_step_edit_displacement_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to frame_step_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
 function maximum_displacement_edit_displacement_Callback(hObject, eventdata, handles)
 % hObject    handle to maximum_displacement_edit_displacement (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -893,7 +870,9 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
         arr = {displacement};
         q = Queue(arr);
-        q.execute();
+        while ~q.finished()
+            q.execute();
+        end
     end
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -917,7 +896,6 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
 setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
-setappdata(0, 'frame_step', get(handles.frame_step_edit_displacement, 'String'));
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
