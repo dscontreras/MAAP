@@ -21,7 +21,6 @@ classdef StreamSource < VideoSource
         %Object of class StreamSource
         function obj = StreamSource(camname, opts)
             try
-                disp(nargin);
                 %Set the input camera of the stream source to a videoinput
                 %with identifier camname
                 obj.inputcam = videoinput(camname);
@@ -29,7 +28,6 @@ classdef StreamSource < VideoSource
                 if(nargin > 1)
                     obj.options = opts;
                 else
-                    disp('auto options');
                     obj.options = {1, 'manual', Inf};
                 end
             catch E
@@ -64,19 +62,6 @@ classdef StreamSource < VideoSource
             else
                 frame = getdata(obj.inputcam, 1, 'uint8');
             end
-        end
-
-        %extractFrames
-        %Description: extract a single frame from the source stream
-        %Params
-        %obj
-        %numFrames: The number of frames to collect from the stream
-        %Output: A frames matrix of uint8 type and a length equal to the number of frames.  
-        %Any use of frames must be in
-        %conjunction with a gather(frame) operation, since the location of
-        %the array is inside the GPU
-        function frames = extractFrames(obj, num_frames)
-            frames = gpuArray(getdata(obj.inputcam, num_frames, 'uint8'));
         end
         
         %start
