@@ -863,13 +863,13 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         set(handles.vid_error_tag, 'String', '');
         path = getappdata(0, 'vid_path');
         pixel_precision = getappdata(0, 'pixel_precision');
-        max_displacement = getappdata(0, 'maximum_displacement');
-        colorspace = 'rgb';  
+        max_displacement = getappdata(0, 'maximum_displacement');  
         cam_resolution = 5.86 * (10^(-6));
         src = FileSource(path, cam_resolution);
-        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, pixel_precision, max_displacement);
         arr = {displacement};
-        q = Queue(arr);
+        handle = @play_video_Callback;
+        q = Queue(handle, arr);
         while ~q.finished()
             q.execute();
         end
@@ -889,6 +889,7 @@ setappdata(0, 'num_frames', get(handles.num_frames_edit_frame, 'String'));
 setappdata(0, 'time_between_frames', get(handles.time_between_frames_edit_frame), 'String');
 setappdata(0, 'file_destination', get(handles.destination_edit_frame));
 setappdata(0, 'file_type', get(handles.file_type_edit_frame));
+
 % --- Executes on button press in save_displacement_options.
 function save_displacement_options_Callback(hObject, eventdata, handles)
 % hObject    handle to save_displacement_options (see GCBO)
@@ -1013,3 +1014,5 @@ end
 
 function q_press_handle(params)
 setappdata(0, 'preview_done', true);
+
+function display_error(msg)

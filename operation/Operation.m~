@@ -18,34 +18,23 @@ classdef (Abstract) Operation < handle
         %index at which an operation will be placed.  This is intended as
         %an enumeration, where the possible values are {start, end}
         insertion_type;
-        %inputs is a simple cell array of all the inputs collected from
-        %available operations sharing the same queue.  These inputs will be
-        %passed to the operation's execute function
-        inputs;
-        %error_report_handle stores the handle that should execute when
-        %this operation encounters an error and cannot continue, this
-        %handle will be from a function defined in queue.
-        error_report_handle;
+        %args_in is a constant variable that determines how many arguments
+        %this program's execute should accept
+        num_args_in = 0;
+        %args_out is a constant variable that determines how many arguments
+        %this program's execute should output
+        num_args_out = 0;
     end
     
-    properties(Access = public, Abstract)
+    properties(Access = public)
         %output_map is a map containing key:value pairs of the form "name
-        %of the output variable"(of type string):value of the
-        %variable(varies).  You, as a coder may pick and choose which
-        %values outputted from execute() may be sent, and documented by the
-        %output map.
-        outputs;
-        %indicates whether the object is in a good state or not
-        valid;
-    end
-    
-    properties(Access = public, Abstract, Constant)
-        %Name of the operation
-        name;
+        %of the output variable"(of type string):
+      
+        output_map;
     end
 
-    methods(Abstract)
-        %METHOD: check_stop
+    methods
+        %METHOD: stop_on
         %Used to configure the operation's stop condition in the queue, which in turn determines whether the operation
         %should remain in the queue after it executes.
         %Should the operation only execute once?  If so, it has
@@ -62,7 +51,9 @@ classdef (Abstract) Operation < handle
         %should remain in the queue for another execution, or remove it
         %stop_trigger: can either be not passed, a number, or a function
         %handle depending on the condition_type
-        bool = check_stop(obj)
+        function bool = check_stop(obj)
+            
+        end
         
         %METHOD: execute
         %The most important method of the operational design model
@@ -72,20 +63,27 @@ classdef (Abstract) Operation < handle
         %or logging a value, but the execute method code must be consistent
         %for a given operation type.  Whether it takes argument(s) does not
         %have to be consistent for any given operation.
-        execute(obj, argsin);
-    end
-    
-    methods
-        
-        function report_error(obj, error)
-            obj.valid = false;
-            error_msg = strcat(obj.name, '_operation: ', error);
-            try
-                feval(obj.error_report_handle);
-            catch(feval(obj.error_report_handle, error_msg))
-                disp('ERROR_REPORT_HANDLE FAILED TO EXECUTE');
-            end
+        function execute(obj, argin)
+            
         end
+        
+        
+%         function indexes = match_outputs_with_inputs(op1, op2)
+%             indexes = {};
+%             count = 1;
+%             length_of_1 = length(op1.outputs);
+%             length_of_2 = length(op2.inputs);
+%             shortest_length = length_of_1;
+%             if(length_of_2 < length_of_1)
+%                 shortest_length = length_of_2;
+%             end
+%             for i = 1:shortest_length
+%                 if(strcmp(op1.outputs{i}, op2.inputs{i}))
+%                     indexes{count} = i;
+%                     count = count + 1;
+%                 end
+%             end
+%         end
         
         function val = get.stop_check_callback(obj)
             val = obj.stop_check_callback;
@@ -98,14 +96,15 @@ classdef (Abstract) Operation < handle
         function rx = get.rx_data(obj)
             rx = obj.rx_data;
         end
-
-        function args_out = get_num_args_out(obj)
-           args_out = length(obj.outputs);
+        
+        function tx = get.tx_data(obj)
+            tx = obj.tx_data;
         end
         
-        function args_in = get_num_args_in(obj)
-           args_in = length(obj.inputs);
+        function deps = get.dependents(obj)
+            deps = obj.dependents;
         end
+
     end
     
 end
