@@ -70,6 +70,7 @@ top_level = true;
 set(handles.trigger_panel, 'Visible', 'Off');
 setappdata(0, 'maximum_displacement', -1);
 setappdata(0, 'pixel_precision', -1);
+setappdata(0, 'wait_status', 0);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
@@ -858,7 +859,6 @@ end
 
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
-    global operation_queue;
     if(get(handles.displacement_check, 'Value') == 1)
         set(handles.vid_error_tag, 'String', '');
         path = getappdata(0, 'vid_path');
@@ -868,8 +868,11 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         src = FileSource(path, cam_resolution);
         displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, pixel_precision, max_displacement);
         arr = {displacement};
-        handle = @play_video_Callback;
+        handle = @display_error;
         q = Queue(handle, arr);
+        output_file_location = ['.' FileSystemParser.get_file_separator() 'outputs' FileSystemParser.get_file_separator()];
+        d = DataCollector(@displacement.check_stop, output_file_location);
+        q.add_to_queue(d);
         while ~q.finished()
             q.execute();
         end
@@ -897,6 +900,10 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
 setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
+if(getappdata(0, 'wait_status'))
+    uiresume;
+end
+    
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
@@ -1016,3 +1023,7 @@ function q_press_handle(params)
 setappdata(0, 'preview_done', true);
 
 function display_error(msg)
+setappdata(0, 'error_msg', msg);
+setappdata(0, 'wait_status', 1);
+error_gui;
+uiwait;

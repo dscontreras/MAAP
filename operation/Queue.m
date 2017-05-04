@@ -8,7 +8,7 @@ classdef Queue < handle
         condition_evals;
         %Map of which operations in the queue transfer data to which other
         %functions
-        data_transfer_map;
+        data_transfer_map= containers.Map('KeyType','char','ValueType','any');
         %number of operations in the queue
         length;
         %the actual contents of the queue
@@ -39,49 +39,74 @@ classdef Queue < handle
                 end
             else
                 obj.condition_evals = {};
-                obj.data_transfer_map = {};
             end
         end
         
         function add_to_queue(obj, operation)
             obj.length = obj.length + 1;
+            %set the object in the queue's callback for error handling to
+            %this Queue's error handling function, so that the error can
+            %correctly propagate up the object hierarchy, from operation to
+            %queue to the data_gui itself
+            operation.set_error_report_handle(@obj.report_error);
             %If the object should be inserted at the start of the list
             if(strcmp(operation.insertion_type, 'start'))
                 for i = obj.length:1
                     obj.list{i + 1} = obj.list{i};
+                    obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
                 end
                 obj.list{1} = operation;
+                operation.queue_index = 1;
                 obj.add_to_map(operation, 1);
             %Otherwise, insert it at the end
             else
                 obj.list{obj.length} = operation;
+                operation.queue_index = obj.length;
                 obj.extend_map(operation);
+                [~, input_op_names, params] = obj.parse_rx_data(operation);
+                operation.param_names = [input_op_names; params];
+                operation.inputs = cell(1, length(input_op_names));
             end
         end
         
         function add_to_map(obj, operation, address_inserted)
-            obj.data_transfer_map{address_inserted} = {operation.name, operation.outputs};
+            obj.data_transfer_map{address_inserted} = operation.outputs;
         end
         
         function extend_map(obj, operation)
-            obj.data_transfer_map{length(obj.data_transfer_map) + 1} = {operation.name, operation.outputs};
+            obj.data_transfer_map(operation.name) = operation.outputs;
         end
         
         function execute(obj)
-            for i = 1:obj.length
-                if(obj.list{i}.get_num_args_in() <= 0)
-                    obj.list{i}.execute();
-                else
-                    obj.list{i}.execute(obj.list{i}.inputs);
-                end
-                stopped = obj.list{i}.check_stop();
-                if(stopped)
-                    obj.list = [obj.list{1:(i - 1)} obj.list{(i + 1):end}];
-                    obj.length = length(obj.list);
-                    if(obj.length == 0)
-                        obj.done = true;
+            i = 1;
+            while(i <= obj.length)
+                name = obj.list{i}.name;
+                if(~obj.list{i}.new || feval(obj.list{i}.start_check_callback))
+                    if(obj.list{i}.new)
+                        obj.list{i}.new = false;
+                        obj.list{i}.startup();
+                    end
+                    if(isempty(obj.list{i}.rx_data))
+                        obj.list{i}.execute();
+                    else
+                        inputs = obj.retrieve_operation_inputs(obj.list{i});
+                        obj.list{i}.execute(inputs);
+                    end
+                    if(isa(obj.list{i}, 'RepeatableOperation'))
+                        stopped = obj.list{i}.check_stop();
+                    else
+                        stopped = true;
+                    end
+                    if(stopped)
+                        %obj.list = [obj.list{1:(i - 1)} obj.list{(i + 1):end}];
+                        obj.list(i) = [];
+                        obj.length = length(obj.list);
+                        if(obj.length == 0)
+                            obj.done = true;
+                        end
                     end
                 end
+                i = i + 1;
             end
         end
         
@@ -101,10 +126,112 @@ classdef Queue < handle
             l = obj.list;
         end
         
+        function inputs = retrieve_operation_inputs(obj, operation)
+            inputs = {};
+            input_operation_names = operation.param_names(1, :);
+            params_to_get = operation.param_names(2, :);
+            for i = 1:length(input_operation_names)
+                map_to_retrieve_from = obj.data_transfer_map(input_operation_names{i});
+                inputs = [inputs map_to_retrieve_from(params_to_get{i})];
+            end
+        end
+        
+        %for the example string input "displacement:dispx", displacement is
+        %the input operation_name, and dispx is the param to get.
+        function [diff_operation_names, input_operation_names, params_to_get] = parse_rx_data(obj, operation)
+            count = 1;
+            diff_operation_names = cell(0);
+            input_operation_names = cell(0);
+            params_to_get = cell(0);
+            for i = 1:length(operation.rx_data)
+                colon_index = strfind(operation.rx_data{i}, ':');
+                input_operation_names{count} = char(operation.rx_data{i}(1:(colon_index - 1)));
+                if(length(diff_operation_names) > 0)
+                    for j = 1:length(diff_operation_names)
+                       if(~strcmp(input_operation_names{count}, diff_operation_names{j}))
+                            diff_operation_names = [diff_operation_names input_operation_names{count}];
+                       end
+                    end
+                end
+                params_to_get{count} = char(operation.rx_data{i}(colon_index + 1:length(operation.rx_data{i})));
+                [num, is_numeric] = str2num(input_operation_names{count});
+                %if the input_operation_name is actually a number, then
+                %this means that this number specifies the position of the
+                %input_operation relative to the operation receiving the
+                %input in the queue
+                index_of_operation_to_receive_from = 0;
+                index = operation.queue_index;
+                if(is_numeric)
+                    if(index <= 0)
+                        obj.report_error('No such operation found in queue.');
+                    else
+                        index_of_operation_to_receive_from = index + num;
+                    end
+                    if((index_of_operation_to_receive_from > length(obj.list) || index_of_operation_to_receive_from < 1))
+                        obj.report_error('Queue list index out of bounds exception');
+                    else
+                        input_operation_names{count} = obj.list{index_of_operation_to_receive_from}.name;
+                    end
+                else
+                    %TODO: Implement this nearest neighbor only valid for
+                    %inputs behind the operation requesting input
+                    matches = obj.pos_in_queue_of_name(input_operation_names{count});
+                    %Create an array filled with the same number: the index
+                    %of the current operation
+                    index_array = index * ones(1, length(matches));
+                    distance_cell = cellfun(@minus, num2cell(index_array), matches, 'UniformOutput', false);
+                    distance_arr = cell2mat(distance_cell);
+                    distance_arr(distance_arr < 0) = 0;
+                    [~, closest_index] = min(distance_arr(distance_arr > 0));
+                    index_of_operation_to_receive_from = matches{closest_index};
+                end
+                if(strcmp(params_to_get{count}, 'all'))
+                    op_name = input_operation_names{count};
+                    param_names = keys(obj.data_transfer_map(op_name));
+                    count = count - 1;
+                    for j = 1:length(param_names)
+                       count = count + 1;
+                       input_operation_names{count} = op_name;
+                       params_to_get{count} = param_names{j};
+                    end
+                end
+                count = count + 1;
+            end
+        end
+        
+        %determine the index of an operation in the queue list
+        function position = pos_in_queue(obj, operation)
+            position = {};
+            count = 0;
+            for i = 1:length(obj.list)
+                if(strcmp(operation.name, obj.list{i}.name))
+                    count = count + 1;
+                    position{count} = i;
+                end
+            end 
+        end
+        
+        function position = pos_in_queue_of_name(obj, name)
+            position = {};
+            count = 0;
+            for i = 1:length(obj.list)
+                if(strcmp(name, obj.list{i}.name))
+                    count = count + 1;
+                    position{count} = i;
+                end
+            end 
+        end
+        
         function report_error(obj, error_msg)
             obj.valid = false;
-            msg = strcat(obj.name, ':', error_msg);
+            msg = strcat(obj.name, ': ', error_msg);
             feval(obj.error_report_handle, msg);
+        end
+        
+        function list_out = delete_cell(index, list)
+            for i = 1:length(list)
+                
+            end
         end
     end
     

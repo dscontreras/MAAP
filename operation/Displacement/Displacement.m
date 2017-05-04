@@ -1,8 +1,8 @@
-classdef Displacement < Operation
+classdef Displacement < RepeatableOperation
     %VIDPLAY Summary of this class goes here
     %   Detailed explanation goes here
     
-    properties (Access = private) 
+    properties (SetAccess = private) 
         vid_src;
         axes;
         error_tag;
@@ -20,9 +20,14 @@ classdef Displacement < Operation
 
     properties (SetAccess = public)
         pause_bool;
+        param_names;
         inputs = {};
-        outputs = containers.Map('KeyType','char','ValueType','int32');
+        outputs = containers.Map('KeyType','char','ValueType','any');
         valid;
+        new;
+        error_report_handle;
+        queue_index = -1;
+        start_check_callback = @RepeatableOperation.check_start;
     end
     
     properties (Constant)
@@ -42,12 +47,20 @@ classdef Displacement < Operation
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_displacement = str2double(max_displacement);
-            obj.startup();
+            obj.new = true;
+            obj.valid = true;
+            obj.outputs('dispx') = 0;
+            obj.outputs('dispy') = 0;
+            obj.outputs('done') = false;
+            if(nargin > 8) %8 is the number of params for displacement
+                obj.error_report_handle = error_report_handle;
+            end
         end
 
         %For carrying out one time method calls that should be done before
         %calling of execute
         function startup(obj)
+            obj.valid = obj.validate(obj.error_tag);
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
@@ -61,7 +74,7 @@ classdef Displacement < Operation
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
         end
         
-        function execute(obj)          
+        function execute(obj)
               obj.current_frame = grab_frame(obj.vid_src, obj);
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
@@ -73,22 +86,36 @@ classdef Displacement < Operation
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
                 else
-                    meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+                    [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
                 end
               end
               draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
               updateTable(dispx, dispy, obj.table);
+              obj.outputs('dispx') = [obj.outputs('dispx') dispx];
+              obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+              obj.outputs('done') = obj.check_stop();
               drawnow;
         end
 
+        %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
-            if(~FileSystemParser.is_file(obj.vid_src.filepath))
-                err = Error(Displacement.name(), 'Not passed a valid path on the filesystem', error_tag);
+            while(~FileSystemParser.is_file(obj.vid_src.filepath))
+                str = 'Displacement: Not passed a valid path on the filesystem'
+                err = Error(Displacement.name, str, error_tag);
+                feval(obj.error_report_handle, str);
                 valid = false;
             end
-            if(~valid_max_displacement(obj))
-                err = Error(Displacement.name(), 'Max Displacement too large', error_tag);
+            while(~valid_max_displacement(obj))
+                str = 'Displacement: Max Displacement invalid';
+                err = Error(Displacement.name, str, error_tag);
+                feval(obj.error_report_handle, str);
+                valid = false;
+            end
+            while(~valid_pixel_precision(obj))
+                str = 'Displacement: Pixel Precision inputted not a number';
+                err = Error(Displacement.name, str, error_tag);
+                feval(obj.error_report_handle, str);
                 valid = false;
             end
             if(valid)
@@ -98,7 +125,8 @@ classdef Displacement < Operation
 
         function valid = valid_max_displacement(obj)
             valid = true;
-            if(size(obj.current_frame, 2) < obj.max_displacement || isnan(obj.max_displacement))
+            frame = obj.get_frame();
+            if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
                 valid = false;
             end 
         end
@@ -128,11 +156,10 @@ classdef Displacement < Operation
             set(handles.pause_vid, 'String', 'Pause Video');
         end
 
-        function draw_frame(videoReader, axes)
-            frame = step(videoReader);
-            imshow(frame, 'Parent', axes);
-            drawnow;
+        function frame = get_frame(obj)
+            frame = obj.vid_src.extractFrame();
         end
+        
         
         function path = get_vid_path(obj)
             path = obj.vid_path;
@@ -151,7 +178,7 @@ classdef Displacement < Operation
         end
         
         function bool = check_stop(obj)
-            if(~obj.validate(obj.error_tag))
+            if(~obj.valid && ~obj.validate(obj.error_tag))
                 bool = true;
             else
                 bool = obj.vid_src.finished();
