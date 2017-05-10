@@ -51,16 +51,7 @@ classdef FileSystemParser
             end
         end
         
-        %Brief: Retrieve which carriage return characters this OS uses
-        function carriage = get_carriage_return()
-            %Use the Windows Carriage return if the OS is Windows
-            if(strcmp(SysInfo.get_os(), 'Windows'))
-                carriage = '\r\n';
-            %Use the unix file separator if the OS is unix
-            else
-                carriage = '\n';
-            end
-        end
+        function carriage = get_carriage_r
         
         %Brief: Get what the start of the OS's filesystem is
         function file_system_start_path = get_file_system_start_path()

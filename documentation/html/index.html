@@ -472,6 +472,53 @@
         </li>
       </ul>
     </ul>
+    <h3 style = "text-decoration: underline">StreamSource</h3>
+    <ul>
+      <h4>Properties:</h4>
+      <ul>
+        <li>inputcam: the input camera the user is using to stream video data. inputcam is of type videoinput, which is a Matlab builtin class.</li>
+        <li>options: the options passed by the user to further configure the stream source(UNIMPLEMENTED).</li>
+        <li>end_btn: a handle to the graphics object that terminates the stream input located on the data_gui</li>
+        <li>gpu_supported: flag indicating whether the gpu is supported on this device.</li>
+      </ul>
+      <h4>Methods:</h4>
+      <ul>
+        <li>
+          <h4>StreamSource</h4>
+          <h5>params:</h5>
+          <p>camname: the name of the camera as recognized by the computer.  Eg. pointgrey.  Must be all lowercase.  Of type string.</p>
+          <p>opts:user-specified options that may change the behavior of stream-source(UNIMPLEMENTED)</p>
+          <h5>description:</h5>
+          <p>attempts to configure the StreamSource by configuring a videoinput object to be equal to the camera.  GPU support is then determined.  If an error occurs, then the program automatically finds a pointgrey camera if it's available.  The camera is also started.</p>
+        </li>
+        <li>
+          <h4>extractFrame</h4>
+          <h5>outputs:</h5>
+          <p>if gpuarrays are supported, then the output is a gpu array wrapping a single frame from the camera.  Otherwise, the output is just a single frame from the camera.  Either way, the output is essentially a numeric matrix, uint8, representing a single frame.</p>
+          <h5>description:</h5>
+          <p>returns a single frame from the camera input.  May return a gpuarray or just image matrix, depending on whether gpu support is enabled.</p>
+        </li>
+        <li>
+          <h4>start</h4>
+          <h5>description:</h5>
+          <p>start the input camera associated with this StreamSource.  starting the camera just readies it to collect images.  You must start a camera before collecting images.</p>
+        </li>
+        <li>
+          <h4>finished</h4>
+          <h5>output:</h5>
+          <p>bool: a boolean flag indicating whether the camera is done with, and no more frames should be collected.</p>
+          <h5>description:</h5>
+          <p>finished checks whether the camera stream is finished, which is determined by whether the user clicks on am end button in the data_gui.</p>
+        </li>
+        <li>
+          <h4>get_resolution</h4>
+          <h5>outputs:</h5>
+          <p>resolution: a 1D array that contains the resolution data in the format: [height, width].  Taken from a single frame of the camera stream.</p>
+          <h5>description:</h5>
+          <p>retrieves the size of a frame from the camera.</p>
+        </li>
+      </ul>
+    </ul>
   </a>
   <a id = "code_operations">
     <h2 style = "text-decoration: underline">Operations and the Queue System</h2>

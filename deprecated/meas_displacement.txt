@@ -115,7 +115,4 @@ Xp = 184.67662; %distance according image in pixels. Correspond to Xm
     dispx = Xm*x/Xp;
     dispy = Xm*y/Xp;
     
-
 end
-
-
