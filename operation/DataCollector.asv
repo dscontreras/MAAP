@@ -76,7 +76,7 @@ classdef DataCollector < Operation
                         if(length(cached_names) == 0 || ~strcmp(obj.param_names{1, i}, cached_names{end}))
                             timestamp = DataCollector.construct_timestamp();
                             filename = [obj.output_folder_path obj.param_names{1, i} '_' timestamp '.mat'];
-                            data_to_save = cat(1, obj.param_names(2, :), argsin);
+                            data_to_save = [obj.param_names{2, :}; argsin];
                             save(filename, 'data_to_save');
                         end
                     end

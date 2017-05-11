@@ -80,7 +80,6 @@ classdef Queue < handle
         function execute(obj)
             i = 1;
             while(i <= obj.length)
-                name = obj.list{i}.name;
                 if(~obj.list{i}.new || feval(obj.list{i}.start_check_callback))
                     if(obj.list{i}.new)
                         obj.list{i}.new = false;
@@ -103,16 +102,11 @@ classdef Queue < handle
                         obj.length = length(obj.list);
                         if(obj.length == 0)
                             obj.done = true;
-                    end
                         end
                     end
                 end
                 i = i + 1;
             end
-        end
-        
-        function bool = finished(obj)
-            bool = obj.done;
         end
         
         function bool = finished(obj)
@@ -239,6 +233,5 @@ classdef Queue < handle
             end
         end
     end
-    
 end
 

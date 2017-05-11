@@ -71,6 +71,7 @@ set(handles.trigger_panel, 'Visible', 'Off');
 setappdata(0, 'maximum_displacement', -1);
 setappdata(0, 'pixel_precision', -1);
 setappdata(0, 'wait_status', 0);
+setappdata(0, 'outputfolderpath', [pwd FileSystemParser.get_file_separator() 'outputs']);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
@@ -870,8 +871,8 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         arr = {displacement};
         handle = @display_error;
         q = Queue(handle, arr);
-        output_file_location = ['.' FileSystemParser.get_file_separator() 'outputs' FileSystemParser.get_file_separator()];
-        d = DataCollector(@displacement.check_stop, output_file_location);
+        output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
+        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
         q.add_to_queue(d);
         while ~q.finished()
             q.execute();

@@ -44,7 +44,8 @@ classdef FileSystemParser
         function separator = get_file_separator()
             %Use the Windows file separator if the OS is Windows.
             if(strcmp(SysInfo.get_os(), 'Windows'))
-                separator = '\\';
+                %separator = '\\';
+                separator = '\';
             %Use the unix file separator if the OS is Unix.
             else
                 separator = '/';
