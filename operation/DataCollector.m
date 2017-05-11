@@ -80,7 +80,9 @@ classdef DataCollector < Operation
                             save(filename, 'data_to_save');
                         end
                     end
-                    fclose(file);
+                    if(strcmp(obj.format, 'txt'))
+                        fclose(file);
+                    end
                 end
             end
         end
