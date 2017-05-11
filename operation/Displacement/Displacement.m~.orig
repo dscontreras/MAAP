@@ -1,13 +1,27 @@
+<<<<<<< HEAD
+classdef Displacement < Operation
+    %VIDPLAY Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties (Access = private) 
+        vid_src;
+        vid_colorspace;
+=======
 classdef Displacement < RepeatableOperation
     %VIDPLAY Summary of this class goes here
     %   Detailed explanation goes here
     
     properties (SetAccess = private) 
         vid_src;
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         axes;
         error_tag;
         pixel_precision;
         max_displacement;
+<<<<<<< HEAD
+        valid;
+=======
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         template; rect; xtemp; ytemp;
         current_frame;
         table;
@@ -16,13 +30,41 @@ classdef Displacement < RepeatableOperation
         table_data;
         stop_check_callback = @check_stop;
         im;
+<<<<<<< HEAD
+        in_buffer;
+=======
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
     end
 
     properties (SetAccess = public)
         pause_bool;
+<<<<<<< HEAD
+        outputs = {};
+        inputs = {};
+    end
+    
+    properties (Constant)
+        VID_HEIGHT = 1024;
+        VID_WIDTH = 1280;
+        rx_data = {};
+        insertion_type = 'end';
+        num_args_in = 0;
+        num_args_out = 0;
+        dependents = {};
+    end
+    
+    methods(Static)
+        function string = name(obj)
+            string = 'VideoPlayer: ';
+        end
+    end
+
+    methods
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, colorspace, pixel_precision, max_displacement)
+=======
         param_names;
         inputs = {};
-        outputs = containers.Map('KeyType','char','ValueType','any');
+        outputs = containers.Map('KeyType','char','ValueType','int32');
         valid;
         new;
         error_report_handle;
@@ -38,12 +80,21 @@ classdef Displacement < RepeatableOperation
 
     methods
         function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, error_report_handle)
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
             obj.img_cover = img_cover;
             obj.pause_button = pause_button;
+<<<<<<< HEAD
+            obj.vid_colorspace = colorspace;
+            obj.pause_bool = false;
+            obj.pixel_precision = str2double(pixel_precision);
+            obj.max_displacement = str2double(max_displacement);
+            obj.startup();
+            obj.in_buffer = {};
+=======
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_displacement = str2double(max_displacement);
@@ -55,12 +106,16 @@ classdef Displacement < RepeatableOperation
             if(nargin > 8) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         end
 
         %For carrying out one time method calls that should be done before
         %calling of execute
         function startup(obj)
+<<<<<<< HEAD
+=======
             obj.valid = obj.validate(obj.error_tag);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
@@ -75,6 +130,44 @@ classdef Displacement < RepeatableOperation
         end
         
         function execute(obj)
+<<<<<<< HEAD
+              disp('ACQUIRE FRAME AND MEAS_DISPLACEMENT')
+              tic;
+              obj.current_frame = grab_frame(obj.vid_src, obj);
+              if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
+                if(vid_src.gpu_supported)
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+                else
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+                end
+              else
+                [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
+              end
+              disp(toc);
+              disp('DRAW_RECT');
+              tic;
+              draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
+              disp(toc);
+              %updateTable(dispx, dispy, obj.table);
+              disp('DRAWNOW');
+              tic;
+              drawnow;
+              disp(toc);
+        end
+
+        function valid = validate(obj, error_tag)
+            valid = true;
+            if(~FileSystemParser.is_file(obj.vid_src.filepath))
+                err = Error(Displacement.name(), 'Not passed a valid path on the filesystem', error_tag);
+                valid = false;
+            end
+            if(~valid_color_space(obj))
+                err = Error(Displacement.name(), 'Invalid Color Space', error_tag);
+                valid = false;
+            end
+            if(~valid_max_displacement(obj))
+                err = Error(Displacement.name(), 'Max Displacement too large', error_tag);
+=======
               obj.current_frame = grab_frame(obj.vid_src, obj);
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
@@ -91,8 +184,8 @@ classdef Displacement < RepeatableOperation
               end
               draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
               updateTable(dispx, dispy, obj.table);
-              obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-              obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+              obj.outputs('dispx') = [dispx;
+              obj.outputs('dispy') = dispy;
               obj.outputs('done') = obj.check_stop();
               drawnow;
         end
@@ -116,6 +209,7 @@ classdef Displacement < RepeatableOperation
                 str = 'Displacement: Pixel Precision inputted not a number';
                 err = Error(Displacement.name, str, error_tag);
                 feval(obj.error_report_handle, str);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
                 valid = false;
             end
             if(valid)
@@ -123,10 +217,26 @@ classdef Displacement < RepeatableOperation
             end
         end
 
+<<<<<<< HEAD
+        function valid = valid_color_space(obj)
+            valid_spaces = {'rgb', 'intensity', 'none'};
+            valid = false;
+            for i = 1:length(valid_spaces)
+                if(strcmp(obj.vid_colorspace, valid_spaces{i}))
+                    valid = true;
+                end
+            end
+        end
+
+        function valid = valid_max_displacement(obj)
+            valid = true;
+            if(size(obj.current_frame, 2) < obj.max_displacement || isnan(obj.max_displacement))
+=======
         function valid = valid_max_displacement(obj)
             valid = true;
             frame = obj.get_frame();
             if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
                 valid = false;
             end 
         end
@@ -156,11 +266,20 @@ classdef Displacement < RepeatableOperation
             set(handles.pause_vid, 'String', 'Pause Video');
         end
 
+<<<<<<< HEAD
+        function draw_frame(videoReader, axes)
+            frame = step(videoReader);
+            imshow(frame, 'Parent', axes);
+            drawnow;
+        end
+        
+=======
         function frame = get_frame(obj)
             frame = obj.vid_src.extractFrame();
         end
         
         
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         function path = get_vid_path(obj)
             path = obj.vid_path;
         end
@@ -178,7 +297,11 @@ classdef Displacement < RepeatableOperation
         end
         
         function bool = check_stop(obj)
+<<<<<<< HEAD
+            if(~obj.validate(obj.error_tag))
+=======
             if(~obj.valid && ~obj.validate(obj.error_tag))
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
                 bool = true;
             else
                 bool = obj.vid_src.finished();
@@ -188,8 +311,13 @@ classdef Displacement < RepeatableOperation
         function vid_source = get.vid_src(obj)
             vid_source = obj.vid_src;
         end
+<<<<<<< HEAD
+    end
+    
+=======
         
     end
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
 
 end
 

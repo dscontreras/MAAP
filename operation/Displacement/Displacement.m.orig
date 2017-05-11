@@ -86,7 +86,11 @@ classdef Displacement < RepeatableOperation
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
                 else
+<<<<<<< HEAD
+                    meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+=======
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
                 end
               end
               draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);

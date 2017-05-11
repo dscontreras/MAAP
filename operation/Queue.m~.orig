@@ -2,7 +2,11 @@ classdef Queue < handle
     %QUEUE Summary of this class goes here
     %   Detailed explanation goes here
     
+<<<<<<< HEAD
+    properties (SetAccess = 'private')
+=======
     properties (SetAccess = private)
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         %An index of which operations in the Queue need to be checked for
         %whether they should be deleted
         condition_evals;
@@ -11,6 +15,10 @@ classdef Queue < handle
         data_transfer_map;
         %number of operations in the queue
         length;
+<<<<<<< HEAD
+        list;
+        done;
+=======
         %the actual contents of the queue
         list;
         %flag indicating whether the queue has finished its chain of
@@ -25,12 +33,17 @@ classdef Queue < handle
     
     properties(Access = public, Constant)
         name = 'Queue';
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
     end
     
     methods
         %operation_list and data_transfer_map should be a cell arrays
+<<<<<<< HEAD
+        function obj = Queue(operation_list)
+=======
         function obj = Queue(error_handle, operation_list)
             obj.error_report_handle = error_handle;
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
             obj.length = 0;
             obj.done = false;
             if(nargin > 0)
@@ -45,15 +58,63 @@ classdef Queue < handle
         
         function add_to_queue(obj, operation)
             obj.length = obj.length + 1;
+<<<<<<< HEAD
+=======
             %set the object in the queue's callback for error handling to
             %this Queue's error handling function, so that the error can
             %correctly propagate up the object hierarchy, from operation to
             %queue to the data_gui itself
             operation.set_error_report_handle(@obj.report_error);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
             %If the object should be inserted at the start of the list
             if(strcmp(operation.insertion_type, 'start'))
                 for i = obj.length:1
                     obj.list{i + 1} = obj.list{i};
+<<<<<<< HEAD
+                end
+                obj.list{1} = operation;
+                extend_map(operation, 1);
+            %Otherwise, insert it at the end
+            else
+                obj.list{obj.length} = operation;
+                %extend_map(operation, obj.length + 1);
+            end
+        end
+        
+        function extend_map(obj, operation, address_inserted)
+            obj.data_transfer_map{address_inserted} = operation.find_dependents_in_queue(obj);
+        end
+        
+        function execute(obj)
+            outparams = {};
+            for i = 1:obj.length
+                if(obj.list{i}.num_args_in <= 0)
+                    if(obj.list{i}.num_args_out > 0)
+                        outparams = obj.list{i}.execute();
+                        %transfer_data(obj.list{i}, outparams);
+                    else
+                        obj.list{i}.execute();
+                    end
+                else
+                    try
+                        if(obj.list{i}.num_args_out > 0)
+                            outparams = obj.list{i}.execute(obj.list{i}.in_buffer{end});
+                            %transfer_data(obj.list{i}, outparams);
+                        else
+                            obj.list{i}.execute(obj.list{i}.in_buffer);
+                        end
+                        obj.list{i}.in_buffer = {};
+                    catch(length(obj.list{i}.in_buffer) < 1)
+                        error('operation expected more than one execute argument but it got none!');
+                    end
+                end
+                stopped = obj.list{i}.check_stop();
+                if(stopped)
+                    obj.list = [obj.list{1:(i - 1)} obj.list{(i + 1):end}];
+                    obj.length = length(obj.list);
+                    if(obj.length == 0)
+                        obj.done = true;
+=======
                     obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
                 end
                 obj.list{1} = operation;
@@ -102,11 +163,31 @@ classdef Queue < handle
                         if(obj.length == 0)
                             obj.done = true;
                         end
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
                     end
                 end
             end
         end
         
+<<<<<<< HEAD
+        %START HERE
+        function transfer_data(obj, sender, data_sent)
+            %iterate through each dependent of the sender
+            for i = 1:length(get(sender, 'dependents'))
+                %operation_receiving is the operation is the one we are sending to
+                operation_receiving = obj.list{i};
+                %Now iterate through the data_transfer_map's list of data
+                %to be sent
+                for j = 1:length(obj.data_transfer_map{i}{2})
+                    index_of_variable_needed_in_transfer_map = obj.data_transfer_map{i}{2}{j};
+                    data_variable_needed = data_sent{index_of_variable_needed_in_transfer_map};
+                    operation_receiving.set_in_buffer(index_of_variable_needed_in_transfer_map, data_variable_needed);
+                end
+            end
+        end
+        
+=======
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         function bool = finished(obj)
             bool = obj.done;
         end
@@ -122,6 +203,8 @@ classdef Queue < handle
         function l = fetch_list(obj)
             l = obj.list;
         end
+<<<<<<< HEAD
+=======
         
         function inputs = retrieve_operation_inputs(obj, operation)
             inputs = {};
@@ -220,6 +303,7 @@ classdef Queue < handle
                 
             end
         end
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
     end
     
 end

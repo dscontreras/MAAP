@@ -1,0 +1,4 @@
+TODO is a list of features to be implemented, and tasks to be carried out.  The closer to #1 a task is, the higher its priority is
+1. Implement this nearest neighbor only valid for inputs behind the operation requesting input
+1. Finish Documentation.
+2. Further input and output transfer architecture design, and implementation.

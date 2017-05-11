@@ -71,7 +71,6 @@ set(handles.trigger_panel, 'Visible', 'Off');
 setappdata(0, 'maximum_displacement', -1);
 setappdata(0, 'pixel_precision', -1);
 setappdata(0, 'wait_status', 0);
-setappdata(0, 'outputfolderpath', [pwd FileSystemParser.get_file_separator() 'outputs']);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
@@ -864,6 +863,15 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         set(handles.vid_error_tag, 'String', '');
         path = getappdata(0, 'vid_path');
         pixel_precision = getappdata(0, 'pixel_precision');
+<<<<<<< HEAD
+        max_displacement = getappdata(0, 'maximum_displacement');
+        colorspace = 'rgb';  
+        cam_resolution = 5.86 * (10^(-6));
+        src = FileSource(path, cam_resolution);
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, colorspace, pixel_precision, max_displacement);
+        arr = {displacement};
+        q = Queue(arr);
+=======
         max_displacement = getappdata(0, 'maximum_displacement');  
         cam_resolution = 5.86 * (10^(-6));
         src = FileSource(path, cam_resolution);
@@ -871,9 +879,10 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         arr = {displacement};
         handle = @display_error;
         q = Queue(handle, arr);
-        output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
+        output_file_location = ['.' FileSystemParser.get_file_separator() 'outputs' FileSystemParser.get_file_separator()];
+        d = DataCollector(@displacement.check_stop, output_file_location);
         q.add_to_queue(d);
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
         while ~q.finished()
             q.execute();
         end
@@ -901,10 +910,13 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
 setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
+<<<<<<< HEAD
+=======
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
     
+>>>>>>> cd095f6090749c5c5e689681814606b36d960f25
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)

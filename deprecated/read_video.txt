@@ -77,4 +77,3 @@ while ~isDone(handles.img_viewer)
         end
     end
 end
-
