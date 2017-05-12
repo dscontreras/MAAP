@@ -29,10 +29,7 @@ function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(temp
     %Note: Jessica tried to perform Gradient Descent NCC Surface but
     %the timing was problematic.  The NCC Surface algorithm only
     %accepted entire images, and was subsequently too slow.
-%     disp('NORMXCORR');
-%     tic;
     c = normxcorr2(template, search_area);
-    %disp(toc);
 
     %FIND PEAK CROSS-CORRELATION
     [ypeak, xpeak] = find(c==max(c(:)));   

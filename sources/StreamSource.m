@@ -25,11 +25,6 @@ classdef StreamSource < VideoSource
                 %with identifier camname
                 obj.inputcam = videoinput(camname);
                 obj.gpu_supported = obj.determine_gpu_support();
-                if(nargin > 1)
-                    obj.options = opts;
-                else
-                    obj.options = {1, 'manual', Inf};
-                end
             catch E
                 %If camname does not actually correctly identify any image
                 %acquisition camera then set the camera automatically to
@@ -39,6 +34,14 @@ classdef StreamSource < VideoSource
                     index_of_pointgrey = strmatch('pointgrey', available_cams);
                     obj.inputcam = videoinput(char(available_cams(index_of_pointgrey)));
                 end
+                delete(obj.inputcam);
+                imaqreset;
+                error('selected inputcam in use!');
+            end
+            if(nargin > 1)
+                obj.options = opts;
+            else
+                obj.options = {1, 'manual', Inf};
             end
             %configure the camera according to options
             obj.inputcam.FramesPerTrigger = obj.options{1};
@@ -84,9 +87,23 @@ classdef StreamSource < VideoSource
         end
         
         function resolution = get_resolution(obj)
-            trigger(obj.inputcam);
-            frame = obj.extractFrame();
-            resolution = size(frame);
+            try
+                trigger(obj.inputcam);
+                frame = obj.extractFrame();
+                resolution = size(frame);
+            catch
+                error('StreamSource unable to extract frames.');
+            end
+        end
+        
+        function resolution = get_num_pixels(obj)
+            try
+                trigger(obj.inputcam);
+                frame = obj.extractFrame();
+                resolution = size(frame);
+            catch
+                error('StreamSource unable to extract frames.');
+            end
         end
     end
     

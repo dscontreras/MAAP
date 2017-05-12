@@ -123,12 +123,6 @@ Xp = 184.67662; %distance according image in pixels. Correspond to Xm
         new_ypeak = new_ypeak/(1/precision);
         new_xpeak = new_xpeak+round(new_search_area_rect(1));
         new_ypeak = new_ypeak+round(new_search_area_rect(2));
-        disp('(xpeak,ypeak) =');
-        disp([new_xpeak, new_ypeak]);
-
-    disp('__ __ __ __ __ __ __ __ __ __ __ __');
-
-  
     
     yoffSet = new_ypeak-(size(template,1));
     xoffSet = new_xpeak-(size(template,2));

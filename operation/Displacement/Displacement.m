@@ -16,6 +16,7 @@ classdef Displacement < RepeatableOperation
         table_data;
         stop_check_callback = @check_stop;
         im;
+        res;
     end
 
     properties (SetAccess = public)
@@ -37,7 +38,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -47,12 +48,13 @@ classdef Displacement < RepeatableOperation
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_displacement = str2double(max_displacement);
+            obj.res = resolution;
             obj.new = true;
             obj.valid = true;
             obj.outputs('dispx') = 0;
             obj.outputs('dispy') = 0;
             obj.outputs('done') = false;
-            if(nargin > 8) %8 is the number of params for displacement
+            if(nargin > 9) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
         end
@@ -84,7 +86,7 @@ classdef Displacement < RepeatableOperation
                 end
               else
                 if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y, ~] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement);
                 end
@@ -100,7 +102,7 @@ classdef Displacement < RepeatableOperation
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
-            while(~FileSystemParser.is_file(obj.vid_src.filepath))
+            while(~strcmp(VideoSource.getSourceType(obj.vid_src), 'stream') && ~FileSystemParser.is_file(obj.vid_src.filepath))
                 str = 'Displacement: Not passed a valid path on the filesystem'
                 err = Error(Displacement.name, str, error_tag);
                 feval(obj.error_report_handle, str);

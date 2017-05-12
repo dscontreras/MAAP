@@ -22,7 +22,7 @@ function varargout = data_gui(varargin)
 
 % Edit the above text to modify the response to help data_gui
 
-% Last Modified by GUIDE v2.5 26-Feb-2017 14:15:38
+% Last Modified by GUIDE v2.5 11-May-2017 17:42:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,6 +71,7 @@ set(handles.trigger_panel, 'Visible', 'Off');
 setappdata(0, 'maximum_displacement', -1);
 setappdata(0, 'pixel_precision', -1);
 setappdata(0, 'wait_status', 0);
+setappdata(0, 'cam_name', '');
 setappdata(0, 'outputfolderpath', [pwd FileSystemParser.get_file_separator() 'outputs']);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
@@ -109,6 +110,7 @@ function img_options_Callback(img_options, eventdata, handles)
 
 %Retrieve the current selection within the list box
 value = ListboxOperations.get_current_selection(img_options);
+src_type = '-1';
 %Clear any errors displayed about invalid video selections
 clear_error(handles.vid_error_tag);
 %top_level is a boolean that indicates whether the listbox is at the top
@@ -124,6 +126,11 @@ global vid_height;
 
 %If at the top level of the parsing system 
 if(top_level)
+    %Make the text to the side of the listbox about directly entering a
+    %video source path visible, and also make visible the direct path entry
+    %field
+    set(handles.src_path_edit_tag, 'Visible', 'On');
+    set(handles.src_path_edit, 'Visible', 'On');
     %and the selection is Pre-Recorded Video
     if(strcmp(value, 'Pre-Recorded Video'))
         %Make the text above the listbox about selecting a video visible
@@ -140,66 +147,70 @@ if(top_level)
         ListboxOperations.change_options(img_options, parser.current_dir);
         %Make a button for returning to the top level of the selection tool
         item_toggle_visibility(handles.return_to_options);
+        src_type = 'file';
+        set(handles.stream_type, 'Value', 0.0);
+        set(handles.file_type, 'Value', 1.0);
+    %Value selected is stream
+    else
+        top_level = false;
+        set(handles.stream_type, 'Value', 1.0);
+        set(handles.file_type, 'Value', 0.0);
+        src_type = 'stream';
+        ListboxOperations.change_options(img_options, get_sys_cams());
     end
-%Must be selecting an element in the filesystem
+%Must be selecting an element in the filesystem or a camera
 else 
-    %Assemble the full path of the element
-    element_path = [parser.path, FileSystemParser.get_file_separator() value];
-    %If that path leads to a folder
-    if(FileSystemParser.is_folder(element_path))
-        %go to the folder in the filesystem
-        parser = parser.goto(value);
-        %Reset our listbox selection to the first element
-        ListboxOperations.reset_selection(img_options);
-        %Change the listbox's options to now be the contents of the folder
-        %just entered
-        ListboxOperations.change_options(img_options, parser.current_dir);
-    %If that path leads to a file
-    elseif(FileSystemParser.is_file(element_path))
-        %Get the indexes of . within the value selected in the listbox
-        exts = strfind(value, '.');
-        %Get the index of the . that is for the file extension
-        extindex = exts(length(exts));
-        %Get the value of the extension
-        extension = value(extindex:end);
-        %Declare a variable that stores whether the given extension is
-        %supported for our purposes
-        supported = false;
-        %Retrieve a list of all the extensions that are supported for video
-        supported_extensions = parser.get_supported_vid_formats();
-        %Iterate through the supported extensions
-        for i = 1:length(supported_extensions)
-            %if the extension is an accepted extension
-            if(strcmp(extension, supported_extensions(i))) 
-                supported = true;
+    if(is_cam_name(value))
+        src_type = 'stream';
+        setappdata(0, 'cam_name', value);
+    else
+        %Assemble the full path of the element
+        element_path = [parser.path, FileSystemParser.get_file_separator() value];
+        %If that path leads to a folder
+        if(FileSystemParser.is_folder(element_path))
+            %go to the folder in the filesystem
+            parser = parser.goto(value);
+            %Reset our listbox selection to the first element
+            ListboxOperations.reset_selection(img_options);
+            %Change the listbox's options to now be the contents of the folder
+            %just entered
+            ListboxOperations.change_options(img_options, parser.current_dir);
+        %If that path leads to a file
+        elseif(FileSystemParser.is_file(element_path))
+            %Get the indexes of . within the value selected in the listbox
+            exts = strfind(value, '.');
+            %Get the index of the . that is for the file extension
+            extindex = exts(length(exts));
+            %Get the value of the extension
+            extension = value(extindex:end);
+            %Declare a variable that stores whether the given extension is
+            %supported for our purposes
+            supported = false;
+            %Retrieve a list of all the extensions that are supported for video
+            supported_extensions = parser.get_supported_vid_formats();
+            %Iterate through the supported extensions
+            for i = 1:length(supported_extensions)
+                %if the extension is an accepted extension
+                if(strcmp(extension, supported_extensions(i))) 
+                    supported = true;
+                end
             end
-        end
-        %Now that we know whether the file type is supported or not, if it
-        %is supported
-        if(supported)
-            %Construct an object that reads the video
-            setappdata(0, 'vid_path', parser.get_path(value));
-            %videoReader = vision.VideoFileReader(parser.get_path(value));
-            %While the video isn't finished
-            %set(handles.image_cover, 'Visible', 'Off');
-            %while(~isDone(videoReader))
-                %generate a frame
-                %frame = step(videoReader);
-                %resize the frame to fit the gui video player
-                %frame = imresize(frame, [vid_height vid_width]);
-                %show the frame
-                %showFrameOnAxis(handles.img_viewer, frame);
-            %end
-            %set(handles.image_cover, 'Visible', 'On');
-        %If the file type is not supported
-        else
-            %Print to the console that the video type is not supported
-            disp('Error: VIDEO TYPE NOT SUPPORTED');
-            %Display the error to the GUI as well
-            disp_error('Error: VIDEO TYPE NOT SUPPORTED', handles.vid_error_tag);
+            %Now that we know whether the file type is supported or not, if it
+            %is supported
+            if(supported)
+                %Construct an object that reads the video
+                src_type = 'file';
+                setappdata(0, 'vid_path', parser.get_path(value));
+            else
+                %Print to the console that the video type is not supported
+                disp('Error: VIDEO TYPE NOT SUPPORTED');
+                %Display the error to the GUI as well
+                disp_error('Error: VIDEO TYPE NOT SUPPORTED', handles.vid_error_tag);
+            end
         end
     end
 end
+img_options.UserData = src_type;
 %Save any changes we've made
 guidata(img_options, handles);
 %end
@@ -861,13 +872,29 @@ end
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     if(get(handles.displacement_check, 'Value') == 1)
+        res_entry_obj = findobj('Tag', 'source_resolution_entry');
+        resolution = res_entry_obj.UserData;
+        if(isnumeric(resolution) && resolution > 0)
+            %if the resolution is a number greater than zero then use it
+            res = resolution;
+        else
+            %Default resolution for pister lab
+            res = 5.86E-6;
+        end
+        %Reset the video error tag
         set(handles.vid_error_tag, 'String', '');
-        path = getappdata(0, 'vid_path');
         pixel_precision = getappdata(0, 'pixel_precision');
         max_displacement = getappdata(0, 'maximum_displacement');  
-        cam_resolution = 5.86 * (10^(-6));
-        src = FileSource(path, cam_resolution);
-        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, pixel_precision, max_displacement);
+        img_options = findobj('Tag', 'img_options');
+        src_type = img_options.UserData;
+        if(strcmp(src_type, 'stream'))
+            cam_name = getappdata(0, 'cam_name');
+            src = StreamSource(cam_name);    
+        else
+            path = getappdata(0, 'vid_path');
+            src = FileSource(path, res);
+        end
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, pixel_precision, max_displacement, res);
         arr = {displacement};
         handle = @display_error;
         q = Queue(handle, arr);
@@ -965,35 +992,21 @@ operation_queue{length(operation_queue) + 1} = operation;
 
 
 
-function file_path_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to file_path_edit (see GCBO)
+function src_path_edit_Callback(hObject, eventdata, handles)
+% hObject    handle to src_path_edit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of file_path_edit as text
-%        str2double(get(hObject,'String')) returns contents of file_path_edit as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function file_path_edit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to file_path_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+% Hints: get(hObject,'String') returns contents of src_path_edit as text
+%        str2double(get(hObject,'String')) returns contents of src_path_edit as a double
+img_options = findobj('Tag', 'img_options');
+if(FileSystemParser.is_file(get(hObject, 'String')))
+    setappdata(0, 'vid_path', get(hObject, 'String'));
+    img_options.UserData = 'file';
+elseif(is_cam_name(get(hObject, 'String')))
+    img_options.UserData = 'stream';
+    setappdata(0, 'cam_name', get(hObject, 'String'));
 end
-
-
-% --- Executes on button press in vid_path_enter_btn.
-function vid_path_enter_btn_Callback(hObject, eventdata, handles)
-% hObject    handle to vid_path_enter_btn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-setappdata(0, 'vid_path', get(handles.file_path_edit, 'String'));
-
 
 % --- Executes on button press in pause_vid.
 function pause_vid_Callback(hObject, eventdata, handles)
@@ -1028,3 +1041,66 @@ setappdata(0, 'error_msg', msg);
 setappdata(0, 'wait_status', 1);
 error_gui;
 uiwait;
+
+
+
+function source_resolution_entry_Callback(hObject, eventdata, handles)
+% hObject    handle to source_resolution_entry (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of source_resolution_entry as text
+%        str2double(get(hObject,'String')) returns contents of source_resolution_entry as a double
+hObject.UserData = str2double(get(hObject, 'String'));
+
+% --- Executes during object creation, after setting all properties.
+function source_resolution_entry_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to source_resolution_entry (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function src_path_edit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to src_path_edit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in stream_type.
+function stream_type_Callback(hObject, eventdata, handles)
+% hObject    handle to stream_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+img_options = findobj('Tag', 'img_options');
+if(get(hObject, 'Value') == 1)
+    img_options.UserData = 'stream';
+else
+    img_options.UserData = '-1';
+end
+% Hint: get(hObject,'Value') returns toggle state of stream_type
+
+
+% --- Executes on button press in file_type.
+function file_type_Callback(hObject, eventdata, handles)
+% hObject    handle to file_type (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+img_options = findobj('Tag', 'img_options');
+if(get(hObject, 'Value') == 1)
+    img_options.UserData = 'file';
+else
+    img_options.UserData = '-1';
+end
+% Hint: get(hObject,'Value') returns toggle state of file_type
