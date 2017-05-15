@@ -806,7 +806,7 @@ end
 set(return_to_options, 'Visible', 'Off');
 set(vid_path_enter_btn, 'Visible', 'Off');
 set(file_path_edit, 'Visible', 'Off');
-set(vid_path_edit_tag, 'Visible', 'Off');
+set(vid_path_edit_tag, 'Visible', 'Off;
 
 %Save any changes made to the GUI.
 guidata(btn, handles);
