@@ -1,4 +1,4 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement_subpixel_gpu_array(template,rect, img, xtemp, ytemp, precision, displacement)
+function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement_subpixel_gpu_array(template,rect, img, xtemp, ytemp, precision, displacement, res)
 %MEAS_DISPLACEMENT_GPU_ARRAY Summary of this function goes here
 %   Detailed explanation goes here
 disp('PRE-INITIALIZATION');
@@ -113,8 +113,10 @@ Xp = 184.67662; %distance according image in pixels. Correspond to Xm
     x = new_xpeak-xtemp;
     
     %DISPLACEMENT In meters
-    dispx = Xm*x/Xp;
-    dispy = Xm*y/Xp;
+%     dispx = Xm*x/Xp;
+%     dispy = Xm*y/Xp;
+    dispx = x * res;
+    dispy = y * res;
     %disp(toc);
 end
 
