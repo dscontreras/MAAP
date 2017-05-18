@@ -152,6 +152,7 @@ if(top_level)
         set(handles.file_type, 'Value', 1.0);
     %Value selected is stream
     else
+        item_toggle_visibility(handles.return_to_options);
         top_level = false;
         set(handles.stream_type, 'Value', 1.0);
         set(handles.file_type, 'Value', 0.0);
@@ -802,7 +803,11 @@ if(~top_level)
     top_level = true;
 end
 %Make the button used to navigate to the top level invisible.
-set(btn, 'Visible', 'Off');
+set(return_to_options, 'Visible', 'Off');
+set(vid_path_enter_btn, 'Visible', 'Off');
+set(file_path_edit, 'Visible', 'Off');
+set(vid_path_edit_tag, 'Visible', 'Off');
+
 %Save any changes made to the GUI.
 guidata(btn, handles);
 % hObject    handle to return_to_options (see GCBO)
@@ -904,6 +909,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         while ~q.finished()
             q.execute();
         end
+        q.delete();
     end
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB

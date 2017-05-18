@@ -1,1 +1,2 @@
 1. Glitch after pressing begin operation multiple times on Windows version.
+2. Potential issue: starting on line 126 of FileSystemParser, '/' is hardcoded in as a separator for a few select cases, however, this is not necessarily the windows separator
