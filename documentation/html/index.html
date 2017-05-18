@@ -522,9 +522,406 @@
   </a>
   <a id = "code_operations">
     <h2 style = "text-decoration: underline">Operations and the Queue System</h2>
+    <h3 style = "text-decoration: underline">Overview</h3>
+    <p>
+      The Operation/Queue system is at the very heart of this microscope analysis application.  A diversified operation system provides
+      a framework for many different operations that can be coded as needed by the application user.  The queue systyem allows for as many operations to be performed at the same
+      time during analysis as the user wants.  The queue system also allows for data transfer between operations.  Consider for instance, a displacement measurement operation taking data on a live stream.
+      .  During the live stream, the data is stored in a temporary transfer cache that is part of the queue object.  After the live stream is finished, all that collected data is piped towards an output file, either .txt or .mat
+      This form of data transfer will be described further in a dedicated section below.  The queue system also provides for an efficient way for operations to be segmented for very specific intents, promoting overall application
+      integrity as a whole.  So how does it work?
+    </p>
+    <h3 style = "text-decoration: underline">Software Design</h3>
+    <h3>The Queue</h3>
+    <p>The queue is at its core a container for holding operations that are currently being performed by the application.  Operations are always executed sequentially in the queue.  This operation execution is performed by a for loop inside of the queue's execute function,
+      which essentially just executes the operations in order.  In addition, if the operation has not yet been fully initialized in the queue, it's startup function is called.  More details on that below.  After the execution of an operation inside the queue, the operation is
+      asked whether it is finished by calling the operation's check_stop() method.  check_stop() returns false if the conditions for the operation to be finished have not been fulfilled.  It returns true if the conditions have been met.  These conditions are defined completely
+      by the coder.  Operations also have a check_start() function to determine whether they should begin calling their execution method on this iteration of the queue's execute().  If they shouldn't start, they are simply passed over.  At object startup, the startup() function is called.
+      startup() performs certain mission critical checks and variable initializations that can only be performed on the queue, not during the object's initial construction.
+    </p>
+    <h3>The Operation</h3>
+    <p>
+      The Operation is an abstraction that provides a convenient way to specify a set of needed behaviors under one central object.  Operations can have almost unlimited behavior but must adhere to a few design requirements.  Operation itself is an abstract class, and so is RepeatableOperation.
+      Therefore, they may not be instantiated.  Every operation MUST have the following variables:
+    </p>
+    <ul>
+      <li>A name (string, public, constant).  The name of the operation being performed.</li>
+      <li>A map of output parameters(map, public).  These parameters must be outputs of the execute() function. The form of the map key value pair is as such: key = name of output variable, value = value of output variable.</li>
+      <li>A valid flag(boolean, public).  The valid flag indicates whether the state of the operation is good or not, and this especially important for the queue to ascertain whether to delete the operation or not.</li>
+      <li>A new flag(boolean, public).  The new flag specifies whether the object has ever been executed on the queue before.  If it has, new will be set to false.  If not, new will be true.  This flag tells startup() when to run.</li>
+      <li>A param names 2xn array(cell array, public), where n is the number of parameters this operation takes as input(2xn cell array).</li>
+      <li>An error report handle.(function handle, public).  An operation's error report handle is integral to the function of the error stack.  The error handle of an operation must be set to the function inside the parent queue of the operation, that handles errors for that queue. That way, the error can make its way up the callstack.(GRAPHIC NEEDED)</li>
+      <li>A queue index(int, public)(considering deprecating, potential violation of OCP).  The queue index stores where in the queue the object is.</li>
+      <li>A start check callback(function handle, public). The start check callback evaluates whether the conditions required for the operation to begin have been reached.</li>
+      <li>An insertion type(string, public, constant).  insertion_type stores whether upon non-indexed insertion, the operation should be placed at the beginning or the end of the queue.  The default is 'end'.</li>
+      <li>An rx_data array(cell array, public, constant).  rx_data is a cell array that stores all the input parameters of a given operation.  It is essentially a minified version of param names.  Each item in the rx_data cell array takes the form "input_operation:input_parameter_of_input_operation".  However, it is valid to specify a negative number for   input_operation, which just tells the application to pull data from the operation whose index is the number's value behind the given operation.  Also, by specifying "all" for the input_parameter, the application will pull all outputs of the input_operation at runtime. For example, if one had a Displacement operation and a DataCollector operation in a queue together, since DataCollector's rx_data array is {"-1:all"}, DataCollector pulls the dispx
+      displacement in the x direction), dispy(displacement in the y direction), and done outputs from displacement, since it is -1 positions relative to DataCollector.</li>
+    </ul>
+    <p>In addition to these required variables, an Operation MUST implement these functions.</p>
+    <ul>
+      <li>execute(obj, argsin). the execute() method is a collection of commands to be run every single time the queue as a whole is executed.  The execute() function executes the collection of commands central to a certain operation's main function.  As an example, for a DataCollector, this would be writing out a file containing a data log from the previous operation.</li>
+      <li>validate(obj).  The validate() method ensures that the internal state of an operation is good, and that it can continue to execute() for as long as it is needed.</li>
+    </ul>
+    <h3>The Difference Between a RepeatableOperation and a regular Operation.</h3>
+    <p>
+      This one is relatively self explanatory.  A Repeatable Operation inherits from Operation and is only different in that it is designed for multiple calls of execute() in a queue.  To achieve this aim, in addition to the ones required by operation, it has one more required variable:
+    </p>
+    <ul>
+      <li>A stop check callback(function handle, public).  This function handle tells the operation when it should terminate. Without a stop_check callback, a repeatable operation would have no way of knowing when to terminate! The stop_check_callback stores a function handle and is not a function itself because of the possible need to specify a function outside of the operation's class to determine whether the operation should stop.  In other words, an operation need not necessarily specifiy a function callback from it's own class to determine when to stop, it can take that method from somewhere else.</li>
+    </ul>
+    <h3>Data Transfer Between Operations</h3>
+    <img src = '../img/data_transfer_map.png' width = 600px></img>
+    <p>
+      Operations retrieve and store data in the data transfer member variable of a queue.  The queue is structured as a map, and each entry of the map refers to another map, this time a map of all the outputs of a certain operation, with their names as the key, and their values as the values.  Before running, any operations that take inputs retrieve their inputs from this map structure by referring to the param_names member variable as an address of sorts of which parameters to pull.
+      Operations set their outputs, if they have any, at the end of the execute() method. Data stored as values at the lowest level of the data_transfer_map can be of any type, but all keys must be the names of the operations and the parameter names respectively.
+    </p>
+    <h3>Error Handling</h3>
+    <p>
+      Technically, Errors are currently really handled at the highest level of the application, in data_gui.m.  That is where error prompts are sent out into actual GUI format.  The error originates at a certain point in the call stack, but it travels back up the callstack towards more abstraction.  As an example, an error might originate during the execute() function of an operation, and then it will be passed up to the execution of the queue's error handling function, which will pass it up to the data_gui.  In this way, every error returns to the data_gui.  This is not required however.  It is altogether possible to stop an error at a lower level, however, I have not gone a good job of hiding the errors at lower levels.  Error handling as a whole could use some work.  The error class encapsulates basic CLI error outputs, GUI Error handling is implemented in data_gui.  Water tight error handling is incomplete.
+    </p>
+    <h3 style = 'text-decoration: underline'>Displacement</h3>
+    <h4>Properties(Private):</h4>
+    <ul>
+      <li>vid_src: source of all video and picture data relayed to the img_viewer axes in data_gui, and analyzed by displacement.  vid_src can be either a StreamSource or a FileSource.</li>
+      <li>axes: the graphics object that the displacement operation is visualized on, in this case likely img_viewer.</li>
+      <li>error_tag: deprecated. Graphics object handle that stores a message for errors.</li>
+      <li>pixel_precision: the precision in pixels of the displacement analysis.  Sub 1 values mean that bicubic interpolation will be performed, but if the video source is a streamsource, this subpixel precision will not be respected, since the operation must be sped up to meet live time requirements.</li>
+      <li>max_displacement: the maximum displacement in pixels that the object of interest is expected to travel in the video feed</li>
+      <li>template: the cropped image of the object of interest that is cross correlated</li>
+      <li>rect: a rectangle object equal to the borders of template</li>
+      <li>xtemp, ytemp: the initial starting coordinates of the object of interest</li>
+      <li>current_frame: the current image being analyzed by the displacement tool</li>
+      <li>table: the handle to the table object in the gui where displacement values are displayed</li>
+      <li>img_cover: handle to graphics panel that normally covers the image viewer axes</li>
+      <li>pause_button: handle to the pause button used to halt the execution of the queue</li>
+      <li>table_data: the displacement data in cell form displayed in table to the user</li>
+      <li>stop_check_callback: the callback to the function to run to check whether this displacement operation has finished.  This is a callback because the function to check may not necessarily be in the displacement class in all circumstances at runtime.</li>
+      <li>im: stores the matrix data of the pixels of the current_image. CHECK.</li>
+      <li>res: the resolution of the source in meters per pixel.  TODO: Migrate to the code for the videosource itself.</li>
+    </ul>
+    <h4>Properties(Public):</h4>
+    <ul>
+      <li>pause_bool: bool indicates whether a pause is currently in effect</li>
+      <li>param_names: the param_names variable specified as a design requirement for any operation.  param_names is a 2xn cell array, with the top row naming an input operation's name, and the bottom row naming the input operation's variable name to pull from.</li>
+      <li>outputs: a map of output names and their respective values used by the operation data_transfer system.  This variable should be set at the end of execute().</li>
+      <li>valid: bool returns whether this object's state is healthy or not.</li>
+      <li>new: bool returns whether this object has ever been executed before.</li>
+      <li>error_report_handle: a function handle object that refers to the function to call in case of an error.</li>
+      <li>queue_index: the index in the queue of this operation.  Possible violation of SOLID principles.</li>
+      <li>start_check_callback: a function handle object that specifies a callback to run to check whether this object should begin executing on the queue or not when it's this object's turn</li>
+      <li>inputs: deprecated</li>
+    </ul>
+    <h4>Properties(Constant):</li>
+    <ul>
+      <li>rx_data: a cell array of strings containing strings formatted in  the following way.  "input_operation_name:input_parameter_name_belonging_to_input_operation".</li>
+      <li>name: the string name of this operation</li>
+      <li>insertion_type: where on the queue should this operation be inserted? End or Start? Variable of string type.</li>
+    </ul>
+    <h4>Methods:</h4>
+    <ul>
+      <li>
+        <h4>Displacement(Constructor)</h4>
+        <h5>params:</h5>
+        <p>src: source of all video and picture data relayed to the img_viewer axes in data_gui, and analyzed by displacement.  vid_src can be either a StreamSource or a FileSource.</p>
+        <p>axes: the graphics object that the displacement operation is visualized on, in this case likely img_viewer.</p>
+        <p>table: the handle to the table object in the gui where displacement values are displayed.</p>
+        <p>error: deprecated. Graphics object handle that stores a message for errors.</p>
+        <p>img_cover: handle to graphics panel that normally covers the image viewer axes</p>
+        <p>pause_button: handle to the pause button used to halt the execution of the queue</p>
+        <p>pixel_precision: the precision in pixels of the displacement analysis.  Sub 1 values mean that bicubic interpolation will be performed, but if the video source is a streamsource, this subpixel precision will not be respected, since the operation must be sped up to meet live time requirements.</p>
+        <p>max_displacement: the maximum displacement in pixels that the object of interest is expected to travel in the video feed.</p>
+        <p>resolution: the resolution of the source in meters per pixel.  TODO: Migrate to the code for the videosource itself.</p>
+        <p>error_report_handle: the function handle to call whenever an error occurs due to this displacement object.  Resulting function calls reverbate up the callstack.</p>
+        <h5>description:</h5>
+        <p>Initializes important variables to their default values and sets the error_callback for this object, if it was passed.</p>
+      </li>
+      <li>
+        <h4>startup</h4>
+        <h5>description:</h5>
+        <p>Initialize even more critical variables, and more importantly, start up the algorithm by allowing the user to select which area of the video stream to analyze.</p>
+        <h4>initialize_algorithm</h4>
+        <h5>description:</h5>
+        <p>start up the algorithm by allowing the user to select which area of the video stream to analyze.  Also, initialize img to an image bounded by the GUI axes through the use of imshow().</p>
+      </li>
+      <li>
+        <h4>execute</h4>
+        <h5>description:</h5>
+        <p>measure the displacement of the object chosen to track, display these values in a table, and update Displacement's output variables, dispx, and dispy, the displacements in both directions, which are shared with other operations in the same queue. Displays a new video frame.</p>
+      </li>
+      <li>
+        <h4>validate</h4>
+        <h5>description:</h5>
+        <p>check the internal state of this operation, and ensure that all variables have values that are nominal.  If this is true, return true.  If this is false, return false.</p>
+      </li>
+      <li>
+        <h4>valid_max_displacement</h4>
+        <h5>description:</h5>
+        <p>ensure that the max_displacement field passed to this displacement object is within a reasonable bound between 0 and the size of the image in pixels.</p>
+      </li>
+      <li>
+        <h4>valid_pixel_precision</h4>
+        <h5>description:</h5>
+        <p>check that the pixel precision passed to this object is a numeric value.</p>
+      </li>
+      <li>
+        <h4>paused</h4>
+        <h5>description:</h5>
+        <p>returns pause_bool.</p>
+      </li>
+      <li>
+        <h4>pause</h4>
+        <h5>description:</h5>
+        <p>pause the queue. DEPRECATED.</p>
+      </li>
+      <li>
+        <h4>unpause</h4>
+        <h5>description:</h5>
+        <p>unpause the queue. DEPRECATED.</p>
+      </li>
+    </ul>
+    <h3 style = 'text-decoration: underline'>DataCollector</h3>
+    <h4>Properties(Private):</h4>
+    <ul>
+      <li>output_folder_path: full file path specifying the location of where the user wants outputs to be stored.</li>
+      <li>format: the file format to store the data in.  Either 'txt', or 'mat'.</li>
+    </ul>
+    <h4>Properties(Public):</h4>
+    <ul>
+      <li>outputs: map containing both parameter names of outputs and their values.  Same as the outputs variable required by the operation/queue design.</li>
+      <li>param_names: the param_names variable specified as a design requirement for any operation.  param_names is a 2xn cell array, with the top row naming an input operation's name, and the bottom row naming the input operation's variable name to pull from.</li>
+      <li>valid: bool returns whether this object's state is healthy or not.</li>
+      <li>new: bool returns whether this object has ever been executed before.</li>
+      <li>error_report_handle: a function handle object that refers to the function to call in case of an error.</li>
+      <li>queue_index: the index in the queue of this operation.  Possible violation of SOLID principles.</li>
+      <li>start_check_callback: a function handle object that specifies a callback to run to check whether this object should begin executing on the queue or not when it's this object's turn</li>
+      <li>inputs: deprecated</li>
+    </ul>
+    <h4>Properties(Constant)</h4>
+    <ul>
+      <li>rx_data: a cell array of strings containing strings formatted in  the following way.  "input_operation_name:input_parameter_name_belonging_to_input_operation".</li>
+      <li>name: the string name of this operation</li>
+      <li>insertion_type: where on the queue should this operation be inserted? End or Start? Variable of string type.</li>
+    </ul>
+    <h4>Methods(Static)</h4>
+    <ul>
+      <li>
+        <h4>construct_timestamp</h4>
+        <h5>description:</h5>
+        <p>creates a string formatted timestamp with the current time.</p>
+      </li>
+    </ul>
+    <h4>Methods</h4>
+    <ul>
+      <li>
+        <h4>DataCollector(Constructor)</h4>
+        <h5>params:</h5>
+        <p>start_check_callback: a function handle object that specifies a callback to run to check whether this object should begin executing on the queue or not when it's this object's turn</p>
+        <p>output_folder_path: full file path specifying the location of where the user wants outputs to be stored.</p>
+        <p>format: the file format to store the data in.  Either 'txt', or 'mat'.</p>
+        <p>error_report_handle: a function handle object that refers to the function to call in case of an error.</p>
+        <h5>description:</h5>
+        <p>Initializes important variables, and if specified, sets an error callback.</p>
+      </li>
+      <li>
+        <h4>validate</h4>
+        <p>unimplemented.</p>
+      </li>
+      <li>
+        <h4>startup</h4>
+        <h5>description:</h5>
+        <p>Check that the operation is valid through validate().</p>
+      </li>
+      <li>
+        <h4>execute</h4>
+        <h5>params:</h5>
+        <p>argsin: A cell array of input arguments passed.  It takes the form: first column, first param values.  Second Column, second param values.  Third Column, third param, etc...</p>
+        <h5>description:</h5>
+        <p>this execute function saves data into permanent files, either .txt or .mat.  .mat files can be reloaded back into matlab for variable retrieval, and .txt files form a more readable data format.  The .txt format consists of a variable name and then all of it's values over the operation's life time, then another variable name and so on.</p>
+      </li>
+    </ul>
+
+    <h3 style = 'text-decoration: underline'>draw_rect</h3>
+    <h5>params:</h5>
+    <p>RGB: a 3D matrix of double value.  Along the x and y axis are separate pixels.  Along the z axis are the different color R,G, and B values for pixels.</p>
+    <p>im: an image object to set the CDATA attribute of, and display on the gui image axes.</p>
+
+    <h3 style = 'text-decoration: underline'>get_template</h3>
+    <h5>params:</h5>
+    <p>gray: a grayscale image</p>
+    <p>displayObj: a handle to a graphics object on which to display the crop process.</p>
+    <h5>description:</h5>
+    <p>get_template prompts the user to crop a certain section of an image, which get_template outputs as a rectangle bounding box around the template, and an image of the cropped area itself.</p>
+
+    <h3 style = 'text-decoration: underline'>grab_frame</h3>
+    <h5>params:</h5>
+    <p>src: a source of images that is either a filesource or a streamsource.  This is the object from which the frame is extracted.</p>
+    <p>displacement_obj: a displacement operation. is checked to make sure that the operation is not paused.</p>
+    <h5>description:</h5>
+    <p>extracts either a regular height*width*RGB matrix, or a gpuArray matrix, depending on the computer type of the user (for optimization).</p>
+
+    <h3 style = 'text-decoration: underline'>updateTable</h3>
+    <h5>params:</h5>
+    <p>x: displacement along the x axis: set as dispx's corresponding value in the graphical table.</p>
+    <p>y: displacement along the y axis: set as dispy's corresponding value in the graphical table. </p>
+    <p>tableObj: handle to the table graphics object where these values are displayed</p>
+    <h5>description:</h5>
+    <p>assigns values to two cells in the data table for displacement.</p>
+
+    <h3 style = 'text-decoration: underline'>meas_displacement, meas_displacement_subpixel, meas_displacement_subpixel_gpu_array, meas_displacement_gpu_array</h3>
+    <h5>params:</h5>
+    <p>template: the cropped area being cross-correlated within a search area of a boundary surrounding the template of length: max_displacement</p>
+    <p>rect: the rectangle bounding the image template.</p>
+    <p>xtemp: the starting x location of the template at the beginning of the displacement analysis process.</p>
+    <p>ytemp: the starting y location of the template at the beginning of the displacement analysis process.</p>
+    <p>precision(not in any files other than subpixel files and also meas_displacement): the pixel precision.  This value specifies how accurate the displacement measurement should be, at the expense of a slower measurement.</p>
+    <p>displacement: a number specifying how far the user expects the object to travel in pixels from its starting position.  This value is used to bound where the normxcorr algorithm should look for template in images after the initial one.</p>
+    <p>resolution: microscope resolution in how many microns across is a pixel. Used to convert from pixel displacement values to micron displacement values.</p>
+    <h5>description:</h5>
+    <p>meas_displacement is the most complex algorithm used by this application.</p>
   </a>
   <a id = "code_filesystem">
     <h2 style = "text-decoration: underline">Filesystem Parser and Navigation</h2>
+    <h3>Overview</h3>
+    <p>
+      The Filesystem parser is relatively logically complex in that there are a lot of different decision branches, but the underlying concepts are quite simple.  The filesystem parser's purpose is to choose a video source for analysis.  It is capable of navigating through a filesystem.  The underlying logic is slightly obscured in the implementation because there are many different edge cases to check for of different files and different folder configurations, as well as the fact that Windows paths are different from Mac paths. The filesystemparser just stores two variables, path, and current_dir.  It mainly consists of a collection of static helper functions,  but of the non-static functions, the most important ones are goto() and get_current_dir().  FileSystemParser is a class file that  provides the backbone for the GUI filetree front end.  get_file_names is a function that takes in a structure of files from matlab's dir struct return and strips those file objects and returns just their names.  StringOperations contains many different convenient String Operations.  SysInfo has helper function to determine information about the OS of the computer the application runs on.  get_sys_cams returns a list of all the cameras available for use by Matlab.
+    </p>
+    <h3 style = 'text-decoration: underline'>FileSystemParser</h3>
+    <h4>Properties:</h4>
+    <ul>
+      <li>current_dir: stores the names of the files and directories and system objects in the current directory.  A cell arrray.</li>
+      <li>path: string path required to travel to the current directory.  Syntax varies depending on the OS.</li>
+    </ul>
+    <h4>Methods(Static):</h4>
+    <ul>
+      <li>
+        <h4>get_supported_vid_formats</h4>
+        <h5>outputs:</h5>
+        <p>supported_vid_formats: a cell array of all supported video formats for your OS</p>
+        <h5>description:</h5>
+        <p>Returns the video file formats supported for the User's OS.</p>
+      </li>
+      <li>
+        <h4>get_supported_pic_formats</h4>
+        <p>supported_pic_formats: a cell array of all supported picture formats for your OS</p>
+        <h5>description:</h5>
+        <p>Returns the picture file formats supported for the User's OS.</p>
+      </li>
+      <li>
+        <h4>get_file_separator</h4>
+        <h5>description:</h5>
+        <p>Returns the separator used to separate different objects on a file system path for different OS's</p>
+      </li>
+      <li>
+        <h4>get_carriage_return</h4>
+        <h5>description:</h5>
+        <p>returns what qualifies as a full newline character on the user's OS.</p>
+      </li>
+      <li>
+        <h4>get_file_system_start_path</h4>
+        <h5>outputs:</h5>
+        <p>
+        <h5>description:</h5>
+        <p>returns what the base directory to append to the start of any absolute path is.</p>
+      </li>
+      <li>
+        <h4>is_folder</h4>
+        <h5>params:</h5>
+        <p>folder_path: the relative or absolute path to a suspected folder.</p>
+        <h5>description:</h5>
+        <p>returns a boolean indicating whether the system object is a folder or not.</p>
+      </li>
+      <li>
+        <h4>is_file</h4>
+        <h5>params:</h5>
+        <p>folder_path: the relative or absolute path to a suspected file.</p>
+        <h5>description:</h5>
+        <p>returns a boolean indicating whether the system object is a file or not.</p>
+      </li>
+    </ul>
+    <h4>Methods:</h4>
+    <ul>
+      <li>
+        <h4>FileSystemParser(Constructor)</h4>
+          <h5>params:</h5>
+          <p>path: the start path to start the FileSystemParser at.</p>
+          <h5>description:</h5>
+          <p>Constructs the parser used to navigate the file system.  If the path passed as a parameter is invalid, the filesystem parser just uses the default OS path or the start_path specified in settings_gui.</p>
+      </li>
+      <li>
+        <h4>goto</h4>
+        <h5>params:</h5>
+        <p>folder: name of the folder being opened by the user in the file system parser</p>
+        <h5>description:</h5>
+        <p>goto appends the folder being navigated into onto the path of the FileSystemParser and then sets the contents of the current dir variable to all the files in the new current dir.</p>
+      </li>
+      <li>
+        <h4>get_current_dir</h4>
+        <h5>params:</h5>
+        <p>filter: a boolean indicating whether a filter option was specified</p>
+        <p>file_types: a cell array of the extensions that should be allowed through a winnowing filter that discards all other types of files</p>
+        <h5>description:</h5>
+        <p>returns the names of the contents of the current directory specified by path.  It may or may not filter the output, depending on whether filter is set to true or false.</p>
+      </li>
+      <li>
+        <h4>find</h4>
+        <h5>params:</h5>
+        <p>exp: a string name to search for among the files in the current directory.</p>
+        <h5>description:</h5>
+        <p>Finds all instances of files in the current directory that contain part of the exp specified by the coder.  Returns a file name cell array of all file names that contain this name partially, or fully.</p>
+      </li>
+      <li>
+        <h4>get_path</h4>
+        <h5>params:</h5>
+        <p>file: name of the file to get the path to. Can be a folder or a file, for that matter.</p>
+        <h5>description:</h5>
+        <p>concatenates the new file name to the current file system parser path along with the an appropriate OS specific file separator.  Returns this new path.</p>
+      </li>
+      <li>
+        <h4>is_valid_path</h4>
+        <h5>params:</h5>
+        <p>path: path to validate</p>
+        <h5>description:</h5>
+        <p>returns whether the path is a valid one on the filesystem or not</p>
+      </li>
+    </ul>
+    <h3 style = 'text-decoration: underline'>get_file_names</h3>
+    <h4>Methods</h4>
+    <h4>get_file_names</h4>
+    <h5>params:</h5>
+    <p>file_struct: a struct of matlab file objects.</p>
+    <h5>description:</h5>
+    <p>this function takes in a struct of matlab file objects, strips these objects' names off of them, and stores these names in a cell array.</p>
+    <h3 style = 'text-decoration: underline'>get_sys_cams</h3>
+    <h4>Methods</h4>
+    <h4>get_sys_cams</h4>
+    <h5>description:</h5>
+    <p>returns a string list of all the different camera names supported by matlab on the user's computer.  used to help determine whether streaming functionality is available.</p>
+    <h3 style = 'text-decoration: underline'>is_cam_name</h3>
+    <h4>Methods</h4>
+    <h4>is_cam_name</h4>
+    <h5>params:</h5>
+    <p>cam_name: camera name that will be checked for compatability on the current user's OS</p>
+    <h5>description:</h5>
+    <p>is_cam_name returns a bool indicating whether a camera is comaptible with the current user's system</p>
+    <h3 style = 'text-decoration: underline'>String Operations</h3>
+    <h4>Methods(Static)</h4>
+    <h4>decompose</h4>
+    <h5>params:</h5>
+    <p>string: the string that should be broken up into many smaller strings</p>
+    <p>separator: the character that the decomposition tool should split on</p>
+    <h5>description:</h5>
+    <p>decompose takes one string, and breaks that string up into a cell array of smaller strings</p>
+    <h4>compose</h4>
+    <h5>params:</h5>
+    <p>arr: cell array of strings</p>
+    <p>separator: character to add between each element of the array</p>
+    <h5>description:</h5>
+    <p>compose takes in a cell array of strings and then constructs a string with the character separator in between each element of the cell array.  This method is the opposite of decompose.</p>
+    <h3 style = 'text-decoration: underline'>SysInfo</h3>
+    <h4>Methods(Static)</h4>
+    <h4>get_os</h4>
+    <h5>description:</h5>
+    <p>Returns a string that is either Windows or Unix, depending on whether ispc returns true.</p>
   </a>
 </body>
 </html>

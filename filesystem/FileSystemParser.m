@@ -123,6 +123,7 @@ classdef FileSystemParser
                 folder = char(folder);
             end
             %check that the folder exists
+            %POTENTIAL BUG
             if(exist([object.path FileSystemParser.get_file_separator() folder]) == 7)
                 if(strcmp(folder, '..'))
                     indexes = strfind(object.path, FileSystemParser.get_file_separator());

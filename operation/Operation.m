@@ -19,10 +19,6 @@ classdef (Abstract) Operation < handle
         valid;
         %new indicates whether the operation is new on the stack
         new;
-        %inputs is a simple cell array of all the inputs collected from
-        %available operations sharing the same queue.  These inputs will be
-        %passed to the operation's execute function
-        inputs;
         %input_param_names is a cell matrix that is 2xn where n is the
         %number of parameters for the operation.
         param_names;
@@ -37,6 +33,7 @@ classdef (Abstract) Operation < handle
         %The value checked to determine when this operation should start in the queue.
         %Once started, this condition is no longer checked 
         start_check_callback;
+        inputs;
     end
     
     properties(Access = public, Abstract, Constant)
