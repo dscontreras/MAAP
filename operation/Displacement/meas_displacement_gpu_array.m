@@ -39,6 +39,8 @@ function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(temp
     new_xmin = (xpeak - rect(3));
     new_ymin = (ypeak - rect(4));
     
+    testy = ypeak - ytemp
+    
     [moved_template, displaced_rect] = imcrop(img, [new_xmin new_ymin rect(3) rect(4)]);
     new_search_area_xmin = displaced_rect(1) - MIN_DISPLACEMENT;
     new_search_area_ymin = displaced_rect(2) - MIN_DISPLACEMENT;
@@ -46,15 +48,15 @@ function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(temp
     new_search_area_height = 2*MIN_DISPLACEMENT+displaced_rect(4);
     [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
     
-    new_xpeak = xpeak + round(new_search_area_rect(1));
-    new_ypeak = ypeak + round(new_search_area_rect(2));
+    new_xpeak = xpeak + round(new_search_area_rect(1)) - 1;
+    new_ypeak = ypeak + round(new_search_area_rect(2)) - 1;
     
     yoffSet = new_ypeak-(size(template,1));
     xoffSet = new_xpeak-(size(template,2));
     
     %DISPLACEMENT IN PIXELS
-    y = ypeak - ytemp;
-    x = xpeak - xtemp;
+    y = new_ypeak - ytemp;
+    x = new_xpeak - xtemp;
     
     %DISPLACEMENT In meters
 %     dispx = Xm*x/Xp;

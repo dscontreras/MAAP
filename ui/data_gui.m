@@ -874,7 +874,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
-        if(isnumeric(resolution) && resolution > 0)
+        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
             %if the resolution is a number greater than zero then use it
             res = resolution;
         else
