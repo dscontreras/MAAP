@@ -1,5 +1,5 @@
 function bool = is_cam_name(cam_name)
-    bool = true;
+    bool = false;
     cams = getfield(imaqhwinfo, 'InstalledAdaptors');
     for i = 1:length(cams)
         if(strcmp(cams{i}, cam_name))
