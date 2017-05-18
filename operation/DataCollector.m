@@ -2,7 +2,6 @@ classdef DataCollector < Operation
     %DATACOLLECTER Summary of this class goes here
     %   Detailed explanation goes here
     properties(SetAccess = private)
-        dataArray;
         output_folder_path;
         format;
     end
@@ -10,12 +9,12 @@ classdef DataCollector < Operation
     properties(SetAccess = public)
         outputs = containers.Map('KeyType','char','ValueType','int32');
         param_names;
-        inputs;
         valid;
         new;
         error_report_handle;
-        queue_index = -1;
+        queue_index;
         start_check_callback;
+        inputs = {};
     end
     
     properties(SetAccess = public, Constant)
@@ -40,6 +39,7 @@ classdef DataCollector < Operation
             obj.output_folder_path = output_folder_path;
             obj.start_check_callback = start_check_callback;
             obj.format = format;
+            obj.queue_index = -1;
             if(nargin > 3)
                 obj.error_report_handle = error_report_handle;
             end           

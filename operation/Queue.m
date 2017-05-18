@@ -8,7 +8,7 @@ classdef Queue < handle
         condition_evals;
         %Map of which operations in the queue transfer data to which other
         %functions
-        data_transfer_map= containers.Map('KeyType','char','ValueType','any');
+        data_transfer_map = containers.Map('KeyType','char','ValueType','any');
         %number of operations in the queue
         length;
         %the actual contents of the queue
@@ -97,7 +97,6 @@ classdef Queue < handle
                         stopped = true;
                     end
                     if(stopped)
-                        %obj.list = [obj.list{1:(i - 1)} obj.list{(i + 1):end}];
                         obj.list(i) = [];
                         obj.length = length(obj.list);
                         if(obj.length == 0)
@@ -225,12 +224,6 @@ classdef Queue < handle
             obj.valid = false;
             msg = strcat(obj.name, ': ', error_msg);
             feval(obj.error_report_handle, msg);
-        end
-        
-        function list_out = delete_cell(index, list)
-            for i = 1:length(list)
-                
-            end
         end
     end
 end

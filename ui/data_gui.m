@@ -879,7 +879,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
-        if(isnumeric(resolution) && resolution > 0)
+        if(~isempty(resolution) && isnumeric(resolution) && resolution > 0)
             %if the resolution is a number greater than zero then use it
             res = resolution;
         else
@@ -909,6 +909,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         while ~q.finished()
             q.execute();
         end
+        q.delete();
     end
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB

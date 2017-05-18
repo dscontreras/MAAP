@@ -22,13 +22,13 @@ classdef Displacement < RepeatableOperation
     properties (SetAccess = public)
         pause_bool;
         param_names;
-        inputs = {};
         outputs = containers.Map('KeyType','char','ValueType','any');
         valid;
         new;
         error_report_handle;
-        queue_index = -1;
+        queue_index;
         start_check_callback = @RepeatableOperation.check_start;
+        inputs = {};
     end
     
     properties (Constant)
@@ -54,6 +54,7 @@ classdef Displacement < RepeatableOperation
             obj.outputs('dispx') = 0;
             obj.outputs('dispy') = 0;
             obj.outputs('done') = false;
+            obj.queue_index = -1;
             if(nargin > 9) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
@@ -70,7 +71,7 @@ classdef Displacement < RepeatableOperation
             obj.im = zeros(obj.vid_src.get_num_pixels());
             obj.im = imshow(obj.im);
         end
-        
+       
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
@@ -82,7 +83,8 @@ classdef Displacement < RepeatableOperation
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_disp(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                 end
               else
                 if(obj.vid_src.gpu_supported)
@@ -141,11 +143,7 @@ classdef Displacement < RepeatableOperation
         end
         
         function boolean = paused(obj)
-            boolean = (obj.pause_bool || ~obj.goodstate());
-        end
-
-        function good = goodstate(obj)
-            good = true; %TODO: Implement goodstate
+            boolean = obj.pause_bool;
         end
 
         function pause(obj, handles)
@@ -165,10 +163,6 @@ classdef Displacement < RepeatableOperation
         
         function path = get_vid_path(obj)
             path = obj.vid_path;
-        end
-        
-        function color = get_vid_colorspace(obj)
-            color = obj.vid_colorspace;    
         end
         
         function pixel_precision = get_pixel_precision(obj)

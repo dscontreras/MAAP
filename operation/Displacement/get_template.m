@@ -20,26 +20,12 @@
 function [template, rect, xtemp, ytemp, A,rectangle] = get_template(gray, displayObj)
 
     %DEFINE TEMPLATE - Obtained from interpolated image
-    disp('START');
     [template, rect] = showCrop(displayObj, gray);
-    disp('past frame shown');
-    
-     
+      
     %PERFORM NORMALIZED CROSS-CORRELATION
     c = normxcorr2(template,gray);
     
     %FIND PEAK CROSS-CORRELATION
     [ytemp, xtemp] = find(c==max(c(:)));
-
-    disp('__ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __');
-    disp('Template coord (x,y) = ');
-    disp([xtemp, ytemp]);
-    
-    [numRows,numCols,dim] = size(template);
-    disp('Size template: (rows,cols) =');
-    disp([numRows,numCols]);
-
-    
-    disp('__ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __ __');
-     
+    [numRows,numCols,dim] = size(template);    
 end
