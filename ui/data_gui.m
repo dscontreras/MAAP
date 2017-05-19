@@ -22,7 +22,7 @@ function varargout = data_gui(varargin)
 
 % Edit the above text to modify the response to help data_gui
 
-% Last Modified by GUIDE v2.5 11-May-2017 17:42:07
+% Last Modified by GUIDE v2.5 18-May-2017 17:07:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -803,10 +803,9 @@ if(~top_level)
     top_level = true;
 end
 %Make the button used to navigate to the top level invisible.
-set(return_to_options, 'Visible', 'Off');
-set(vid_path_enter_btn, 'Visible', 'Off');
-set(file_path_edit, 'Visible', 'Off');
-set(vid_path_edit_tag, 'Visible', 'Off');
+set(handles.return_to_options, 'Visible', 'Off');
+set(handles.src_path_edit, 'Visible', 'Off');
+set(handles.src_path_edit_tag, 'Visible', 'Off');
 
 %Save any changes made to the GUI.
 guidata(btn, handles);
@@ -1110,3 +1109,10 @@ else
     img_options.UserData = '-1';
 end
 % Hint: get(hObject,'Value') returns toggle state of file_type
+
+
+% --- Executes on button press in pushbutton32.
+function pushbutton32_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton32 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
