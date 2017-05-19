@@ -5,12 +5,35 @@
   <meta name = "description" content = "Microanalyze documentation">
   <meta name = "keywords" content = "Documentation, Microanalyze, Docs, Code, Help">
   <meta name = "author" content = "Will Fehrnstrom">
-  <title>Microanalyze Reference</title>
+  <title>MAAP Reference</title>
 </head>
+
+
+<script type="text/javascript">
+
+    // Wait for the page to load first
+    window.onload = function() {
+
+      //Get a reference to the link on the page
+      // with an id of "mylink"
+      var a = document.getElementById("meas_disp_ppt");
+
+      //Set code to run when the link is clicked
+      // by assigning a function to "onclick"
+      a.onclick = function() {
+        var slashIndex = window.location.href.lastIndexOf("/");
+        var cropped = window.location.href.slice(0,slashIndex+1);
+
+        window.location.replace(cropped + "assets/player/KeynoteDHTMLPlayer.html");
+        return false;
+      }
+    }
+</script>
+
 <body>
-  <h1 style = "text-decoration: underline"><strong>Microanalyze Documentation and Reference</strong></h1>
+  <h1 style = "text-decoration: underline"><strong>MAAP Documentation and Reference</strong></h1>
   <h2 style = "text-decoration: underline">Introduction</h2>
-  <p>This documentation is intended to help you navigate both the ins and outs of using Microanalyze to greatly
+  <p>This documentation is intended to help you navigate both the ins and outs of using MAAP(Microscope Analysis APplication) to greatly
     reduce time and effort in your microscope data collection efforts.  I hope you find it useful.  You should
     email me at wfehrnstromdev@gmail.com with any questions you might have!</p>
   <h2 style = "text-decoration: underline">Table of Contents</h2>
@@ -579,6 +602,11 @@
     <p>
       Technically, Errors are currently really handled at the highest level of the application, in data_gui.m.  That is where error prompts are sent out into actual GUI format.  The error originates at a certain point in the call stack, but it travels back up the callstack towards more abstraction.  As an example, an error might originate during the execute() function of an operation, and then it will be passed up to the execution of the queue's error handling function, which will pass it up to the data_gui.  In this way, every error returns to the data_gui.  This is not required however.  It is altogether possible to stop an error at a lower level, however, I have not gone a good job of hiding the errors at lower levels.  Error handling as a whole could use some work.  The error class encapsulates basic CLI error outputs, GUI Error handling is implemented in data_gui.  Water tight error handling is incomplete.
     </p>
+    <h3 style = 'text-decoration: underline'>Queue</h3>
+    <h4>Properties</h4>
+    
+    <h3 style = 'text-decoration: underline'>Operation</h3>
+    <h3 style = 'text-decoration: underline'>RepeatableOperation</h3>
     <h3 style = 'text-decoration: underline'>Displacement</h3>
     <h4>Properties(Private):</h4>
     <ul>
@@ -777,7 +805,8 @@
     <p>displacement: a number specifying how far the user expects the object to travel in pixels from its starting position.  This value is used to bound where the normxcorr algorithm should look for template in images after the initial one.</p>
     <p>resolution: microscope resolution in how many microns across is a pixel. Used to convert from pixel displacement values to micron displacement values.</p>
     <h5>description:</h5>
-    <p>meas_displacement is the most complex algorithm used by this application.</p>
+    <p>meas_displacement is the most complex algorithm used by this application.  It involves the coupled use of normalized cross correlation across a 2D image.  With the subpixel variants of this application, after the first round of cross correlation, the template is interpolated, and then normalized cross correlation is performed again.  This allows the algorithm to obtain a higher level of accuracy.  For any files that are to be analyzed, subpixel displacement measurement is performed.  For live streams, bicubic interpolation and the 2nd round of normalized cross correlation are not performed.  For any systems that are supported by matlab's parallel computing toolbox, gpu array speedups are enabled.  It is highly recommended that this function is switched out for a DFT/FFT algorithm in order to both improve accuracy and speed.</p>
+    <a id = 'meas_disp_ppt' style = 'text-decoration:underline; color: blue'>Explanation Powerpoint</a>
   </a>
   <a id = "code_filesystem">
     <h2 style = "text-decoration: underline">Filesystem Parser and Navigation</h2>
