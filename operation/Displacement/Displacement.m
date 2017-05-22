@@ -17,6 +17,8 @@ classdef Displacement < RepeatableOperation
         stop_check_callback = @check_stop;
         im;
         res;
+        xoff;
+        yoff;
     end
 
     properties (SetAccess = public)
@@ -55,6 +57,8 @@ classdef Displacement < RepeatableOperation
             obj.outputs('dispy') = 0;
             obj.outputs('done') = false;
             obj.queue_index = -1;
+            obj.xoff = [];
+            obj.yoff = [];
             if(nargin > 9) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
@@ -81,10 +85,10 @@ classdef Displacement < RepeatableOperation
               obj.current_frame = grab_frame(obj.vid_src, obj);
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_disp(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
               else
                 if(obj.vid_src.gpu_supported)
@@ -98,6 +102,11 @@ classdef Displacement < RepeatableOperation
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
               obj.outputs('done') = obj.check_stop();
+              obj.xoff = [obj.xoff xoffSet];
+              obj.yoff = [obj.yoff yoffSet];
+              xoff3 = obj.xoff;
+              yoff3 = obj.yoff;
+              save('gpu_displacement.mat', 'xoff3', 'yoff3');
               drawnow;
         end
 

@@ -22,7 +22,7 @@ function varargout = data_gui(varargin)
 
 % Edit the above text to modify the response to help data_gui
 
-% Last Modified by GUIDE v2.5 11-May-2017 17:42:07
+% Last Modified by GUIDE v2.5 22-May-2017 14:15:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -61,7 +61,9 @@ global operation_queue;
 global enabled_operations;
 global current_operation;
 global keymap;
+global q;
 keymap = containers.Map();
+q = Queue(@display_error);
 operation_queue = cell(0);
 enabled_operations = {'Displacement', 'Stills', 'Voltage'};
 vid_width = 1280;
@@ -803,10 +805,9 @@ if(~top_level)
     top_level = true;
 end
 %Make the button used to navigate to the top level invisible.
-set(return_to_options, 'Visible', 'Off');
-set(vid_path_enter_btn, 'Visible', 'Off');
-set(file_path_edit, 'Visible', 'Off');
-set(vid_path_edit_tag, 'Visible', 'Off');
+set(handles.return_to_options, 'Visible', 'Off');
+set(handles.src_path_edit, 'Visible', 'Off');
+set(handles.src_path_edit_tag, 'Visible', 'Off');
 
 %Save any changes made to the GUI.
 guidata(btn, handles);
@@ -876,10 +877,11 @@ end
 
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
+    global q;
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
-        if(~isempty(resolution) && isnumeric(resolution) && resolution > 0)
+        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
             %if the resolution is a number greater than zero then use it
             res = resolution;
         else
@@ -899,16 +901,16 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
-        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_vid, pixel_precision, max_displacement, res);
-        arr = {displacement};
-        handle = @display_error;
-        q = Queue(handle, arr);
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res);
+        q.add_to_queue(displacement);
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-        q.add_to_queue(d);
-        while ~q.finished()
-            q.execute();
+        if(get(handles.data_collect_check, 'Value'))
+            d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
+            q.add_to_queue(d);
         end
+    end
+    q.run_to_finish();
+    if(q.finished())
         q.delete();
     end
 % hObject    handle to begin_operation_btn (see GCBO)
@@ -1014,16 +1016,18 @@ elseif(is_cam_name(get(hObject, 'String')))
     setappdata(0, 'cam_name', get(hObject, 'String'));
 end
 
-% --- Executes on button press in pause_vid.
-function pause_vid_Callback(hObject, eventdata, handles)
-% hObject    handle to pause_vid (see GCBO)
+% --- Executes on button press in pause_operation.
+function pause_operation_Callback(hObject, eventdata, handles)
+% hObject    handle to pause_operation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global current_operation;
-if(~current_operation.paused())
-    current_operation.pause(handles);
+global q;
+if(~q.is_paused())
+    set(hObject, 'String', 'Unpause Operation');
+    q.pause();
 else
-    current_operation.unpause(handles);
+    set(hObject, 'String', 'Pause Operation');
+    q.unpause();
 end
 
 function map_keypress(key, func)
@@ -1110,3 +1114,18 @@ else
     img_options.UserData = '-1';
 end
 % Hint: get(hObject,'Value') returns toggle state of file_type
+
+% --- Executes on button press in end_operation.
+function end_operation_Callback(hObject, eventdata, handles)
+% hObject    handle to end_operation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in data_collect_check.
+function data_collect_check_Callback(hObject, eventdata, handles)
+% hObject    handle to data_collect_check (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of data_collect_check
