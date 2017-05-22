@@ -279,6 +279,12 @@ classdef Queue < handle
         function bool = is_paused(obj)
             bool = obj.paused;
         end
+        
+        function stop_execution(obj)
+           obj.pause();
+           obj.done = true;
+        end
+        
     end
 end
 
