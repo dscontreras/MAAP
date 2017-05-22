@@ -25,9 +25,7 @@ classdef Queue < handle
         paused;
         %Index to pick off from when unpausing
         pause_index;
-        %active is a boolean flag indicating whether this object is
-        %currently executing or in the process of executing
-        active;
+        %active indica
     end
     
     properties(Access = public, Constant)
@@ -40,7 +38,6 @@ classdef Queue < handle
             obj.error_report_handle = error_handle;
             obj.length = 0;
             obj.done = false;
-            obj.active = false;
             obj.paused = false;
             obj.pause_index = 1;
             if(nargin > 1)
@@ -89,16 +86,15 @@ classdef Queue < handle
         
         function execute(obj, index)
             i = 1;
-            obj.active = true;
             if(nargin > 1)
                 i = index;
             end
             while(i <= obj.length)
+                if(obj.paused)
+                    obj.pause_index = i;
+                    return;
+                end
                 if(~obj.list{i}.new || feval(obj.list{i}.start_check_callback))
-                    if(obj.paused)
-                        obj.pause_index = i;
-                        return;
-                    end
                     if(obj.list{i}.new)
                         obj.list{i}.new = false;
                         obj.list{i}.startup();
@@ -119,7 +115,6 @@ classdef Queue < handle
                         obj.length = length(obj.list);
                         if(obj.length == 0)
                             obj.done = true;
-                            obj.active = false;
                         end
                     end
                 end
@@ -128,17 +123,13 @@ classdef Queue < handle
         end
         
         function resume_execution(obj)
-            obj.run_to_finish(obj.pause_index);
+            obj.execute(obj.pause_index);
         end
             
         
-        function successful = run_to_finish(obj, starting_index)
+        function successful = run_to_finish(obj)
             while(~obj.finished() && ~obj.paused)
-                if(nargin > 1)
-                    obj.execute(starting_index);
-                else
-                    obj.execute();
-                end
+                obj.execute();
             end
             if(obj.paused)
                 successful = false;
@@ -271,9 +262,6 @@ classdef Queue < handle
         
         function unpause(obj)
             obj.paused = false;
-            if(obj.active)
-                obj.resume_execution();
-            end
         end
         
         function bool = is_paused(obj)
