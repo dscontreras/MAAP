@@ -16,18 +16,24 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 % PERFORM FOURIER TRANSFORM FOR PIXEL PRECISION COORDINATES
 
+% Some image preprocessing
+% Assumes a grayscale image and inverts the colors to make the edges stand
+% out
+% This isn't enough for frame 271 in the example video 45V_1.avi
+template = 100-template;
+search_area = 100-search_area;
+    
 % Pad search_area
 % This is necessary because the convolution theorem/correlation theorem
 % assumes that the images are periodic so without this padding there would
 % be corruption at the edges
-search_area_padded = padarray(search_area, [search_area_rect(1), search_area_rect(2)], 'pre');
+search_area_padded = padarray(search_area, [search_area_height, search_area_width], 'post');
 
-% Pad Template for the two matrices/fourier transforms to be of the same
-% size 
+% Pad Template to be the same size as the padded search_area
 [m1, n1] = size(search_area_padded);
 [m2, n2] = size(template);
-template_padded = padarray(template, [(m1-m2), (n1-n2)], 'pre');
-
+template_padded = padarray(template, [(m1-m2), (n1-n2)], 'post');
+    
 % Find the DTFT of the two
 dtftOfFrame = fft2(search_area_padded);
 dtftOfTemplate = fft2(template_padded);
@@ -41,20 +47,15 @@ R = R./abs(R); % normalize to get rid of values related to intensity of light
 r = ifft2(R); 
 
 % Find maximum value. 
-[ypeak, xpeak] = find(r==max(r(:)));
+[ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
 
-% Remove effects from the padding and the 1 indexing
-% After all, I added search_area_rect to the two dimensions to pad template
-ypeak = ypeak - search_area_rect(1)-1;
-xpeak = xpeak - search_area_rect(2)-1;
+% Add the template size to the get right most corner rather than the
+% origin to match the output of normxcorr2
+ypeak = ypeak + m2 - 1; 
+xpeak = xpeak + n2 - 1; 
 
-% normxcorr is now replaced. 
+% normxcorr2 is now replaced. 
 
-% The following returns the origin of the (minX/minY) of where the template
-% is in the image. But the original code I'm replacing didn't and instead
-% did the following uncommented lines below. 
-% xpeak = xR - n2 
-% ypeak = yR - m2
 
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
