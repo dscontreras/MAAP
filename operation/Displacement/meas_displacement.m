@@ -14,15 +14,48 @@ search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
-%PERFORM NORMALIZED CROSS-CORRELATION
-%Note: Jessica tried to perform Gradient Descent NCC Surface but
-%the timing was problematic.  The NCC Surface algorithm only
-%accepted entire images, and was subsequently too slow.
- c = normxcorr2(template, search_area); %So perform normalized cross correlation to find where the
-                                        %template is in the image right now
+% PERFORM FOURIER TRANSFORM FOR PIXEL PRECISION COORDINATES
 
-%FIND PEAK CROSS-CORRELATION
-[ypeak, xpeak] = find(c==max(c(:))); %find where the template's starting x and y's are in the image
+% Pad search_area
+% This is necessary because the convolution theorem/correlation theorem
+% assumes that the images are periodic so without this padding there would
+% be corruption at the edges
+search_area_padded = padarray(search_area, [search_area_rect(1), search_area_rect(2)], 'pre');
+
+% Pad Template for the two matrices/fourier transforms to be of the same
+% size 
+[m1, n1] = size(search_area_padded);
+[m2, n2] = size(template);
+template_padded = padarray(template, [(m1-m2), (n1-n2)], 'pre');
+
+% Find the DTFT of the two
+dtftOfFrame = fft2(search_area_padded);
+dtftOfTemplate = fft2(template_padded);
+conj_dtftOfTemplate = conj(dtftOfTemplate);
+
+% Take advantage of the correlation theorem
+% Corr(f, g) <=> element multiplication of F and conj(G) where F, G are
+% fourier transforms of the signals f, g
+R = dtftOfFrame.*conj_dtftOfTemplate;
+R = R./abs(R); % normalize to get rid of values related to intensity of light
+r = ifft2(R); 
+
+% Find maximum value. 
+[ypeak, xpeak] = find(r==max(r(:)));
+
+% Remove effects from the padding and the 1 indexing
+% After all, I added search_area_rect to the two dimensions to pad template
+ypeak = ypeak - search_area_rect(1)-1;
+xpeak = xpeak - search_area_rect(2)-1;
+
+% normxcorr is now replaced. 
+
+% The following returns the origin of the (minX/minY) of where the template
+% is in the image. But the original code I'm replacing didn't and instead
+% did the following uncommented lines below. 
+% xpeak = xR - n2 
+% ypeak = yR - m2
+
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
