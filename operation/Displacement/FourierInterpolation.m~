@@ -1,0 +1,2 @@
+function interp = FourierInterpolation(template,rect, img, xtemp, ytemp, precision, displacement, res)
+interp_template = im2double(template);
