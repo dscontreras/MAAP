@@ -1,4 +1,4 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template,rect, img, xtemp, ytemp, precision, displacement, res)
+function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement2(template,rect, img, xtemp, ytemp, precision, displacement, res)
 min_displacement = 2; %pixel unit
 Xm =40*10^(-6); %distance according to chip dimensions in microns
 Xp = 184.67662; %distance according image in pixels. Correspond to Xm
@@ -14,12 +14,14 @@ search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
-% PERFORM FOURIER TRANSFORM FOR PIXEL PRECISION COORDINATES
-
-[xpeak, ypeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
-
-% normxcorr2 is now replaced. The new method and old differs by at most 2
-% pixels
+%PERFORM NORMALIZED CROSS-CORRELATION
+%Note: Jessica tried to perform Gradient Descent NCC Surface but
+%the timing was problematic.  The NCC Surface algorithm only
+%accepted entire images, and was subsequently too slow.
+    c = normxcorr2(template, search_area); %So perform normalized cross correlation to find where the
+                                        %template is in the image right now
+%FIND PEAK CROSS-CORRELATION
+[ypeak, xpeak] = find(c==max(c(:))); %find where the template's starting x and y's are in the image
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
@@ -51,7 +53,7 @@ interp_template = im2double(template);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
 tic
-interp_template = interp2(X,Y,V,Xq,Yq, 'cubic'); %perform the bicubic interpolation
+interp_template = qinterp2(X,Y,V,Xq,Yq, 0); %perform the bicubic interpolation
 
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
 interp_search_area = im2double(new_search_area);
@@ -59,7 +61,7 @@ interp_search_area = im2double(new_search_area);
 [X,Y] = meshgrid(1:numCols,1:numRows);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
-interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic'); 
+interp_search_area = qinterp2(X,Y,V,Xq,Yq, 0);   
 toc
 
 
