@@ -55,7 +55,6 @@ V=interp_template; %copy interp_template into V
 tic
 interp_template = qinterp2(X,Y,V,Xq,Yq, 0); %perform the bicubic interpolation
 
-
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
 interp_search_area = im2double(new_search_area);
 [numRows,numCols,dim] = size(interp_search_area);

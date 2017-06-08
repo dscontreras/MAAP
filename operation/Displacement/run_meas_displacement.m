@@ -25,7 +25,6 @@ tic
 [xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
 toc
 
-
 %{
 xoffSet == xoffSet1
 yoffSet == yoffSet1
@@ -33,6 +32,7 @@ dispx == dispx1
 dispy == dispy1
 x1 == x
 y == y1
+<<<<<<< HEAD
 c1 == c11 
 %}
 
