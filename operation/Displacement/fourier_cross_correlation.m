@@ -1,4 +1,4 @@
-function [xpeak, ypeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
+function [ypeak, xpeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
     
     % TEMPLATE and SEARCH_AERA should be 8bit grayscale images
     % Performs cross correlation of SEARCH_AREA and TEMPLATE
