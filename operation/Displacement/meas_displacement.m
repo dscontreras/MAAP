@@ -23,6 +23,9 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 %c = normxcorr2(template, search_area);
 %[ypeak, xpeak] = find(c==max(c(:)));
 
+% normxcorr2 is now replaced. The new method and old differs by at most 2
+% pixels
+
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
@@ -63,6 +66,7 @@ interp_search_area = im2double(new_search_area);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
+
 toc
 
 
