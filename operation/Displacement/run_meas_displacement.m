@@ -1,7 +1,8 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/45V_1.avi');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_1.avi');
 vWidth = v.Width;
 vHeight = v.Height;
-rect = [730, 550, 70, 30];
+%rect = [730, 550, 70, 30];
+rect = [600, 500, 70, 30];
 originalFrame = rgb2gray(readFrame(v));
 k = 1;
 while v.hasFrame 

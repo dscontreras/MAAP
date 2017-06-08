@@ -15,12 +15,12 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
 % PERFORM FOURIER TRANSFORM FOR PIXEL PRECISION COORDINATES
-[ypeak, xpeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
+%[ypeak, xpeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
 
 % normxcorr2 is now replaced. The new method and old differs by at most 2
 % pixels
-%c = normxcorr2(template, search_area);
-%[ypeak, xpeak] = find(c==max(c(:)));
+c = normxcorr2(template, search_area);
+[ypeak, xpeak] = find(c==max(c(:)));
 
 % normxcorr2 is now replaced. The new method and old differs by at most 2
 % pixels
@@ -55,8 +55,8 @@ interp_template = im2double(template);
 [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes 
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
-tic
 
+tic
 interp_template = interp2(X,Y,V,Xq,Yq, 'nearest'); %perform the bicubic interpolation
 
 
@@ -68,7 +68,7 @@ interp_search_area = im2double(new_search_area);
 V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
-
+toc
 
 
  %PERFORM NORMALIZED CROSS-CORRELATION
