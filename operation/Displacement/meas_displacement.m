@@ -20,7 +20,7 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 % Assumes a grayscale image and inverts the colors to make the edges stand
 % out 
 template = 100-template;
-search_area = (110-search_area)*10; % To ensure that motion blur doesn't "erase" critical contours
+search_area = (120-search_area)*3; % To ensure that motion blur doesn't "erase" critical contours
     
 % Pad search_area
 % This is necessary because the convolution theorem/correlation theorem
