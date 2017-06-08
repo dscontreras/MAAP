@@ -1,4 +1,4 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/30V_1.avi');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_2.avi');
 vWidth = v.Width;
 vHeight = v.Height;
 rect = [730, 550, 70, 30];
@@ -15,15 +15,16 @@ img = mov(21).cdata;
 displacement = 50;
 xtemp = rect(1);
 ytemp = rect(2);
-precision = rand;
-res = rand;
-%tic
+precision = 1; % use rand later
+res = 1; % use rand later
+tic
 [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
-%toc
+toc
 
-%tic
+tic
 [xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
-%toc
+toc
+
 
 
 xoffSet == xoffSet1
