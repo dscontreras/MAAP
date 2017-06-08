@@ -18,10 +18,9 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 % Some image preprocessing
 % Assumes a grayscale image and inverts the colors to make the edges stand
-% out
-% This isn't enough for frame 271 in the example video 45V_1.avi
+% out 
 template = 100-template;
-search_area = 100-search_area;
+search_area = (110-search_area)*10; % To ensure that motion blur doesn't "erase" critical contours
     
 % Pad search_area
 % This is necessary because the convolution theorem/correlation theorem
@@ -54,7 +53,8 @@ r = ifft2(R);
 ypeak = ypeak + m2 - 1; 
 xpeak = xpeak + n2 - 1; 
 
-% normxcorr2 is now replaced. 
+% normxcorr2 is now replaced. The new method and old differs by at most 2
+% pixels
 
 
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
