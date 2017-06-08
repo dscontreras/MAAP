@@ -14,14 +14,12 @@ search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
-%PERFORM NORMALIZED CROSS-CORRELATION
-%Note: Jessica tried to perform Gradient Descent NCC Surface but
-%the timing was problematic.  The NCC Surface algorithm only
-%accepted entire images, and was subsequently too slow.
-    c = normxcorr2(template, search_area); %So perform normalized cross correlation to find where the
-                                        %template is in the image right now
-%FIND PEAK CROSS-CORRELATION
-[ypeak, xpeak] = find(c==max(c(:))); %find where the template's starting x and y's are in the image
+% PERFORM FOURIER TRANSFORM FOR PIXEL PRECISION COORDINATES
+
+[xpeak, ypeak] = fourier_cross_correlation(template, search_area, search_area_height, search_area_width)
+
+% normxcorr2 is now replaced. The new method and old differs by at most 2
+% pixels
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
