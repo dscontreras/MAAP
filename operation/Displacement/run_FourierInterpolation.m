@@ -18,8 +18,5 @@ ytemp = rect(2);
 precision = 1;
 res = 1;
 tic
-[xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
-toc
-tic
-[xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
+interp = FourierInterpolation(template, rect, img, xtemp, ytemp, precision, displacement, res)
 toc
