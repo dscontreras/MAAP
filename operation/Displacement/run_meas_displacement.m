@@ -32,7 +32,6 @@ dispx == dispx1
 dispy == dispy1
 x1 == x
 y == y1
-<<<<<<< HEAD
 c1 == c11 
 %}
 
