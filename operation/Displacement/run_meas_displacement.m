@@ -26,7 +26,7 @@ tic
 toc
 
 
-
+%{
 xoffSet == xoffSet1
 yoffSet == yoffSet1
 dispx == dispx1
@@ -34,6 +34,7 @@ dispy == dispy1
 x1 == x
 y == y1
 c1 == c11 
+%}
 
 
 
