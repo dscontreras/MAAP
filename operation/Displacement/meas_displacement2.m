@@ -1,6 +1,4 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1, time] = meas_displacement2(template,rect, img, xtemp, ytemp, precision, displacement, res)
-%% *** REMOVE TIME FROM FUNCTION OUTPUT -- USED ONLY FOR MEASURING PERFORMANCE *** %%
-
+function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement2(template,rect, img, xtemp, ytemp, precision, displacement, res)
 min_displacement = 2; %pixel unit
 Xm =40*10^(-6); %distance according to chip dimensions in microns
 Xp = 184.67662; %distance according image in pixels. Correspond to Xm
@@ -59,7 +57,7 @@ interp_template = im2double(template);
 [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes 
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
-tic
+%tic
 interp_template = qinterp2(X,Y,V,Xq,Yq, 0); %perform the bicubic interpolation
 
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
@@ -69,7 +67,7 @@ interp_search_area = im2double(new_search_area);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
 interp_search_area = qinterp2(X,Y,V,Xq,Yq, 0);   
-time = toc;
+%time = toc;
 
 
  %PERFORM NORMALIZED CROSS-CORRELATION
@@ -93,7 +91,6 @@ x = new_xpeak-xtemp;
 %DISPLACEMENT IN MICRONS    
 dispx = x * res;
 dispy = y * res;
-    
     
 
 end
