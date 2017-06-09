@@ -19,16 +19,16 @@ ytemp = rect(2);
 precision = rand; 
 res = rand; 
 tic
-[xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
-toc
+[xoffSet, yoffSet, dispx,dispy,x, y, c1, orig_interp2_time] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
+orig_disp_time = toc;
 
 tic
-[xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
-toc
+[xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11, new_interp2_time] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
+new_disp_time = toc;
 
 
-times = [orig_interp2_time new_interp2_time orig_displacement_time new_displacement_time];
-%dlmwrite('normxcorr2_times.dat', times, '-append');
+times = [orig_interp2_time new_interp2_time orig_disp_time new_disp_time];
+dlmwrite('normxcorr2_times.dat', times, '-append');
 %dlmwrite('fourier_xc_times.dat', times, '-append');
 
 % Notes:
