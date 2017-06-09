@@ -2,8 +2,8 @@ v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_3.avi');
 vWidth = v.Width;
 vHeight = v.Height;
 %rect = [730, 550, 70, 30];
-%rect = [600, 500, 70, 30];
-rect = find_rect(v, 'template.png'); % put appropriate template here
+rect = [600, 500, 70, 30];
+%rect = find_rect(v, 'template.png'); % put appropriate template here
 originalFrame = rgb2gray(readFrame(v));
 k = 1;
 while v.hasFrame 
@@ -17,20 +17,69 @@ img = mov(21).cdata;
 displacement = 50;
 xtemp = rect(1);
 ytemp = rect(2);
-precision = rand; 
-res = rand; 
+precision = 0.5; 
+res = 0.5; 
 tic
-[xoffSet, yoffSet, dispx,dispy,x, y, c1, orig_interp2_time] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
-orig_disp_time = toc;
+[xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
+disp = toc;
 
 tic
-[xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11, new_interp2_time] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
-new_disp_time = toc;
+[xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
+disp1 = toc;
+
+tic
+[xoffSet2, yoffSet2, dispx2,dispy2,x2, y2, c12] = meas_displacement3(template, rect, img, xtemp, ytemp, precision, displacement, res);
+disp2 = toc;
+
+tic
+[xoffSet3, yoffSet3, dispx3,dispy3,x3, y3, c13] = meas_displacement4(template, rect, img, xtemp, ytemp, precision, displacement, res);
+disp3 = toc;
 
 
-times = [orig_interp2_time new_interp2_time orig_disp_time new_disp_time];
+times = [disp disp1 disp2 disp3];
 %dlmwrite('normxcorr2_times.dat', times, '-append');
 %dlmwrite('fourier_xc_times.dat', times, '-append');
+dlmwrite('disp_times.dat', times, '-append');
+    % col1: interp2 and normxcorr2 (original): 0.015186833333333335
+    % col2: qinterp2 and normxcorr2: 0.011231466666666667
+    % col3: interp2 and fourier_xc: 0.016263033333333336
+    % col4: qinterp2 and fourier_xc: 0.014373933333333337
+
+%{
+% Is meas_displacement == meas_displacement2
+xoffSet == xoffSet1
+yoffSet == yoffSet1
+dispx == dispx1
+dispy == dispy1
+x == x1
+y == y1
+c1 == c11 
+%}
+
+%{
+% Is meas_displacement == meas_displacement3
+xoffSet == xoffSet2
+yoffSet == yoffSet2
+dispx == dispx2
+dispy == dispy2
+x == x2
+y == y2
+c1 == c12 
+%}
+
+%{
+% Is meas_displacement == meas_displacement4
+xoffSet == xoffSet3
+yoffSet == yoffSet3
+dispx == dispx3
+dispy == dispy3
+x == x3
+y == y3
+c1 == c13 
+%}
+
+
+
 
 % Notes:
 %   - normxcorr2 cols: [orig_interp2_time new_interp2_time orig_disp_time new_disp_time]
@@ -40,16 +89,4 @@ times = [orig_interp2_time new_interp2_time orig_disp_time new_disp_time];
 %   - normxcorr2 averages: [0.00165434, 0.0017847793333333334, 0.021319013333333338, 0.018772909999999997]
 %
 %   - fourier_xc averages: [0.010571056666666667, 0.008897223333333334, 0.13102506666666666, 0.12615038333333334]
-
-
-
-xoffSet == xoffSet1
-yoffSet == yoffSet1
-dispx == dispx1
-dispy == dispy1
-x1 == x
-y == y1
-c1 == c11 
-
-
 
