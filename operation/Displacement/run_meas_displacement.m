@@ -1,10 +1,11 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/45V_1.avi');
+v = VideoReader('E:/microscopeanalysis/videos/45V_1.avi');
 vWidth = v.Width;
 vHeight = v.Height;
-rect = [730, 550, 70, 30];
+% rect = [730, 550, 70, 30];
+rect = find_rect('E:/microscopeanalysis/videos/45V_1.avi', 'E:\microscopeanalysis\template.png');
 originalFrame = rgb2gray(readFrame(v));
 k = 1;
-while v.hasFrame & k < 120
+while v.hasFrame
     frame = readFrame(v);
     frame = rgb2gray(frame); 
     mov(k).cdata = frame;
