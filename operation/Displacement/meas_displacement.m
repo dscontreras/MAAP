@@ -21,7 +21,7 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 % normxcorr2 is now replaced. The new method and old differs by at most 2
 % pixels
-tic
+%tic
 c = normxcorr2(template, search_area);
 
 [ypeak, xpeak] = find(c==max(c(:)));
@@ -31,7 +31,7 @@ c = normxcorr2(template, search_area);
 
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
-time = toc;
+%time = toc;
 
 %% ************************** SUBPIXEL PRECISION COORDINATES *************************
 %GENERATE MOVED TEMPLATE
@@ -60,7 +60,7 @@ interp_template = im2double(template);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
 
-%tic
+tic
 interp_template = interp2(X,Y,V,Xq,Yq, 'nearest'); %perform the bicubic interpolation
 
 
@@ -73,7 +73,7 @@ V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
 
-%time = toc;
+time = toc;
 
 
  %PERFORM NORMALIZED CROSS-CORRELATION
