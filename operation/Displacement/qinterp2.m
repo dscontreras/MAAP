@@ -166,7 +166,8 @@ switch method
             Z(ind2).*dfxi.*(1-dfyi) + ...
             Z(ind4).*(1-dfxi).*dfyi + ...
             Z(ind3).*dfxi.*dfyi;
-        
+    case 3 % bicubic interpolation 
+        %%% TODO: Implement bicubic interpolation for this %%% 
     otherwise
         error('Invalid method flag');
         
