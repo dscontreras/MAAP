@@ -1,4 +1,6 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template,rect, img, xtemp, ytemp, precision, displacement, res)
+function [xoffSet, yoffSet, dispx,dispy,x, y, c1, time] = meas_displacement(template,rect, img, xtemp, ytemp, precision, displacement, res)
+%% **** remove time from function output -- used only for measuring performance **** %%
+
 min_displacement = 2; %pixel unit
 Xm =40*10^(-6); %distance according to chip dimensions in microns
 Xp = 184.67662; %distance according image in pixels. Correspond to Xm
@@ -19,7 +21,9 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 % normxcorr2 is now replaced. The new method and old differs by at most 2
 % pixels
+tic
 c = normxcorr2(template, search_area);
+
 [ypeak, xpeak] = find(c==max(c(:)));
 
 % normxcorr2 is now replaced. The new method and old differs by at most 2
@@ -27,7 +31,7 @@ c = normxcorr2(template, search_area);
 
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
-
+time = toc;
 
 %% ************************** SUBPIXEL PRECISION COORDINATES *************************
 %GENERATE MOVED TEMPLATE
@@ -56,7 +60,7 @@ interp_template = im2double(template);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
 
-tic
+%tic
 interp_template = interp2(X,Y,V,Xq,Yq, 'nearest'); %perform the bicubic interpolation
 
 
@@ -68,7 +72,8 @@ interp_search_area = im2double(new_search_area);
 V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
-toc
+
+%time = toc;
 
 
  %PERFORM NORMALIZED CROSS-CORRELATION
