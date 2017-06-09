@@ -1,7 +1,7 @@
 """ Averages columns in .dat files. Assumes only four columns in file """
 
-file = open('normxcorr2_times.dat') # replace filename here
-#file = open('fourier_xc_times.dat')
+#file = open('normxcorr2_times.dat') # replace filename here
+file = open('fourier_xc_times.dat')
 values = []
 for line in file:
     values += line.split()
