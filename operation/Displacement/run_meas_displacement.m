@@ -12,6 +12,7 @@ while v.hasFrame
     mov(k).cdata = frame;
     k = k + 1;
 end
+
 template = imcrop(originalFrame, rect);
 img = mov(21).cdata;
 displacement = 50;
@@ -23,6 +24,7 @@ tic
 [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
 disp = toc;
 
+%{
 tic
 [xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement2(template, rect, img, xtemp, ytemp, precision, displacement, res);
 disp1 = toc;
@@ -37,13 +39,12 @@ disp3 = toc;
 
 
 times = [disp disp1 disp2 disp3];
-%dlmwrite('normxcorr2_times.dat', times, '-append');
-%dlmwrite('fourier_xc_times.dat', times, '-append');
 dlmwrite('disp_times.dat', times, '-append');
     % col1: interp2 and normxcorr2 (original): 0.015186833333333335
     % col2: qinterp2 and normxcorr2: 0.011231466666666667
     % col3: interp2 and fourier_xc: 0.016263033333333336
     % col4: qinterp2 and fourier_xc: 0.014373933333333337
+%}
 
 %{
 % Is meas_displacement == meas_displacement2
@@ -77,16 +78,3 @@ x == x3
 y == y3
 c1 == c13 
 %}
-
-
-
-
-% Notes:
-%   - normxcorr2 cols: [orig_interp2_time new_interp2_time orig_disp_time new_disp_time]
-%   - fourier_xc cols: [normxcorr_time fourier_xc_time orig_disp_time new_disp_time]
-%       fourier_xc also takes takes in interp2 and qinterp2 times
-%
-%   - normxcorr2 averages: [0.00165434, 0.0017847793333333334, 0.021319013333333338, 0.018772909999999997]
-%
-%   - fourier_xc averages: [0.010571056666666667, 0.008897223333333334, 0.13102506666666666, 0.12615038333333334]
-

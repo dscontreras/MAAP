@@ -1,5 +1,4 @@
 function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template,rect, img, xtemp, ytemp, precision, displacement, res)
-
 min_displacement = 2; %pixel unit
 Xm =40*10^(-6); %distance according to chip dimensions in microns
 Xp = 184.67662; %distance according image in pixels. Correspond to Xm
