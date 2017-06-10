@@ -1,7 +1,7 @@
 function rect = find_rect(videoReader, templateFilePath)
     firstFrame = rgb2gray(readFrame(videoReader));
     template = rgb2gray(imread(templateFilePath));
-
+    
     %-- Adapted from https://stackoverflow.com/a/32664730
     frameWidth = size(firstFrame, 2);
     frameHeight = size(firstFrame, 1);

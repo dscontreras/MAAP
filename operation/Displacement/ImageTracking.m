@@ -1,6 +1,6 @@
 %%    ************************** Initialization *************************
 
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/55V_2017-05-26-151326-0000.avi');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_1.avi');
 vWidth = v.Width;
 vHeight = v.Height;
 
@@ -10,8 +10,9 @@ mov = struct('cdata',zeros(vHeight,vWidth,3,'uint8'),'colormap',[]);
 displacement = 50; % I need to ensure that displacement and the width/height of the template match up. 
 % An easy fix would be to affect search_area_width/height. 
 % Make everything even
-% original: rect = [730, 550, 70, 30];
-rect = find_rect(v, 'template.png');
+% 45V_1: rect = [730, 550, 70, 30];
+%rect = [584, 493, 74, 35];
+rect = find_rect(v, 'template.png')
 
 originalFrame = rgb2gray(readFrame(v));
 mov(1).cdata = originalFrame;
