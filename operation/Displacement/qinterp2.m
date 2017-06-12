@@ -1,6 +1,6 @@
 % Reference:
 % https://www.mathworks.com/matlabcentral/fileexchange/10772-fast-2-dimensional-interpolation
-function Zi = qinterp2(X,Y,Z,xi,yi,methodflag)
+function Zi = qinterp2(X,Y,Z,xi,yi,precision, methodflag)
 %QINTERP2 2-dimensional fast interpolation
 % qinterp2 provides a speedup over interp2 in the same way that
 % qinterp1 provides a speedup over interp1
@@ -13,6 +13,7 @@ function Zi = qinterp2(X,Y,Z,xi,yi,methodflag)
 %           flag = 0       - Nearest-neighbor
 %           flag = 1       - Triangular-mesh linear interpolation.
 %           flag = 2       - Bilinear (equivalent to MATLAB's 'linear')
+%           flag = 3       - Bicubic 
 %
 % Usage restrictions
 %   X(:,n) and Y(m,:) must be monotonically and evenly increasing
@@ -70,7 +71,7 @@ end
 %}
 
 % Decide the interpolation method
-if nargin>=6
+if nargin>=7
     method = methodflag;
 else
     method = 2; % Default to bilinear
@@ -81,10 +82,8 @@ ndx = 1/(X(1,2)-X(1,1));    ndy = 1/(Y(2,1)-Y(1,1));
 % Begin mapping xi and yi vectors onto index space by subtracting library
 % array minima and scaling to index spacing
 xi = (xi - X(1,1))*ndx;       yi = (yi - Y(1,1))*ndy;
-
 % Fill Zi with NaNs
-Zi = NaN*ones(size(xi));
-
+Zi = 0*ones(size(xi));
 switch method
     
     % Nearest-neighbor method
@@ -138,6 +137,9 @@ switch method
             Z(ind1(flag2)).*(1-dfyi(flag2)) +...
             Z(ind4(flag2)).*(dfyi(flag2)-dfxi(flag2)) +...
             Z(ind3(flag2)).*dfxi(flag2);
+        [rows, cols] = size(Z);
+        Zi(end-1:end,:) = Zi(end-2:end-1,:) + precision * cols;
+        Zi(:,end-1:end) = Zi(:,end-2:end-1) + precision;
 
     case 2 % Bilinear interpolation
         % Code is cloned from above for speed
@@ -166,8 +168,32 @@ switch method
             Z(ind2).*dfxi.*(1-dfyi) + ...
             Z(ind4).*(1-dfxi).*dfyi + ...
             Z(ind3).*dfxi.*dfyi;
+        [rows, cols] = size(Z);
+        %Zi(end-1:end,:) = Zi(end-2:end-1,:) + precision * cols;
+        %Zi(:,end-1:end) = Zi(:,end-2:end-1) + precision;
     case 3 % bicubic interpolation 
-        %%% TODO: Implement bicubic interpolation for this %%% 
+        % Code is cloned from above for speed
+        % Transform to unit square
+        fxi = floor(xi)+1;  fyi = floor(yi)+1;   % x_i and y_i
+        dfxi = xi-fxi+1;    dfyi = yi-fyi+1;     % Location in unit square
+        
+        % flagIn determines whether the requested location is inside of the
+        % library arrays
+        flagIn = fxi>0 & fxi<librarySize(2) & ~isnan(fxi) &...
+            fyi>0 & fyi<librarySize(1) & ~isnan(fyi);
+        
+        % Toss all out-of-bounds variables now to save time
+        fxi = fxi(flagIn); fyi = fyi(flagIn);
+        dfxi = dfxi(flagIn); dfyi = dfyi(flagIn);
+        
+        % Find bounding vertices
+        ind1 = fyi + librarySize(1)*(fxi-1);     % Indices of (  x_i  ,  y_i  )
+        ind2 = fyi + librarySize(1)*fxi;         % Indices of ( x_i+1 ,  y_i  )
+        ind3 = fyi + 1 + librarySize(1)*fxi;     % Indices of ( x_i+1 , y_i+1 )
+        ind4 = fyi + 1 + librarySize(1)*(fxi-1); % Indices of (  x_i  , y_i+1 )
+        
+        % Bicubic interpolation
+        
     otherwise
         error('Invalid method flag');
         

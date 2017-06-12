@@ -1,7 +1,7 @@
 function ImTest()
     clc;
-    v = VideoReader('displacement_video.avi');
-    vidRead = vision.VideoFileReader('displacement_video.avi');
+    v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_1.avi');
+    vidRead = vision.VideoFileReader('/Users/timmytimmyliu/research/maap/videos/50V_1.avi');
     avg = 0;
     avg2 = 0;
 %     while(hasFrame(v))
