@@ -1,4 +1,4 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_3.avi');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/30V_1.avi');
 vWidth = v.Width;
 vHeight = v.Height;
 %rect = [730, 550, 70, 30];
@@ -14,6 +14,7 @@ while v.hasFrame
     mov(k).cdata = frame;
     k = k + 1;
 end
+k
 template = imcrop(originalFrame, rect);
 img = mov(21).cdata;
 displacement = 50;
@@ -21,7 +22,7 @@ xtemp = rect(1);
 ytemp = rect(2);
 precision = 0.5; 
 res = 0.5; 
-i = 0;
+
 tic
 [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
 disp = toc;
@@ -38,14 +39,13 @@ tic
 [xoffSet3, yoffSet3, dispx3,dispy3,x3, y3, c13] = meas_displacement4(template, rect, img, xtemp, ytemp, precision, displacement, res);
 disp3 = toc;
 
-    %times = [disp disp1 disp2 disp3];
-    %dlmwrite('new_disp_times.dat', times, '-append');
+times = [disp disp1 disp2 disp3];
+    dlmwrite('disp_times2.dat', times, '-append');
     % Video: 50V_1.avi; 30 trials:
     % col1: interp2 and normxcorr2 (original): 0.01586208500000001
     % col2: *interp2 and normxcorr2: 0.015590505
     % col3: interp2 and fourier_xc: 0.022950125
     % col4: *interp2 and fourier_xc: 0.02235597499999999
-    i = i+1;
 %{
 % Is meas_displacement == meas_displacement2
 xoffSet == xoffSet1
@@ -69,7 +69,7 @@ y == y2
 c1 == c12 
 %}
 
-
+%{
 % Is meas_displacement == meas_displacement4
 xoffSet == xoffSet3
 yoffSet == yoffSet3
@@ -77,5 +77,6 @@ dispx == dispx3
 dispy == dispy3
 x == x3
 y == y3
-c1 == c13 
+c1 == c13
+ %}
 

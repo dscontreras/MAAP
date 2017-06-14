@@ -31,7 +31,7 @@ classdef DataCollector < Operation
             timestamp = datestring;
         end  
     end
-    
+
     methods
         function obj = DataCollector(start_check_callback, output_folder_path, format, error_report_handle)
             obj.valid = true;
@@ -86,7 +86,6 @@ classdef DataCollector < Operation
                 end
             end
         end
-    end
-    
+    end   
 end
 

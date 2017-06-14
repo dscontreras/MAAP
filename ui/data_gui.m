@@ -855,12 +855,12 @@ function preview_start_Callback(btn, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %TODO: Let user select which camera feed they want to use for live preview
-if(isempty(videoinput('pointgrey')))
-    error('Video input: Pointgrey does not exist!');
+if(isempty(videoinput('macvideo')))
+    error('Video input: macvideo does not exist!');
 else
     setappdata(0, 'preview_done', false);
     set(handles.image_cover, 'Visible', 'Off');
-    stream = videoinput('pointgrey');
+    stream = videoinput('macvideo');
     set(stream, 'FramesPerTrigger', Inf);
     triggerconfig(stream, 'manual');
     start(stream);
@@ -871,7 +871,6 @@ else
         drawnow;
     end
 end
-
 
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
