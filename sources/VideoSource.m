@@ -22,7 +22,7 @@ classdef (Abstract) VideoSource < handle
     
     methods 
         function gpu_supported = determine_gpu_support(obj)
-            if(strcmp(SysInfo.get_os(), 'Windows'))
+            if(strcmp(getenv('OS'), 'Windows'))
                 gpu_supported = true;
             else
                 gpu_supported = false;

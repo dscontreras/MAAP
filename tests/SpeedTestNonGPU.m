@@ -5,8 +5,9 @@ function SpeedTestNonGPU()
             tic;
             set(im, 'CData', randi(720, 720, 'uint8'));
             n = toc;
-            avg = 
+            avg = avg + n; 
         end
+        avg = avg / 100
         drawnow;
 end
 

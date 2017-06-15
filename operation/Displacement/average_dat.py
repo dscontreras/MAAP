@@ -1,6 +1,6 @@
 """ Averages columns in .dat files. Assumes only four columns in file """
 
-file = open('disp_times.dat')
+file = open('not_drawnow_times.dat')
 values = []
 for line in file:
     values += line.split()
