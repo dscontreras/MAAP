@@ -14,21 +14,14 @@ search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
-%PERFORM NORMALIZED CROSS-CORRELATION
-%Note: Jessica tried to perform Gradient Descent NCC Surface but
-%the timing was problematic.  The NCC Surface algorithm only
-%accepted entire images, and was subsequently too slow.
- c = normxcorr2(template, search_area); %So perform normalized cross correlation to find where the
-                                        %template is in the image right now
+c = normxcorr2(template, search_area);
 
-%FIND PEAK CROSS-CORRELATION
-[ypeak, xpeak] = find(c==max(c(:))); %find where the template's starting x and y's are in the image
+[ypeak, xpeak] = find(c==max(c(:)));
+
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
-
 %% ************************** SUBPIXEL PRECISION COORDINATES *************************
-
 %GENERATE MOVED TEMPLATE
 %new_xmin = (xpeak-xtemp) + rect(1); 
 new_xmin = (xpeak-rect(3));
@@ -54,7 +47,9 @@ interp_template = im2double(template);
 [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes 
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
-interp_template = interp2(X,Y,V,Xq,Yq, 'cubic'); %perform the bicubic interpolation
+
+interp_template = interp2(X,Y,V,Xq,Yq, 'nearest'); %perform the bicubic interpolation
+
 
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
 interp_search_area = im2double(new_search_area);
@@ -62,7 +57,9 @@ interp_search_area = im2double(new_search_area);
 [X,Y] = meshgrid(1:numCols,1:numRows);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
-interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');   
+
+interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
+
 
 
  %PERFORM NORMALIZED CROSS-CORRELATION
@@ -88,6 +85,5 @@ dispx = x * res;
 dispy = y * res;
     
     
-
 end
 
