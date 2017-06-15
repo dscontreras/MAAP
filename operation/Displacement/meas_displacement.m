@@ -48,7 +48,7 @@ interp_template = im2double(template);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
 
-interp_template = interp2(X,Y,V,Xq,Yq, 'nearest'); %perform the bicubic interpolation
+interp_template = interp2(X,Y,V,Xq,Yq, 'cubic'); 
 
 
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
@@ -58,7 +58,7 @@ interp_search_area = im2double(new_search_area);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
 
-interp_search_area = interp2(X,Y,V,Xq,Yq, 'nearest'); 
+interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic'); 
 
 
 

@@ -79,7 +79,6 @@ classdef Displacement < RepeatableOperation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
-            %imrect(obj.axes,[obj.xtemp, obj.ytemp, size(obj.template,2), size(obj.template,1)]);
         end
         
         function execute(obj)  
@@ -100,8 +99,8 @@ classdef Displacement < RepeatableOperation
               end              
               %draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
               %set(obj.im, 'CData', gather(obj.current_frame));
-              obj.im.CData = gather(obj.current_frame);
-              %imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+              obj.im.CData 
+              imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
@@ -111,9 +110,7 @@ classdef Displacement < RepeatableOperation
               xoff3 = obj.xoff;
               yoff3 = obj.yoff;
               save('gpu_displacement.mat', 'xoff3', 'yoff3');              
-              drawnow limitrate nocallbacks;  %-- 20ish seconds
-              %drawnow; %-- 48ish seconds 
-              %pause(0.001); %-- 32ish seconds
+              drawnow limitrate nocallbacks;  
         end
 
         %error_tag is now deprecated
