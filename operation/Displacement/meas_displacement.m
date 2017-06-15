@@ -14,10 +14,11 @@ search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
+"\tNormxCorr2"
 c = normxcorr2(template, search_area);
 
 [ypeak, xpeak] = find(c==max(c(:)));
-
+toc
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
 
@@ -59,15 +60,16 @@ interp_search_area = im2double(new_search_area);
 V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic'); 
-
-
+"\tInterpolation"
+toc
 
  %PERFORM NORMALIZED CROSS-CORRELATION
  c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
 
 %FIND PEAK CROSS-CORRELATION
 [new_ypeak, new_xpeak] = find(c1==max(c1(:)));  
-
+"\t Normxcorr2 2"
+toc
 new_xpeak = new_xpeak/(1/precision);
 new_ypeak = new_ypeak/(1/precision);
 new_xpeak = new_xpeak+round(new_search_area_rect(1));

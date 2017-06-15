@@ -103,7 +103,7 @@ classdef Queue < handle
                         obj.list{i}.new = false;
                         obj.list{i}.startup();
                     end
-                    if(isempty(obj.list{i}.rx_data))
+                    if(isempty(obj.list{i}.rx_data))                      
                         obj.list{i}.execute();
                     else
                         inputs = obj.retrieve_operation_inputs(obj.list{i});
