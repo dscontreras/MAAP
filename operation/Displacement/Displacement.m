@@ -79,11 +79,11 @@ classdef Displacement < RepeatableOperation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
-            %imrect(obj.axes,[obj.xtemp, obj.ytemp, size(obj.template,2), size(obj.template,1)]);
         end
         
         function execute(obj)  
-            obj.current_frame = grab_frame(obj.vid_src, obj);
+            %obj.current_frame = grab_frame(obj.vid_src, obj);
+            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
               if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
@@ -97,23 +97,25 @@ classdef Displacement < RepeatableOperation
                 else
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
-              end              
-              %draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
-              %set(obj.im, 'CData', gather(obj.current_frame));
-              obj.im.CData = gather(obj.current_frame);
-              %imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+              end
+              obj.im.CData = obj.current_frame;
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
               obj.outputs('done') = obj.check_stop();
+              if obj.check_stop()
+                  % draws rect around last location of template in blue %
+                  draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
+                  % draws rect around first location of template in red %
+                  h = imrect(obj.axes, [obj.rect(1), obj.rect(2), obj.rect(3), obj.rect(4)]);
+                  setColor(h, 'red');
+              end
               obj.xoff = [obj.xoff xoffSet];
               obj.yoff = [obj.yoff yoffSet];
               xoff3 = obj.xoff;
               yoff3 = obj.yoff;
-              save('gpu_displacement.mat', 'xoff3', 'yoff3');              
-              drawnow limitrate nocallbacks;  %-- 20ish seconds
-              %drawnow; %-- 48ish seconds 
-              %pause(0.001); %-- 32ish seconds
+              save('gpu_displacement.mat', 'xoff3', 'yoff3');    
+              drawnow limitrate nocallbacks;
         end
 
         %error_tag is now deprecated
