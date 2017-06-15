@@ -19,6 +19,13 @@ classdef Displacement < RepeatableOperation
         res;
         xoff;
         yoff;
+        
+        % Properties for use when using fft2
+        fft_conj_template;
+        template_padded;
+        template_grayscale_inverted;
+        search_area_width;
+        search_area_height;
     end
 
     properties (SetAccess = public)
@@ -59,6 +66,7 @@ classdef Displacement < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
+            
             if(nargin > 9) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
@@ -79,18 +87,33 @@ classdef Displacement < RepeatableOperation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+            obj.rect = ceil(obj.rect); 
+            
+            % Begin Fourier Method Code
+            obj.search_area_width = 2*obj.max_displacement + obj.rect(3);
+            obj.search_area_height = 2*obj.max_displacement + obj.rect(4);
+            
+            obj.template_grayscale_inverted = (120 - obj.template)*2; % Assumes image is 255 bit grayscale
+            obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
+            obj.fft_conj_template = conj(fft2(obj.template_padded));
+            
         end
         
         function execute(obj)  
             %obj.current_frame = grab_frame(obj.vid_src, obj);
             obj.current_frame = gather(grab_frame(obj.vid_src, obj)); 
-              if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
+            tic
+            if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    tic;
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    toc
+                    "End1"
+                    tic
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res, obj.fft_conj_template);
+                    "End2"
                     toc
                 end
               else
@@ -99,7 +122,8 @@ classdef Displacement < RepeatableOperation
                 else
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
-              end
+            end
+              
               obj.im.CData = obj.current_frame;
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
