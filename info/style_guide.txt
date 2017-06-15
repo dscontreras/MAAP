@@ -1,0 +1,13 @@
+STYLE GUIDE:
+
+Functions:
+Function names will be formatted the following way: function_name().  That is, there will be underscores separating words
+and no capital letters. Function contents will be indented by tabs, and all loops and conditionals will be further indented.
+
+Variable Names:
+Variable names will feature underscore separations and no capital letters.
+
+Class Names:
+Class names will be formatted with camel-case.
+
+These formatting guidelines must be followed in order to create clean code.  

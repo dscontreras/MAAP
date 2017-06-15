@@ -1123,3 +1123,18 @@ global q;
 q.stop_execution();
 
 function data_collect_check_Callback(hObject, eventdata, handles)
+<<<<<<< HEAD
+% hObject    handle to data_collect_check (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of data_collect_check
+
+
+% --- Executes on button press in pushbutton32.
+function pushbutton32_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton32 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+=======
+>>>>>>> c63f005bb3fb8cf50f46825012cc74399c784294
