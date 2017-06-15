@@ -17,15 +17,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-function [template, rect, xtemp, ytemp, A,rectangle] = get_template(gray, displayObj)
+function [template, rect, xtemp, ytemp] = get_template(gray, displayObj)
 
     %DEFINE TEMPLATE - Obtained from interpolated image
     [template, rect] = showCrop(displayObj, gray);
-      
+    
     %PERFORM NORMALIZED CROSS-CORRELATION
     c = normxcorr2(template,gray);
     
     %FIND PEAK CROSS-CORRELATION
-    [ytemp, xtemp] = find(c==max(c(:)));
-    [numRows,numCols,dim] = size(template);    
+    [ytemp, xtemp] = find(c==max(c(:)));    
 end

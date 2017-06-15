@@ -116,7 +116,7 @@ function browse_button_Callback(hObject, eventdata, handles)
 % hObject    handle to browse_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-filename = uigetfile;
+filename = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
 if filename ~= 0
     setappdata(0, 'img_path', filename);
 else

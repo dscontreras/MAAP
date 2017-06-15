@@ -86,33 +86,40 @@ classdef Displacement < RepeatableOperation
        
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
-            obj.rect = ceil(obj.rect); 
-            
-            % Begin Fourier Method Code
-            obj.search_area_width = 2*obj.max_displacement + obj.rect(3);
-            obj.search_area_height = 2*obj.max_displacement + obj.rect(4);
-            
-            obj.template_grayscale_inverted = (120 - obj.template)*2; % Assumes image is 255 bit grayscale
-            obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
-            obj.fft_conj_template = conj(fft2(obj.template_padded));
+            path = getappdata(0, 'img_path');
+            % if template path is specified, use path. Else use user input%
+            if ~strcmp(path,'')
+                %[obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes)
+                [obj.rect, obj.xtemp, obj.ytemp] = find_rect(obj.vid_src.get_filepath(), path);
+                obj.template = imcrop(obj.current_frame, obj.rect);
+            else
+                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+                obj.rect = ceil(obj.rect); 
+
+                % Begin Fourier Method Code
+                obj.search_area_width = 2*obj.max_displacement + obj.rect(3);
+                obj.search_area_height = 2*obj.max_displacement + obj.rect(4);
+
+                obj.template_grayscale_inverted = (120 - obj.template)*2; % Assumes image is 255 bit grayscale
+                obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
+                obj.fft_conj_template = conj(fft2(obj.template_padded));
+            end
             
         end
         
         function execute(obj)  
-            %obj.current_frame = grab_frame(obj.vid_src, obj);
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj)); 
+            obj.current_frame = grab_frame(obj.vid_src, obj);
             %tic
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_f(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     %toc
                     %"End1"
                     %tic
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res, obj.fft_conj_template);
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res, obj.fft_conj_template);
                     %"End2"
                     %toc
                 end
@@ -123,8 +130,6 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-              
-              obj.im.CData = obj.current_frame;
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
@@ -141,7 +146,7 @@ classdef Displacement < RepeatableOperation
               xoff3 = obj.xoff;
               yoff3 = obj.yoff;
               save('gpu_displacement.mat', 'xoff3', 'yoff3');    
-              drawnow limitrate nocallbacks;
+              drawnow;
         end
 
         %error_tag is now deprecated

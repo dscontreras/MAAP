@@ -1,4 +1,5 @@
-function rect = find_rect(videoReader, templateFilePath)
+function [rect, xpeak, ypeak] = find_rect(video, templateFilePath)
+    videoReader = VideoReader(video);
     firstFrame = rgb2gray(readFrame(videoReader));
     template = rgb2gray(imread(templateFilePath));
     

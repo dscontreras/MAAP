@@ -50,6 +50,9 @@ classdef FileSource < VideoSource
                end
         end
         
+        function filepath = get_filepath(obj)
+            filepath = obj.filepath; 
+        end
     end
     
 end
