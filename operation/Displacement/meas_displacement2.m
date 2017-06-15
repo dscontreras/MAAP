@@ -54,8 +54,8 @@ interp_template = im2double(template);
 [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes 
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
 V=interp_template; %copy interp_template into V
-%interp_template = qinterp2(X,Y,V,Xq,Yq, precision, 2);
-interp_template = interp2(X,Y,V,Xq,Yq, '*cubic');
+interp_template = qinterp2(X,Y,V,Xq,Yq, 0);
+%interp_template = interp2(X,Y,V,Xq,Yq, '*cubic');
 
 
 % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
@@ -64,8 +64,8 @@ interp_search_area = im2double(new_search_area);
 [X,Y] = meshgrid(1:numCols,1:numRows);
 [Xq,Yq]= meshgrid(1:precision:numCols,1:precision:numRows);
 V=interp_search_area;
-%interp_search_area = qinterp2(X,Y,V,Xq,Yq, precision, 2);   
-interp_search_area = interp2(X,Y,V,Xq,Yq, '*cubic');
+interp_search_area = qinterp2(X,Y,V,Xq,Yq, 0);   
+%interp_search_area = interp2(X,Y,V,Xq,Yq, '*cubic');
 
  %PERFORM NORMALIZED CROSS-CORRELATION
  c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images

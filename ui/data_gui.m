@@ -906,7 +906,9 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             q.add_to_queue(d);
         end
     end
+    tic;
     q.run_to_finish();
+    toc
     if(q.finished())
         q.delete();
     end

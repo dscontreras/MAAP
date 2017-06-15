@@ -107,8 +107,8 @@ classdef Queue < handle
                         obj.list{i}.execute();
                     else
                         inputs = obj.retrieve_operation_inputs(obj.list{i});
-                        obj.list{i}.execute(inputs);
-                    end
+                        obj.list{i}.execute(inputs); 
+                    end                   
                     if(isa(obj.list{i}, 'RepeatableOperation'))
                         stopped = obj.list{i}.check_stop();
                     else

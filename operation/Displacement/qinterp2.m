@@ -1,6 +1,6 @@
 % Reference:
 % https://www.mathworks.com/matlabcentral/fileexchange/10772-fast-2-dimensional-interpolation
-function Zi = qinterp2(X,Y,Z,xi,yi,precision, methodflag)
+function Zi = qinterp2(X,Y,Z,xi,yi, methodflag)
 %QINTERP2 2-dimensional fast interpolation
 % qinterp2 provides a speedup over interp2 in the same way that
 % qinterp1 provides a speedup over interp1
@@ -137,9 +137,7 @@ switch method
             Z(ind1(flag2)).*(1-dfyi(flag2)) +...
             Z(ind4(flag2)).*(dfyi(flag2)-dfxi(flag2)) +...
             Z(ind3(flag2)).*dfxi(flag2);
-        [rows, cols] = size(Z);
-        Zi(end-1:end,:) = Zi(end-2:end-1,:) + precision * cols;
-        Zi(:,end-1:end) = Zi(:,end-2:end-1) + precision;
+
 
     case 2 % Bilinear interpolation
         % Code is cloned from above for speed
