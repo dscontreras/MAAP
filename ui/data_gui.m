@@ -22,12 +22,6 @@ function varargout = data_gui(varargin)
 
 % Edit the above text to modify the response to help data_gui
 
-<<<<<<< HEAD
-% Last Modified by GUIDE v2.5 22-May-2017 14:15:13
-=======
-% Last Modified by GUIDE v2.5 18-May-2017 17:07:11
->>>>>>> 792efc94ad08a6bcbd056d1becf33e1117e1448a
-
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -1119,7 +1113,6 @@ else
 end
 % Hint: get(hObject,'Value') returns toggle state of file_type
 
-<<<<<<< HEAD
 % --- Executes on button press in end_operation.
 function end_operation_Callback(hObject, eventdata, handles)
 % hObject    handle to end_operation (see GCBO)
@@ -1134,11 +1127,10 @@ function data_collect_check_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of data_collect_check
-=======
+
 
 % --- Executes on button press in pushbutton32.
 function pushbutton32_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
->>>>>>> 792efc94ad08a6bcbd056d1becf33e1117e1448a
