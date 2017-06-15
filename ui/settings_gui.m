@@ -22,7 +22,7 @@ function varargout = settings_gui(varargin)
 
 % Edit the above text to modify the response to help settings_gui
 
-% Last Modified by GUIDE v2.5 01-Feb-2017 16:29:57
+% Last Modified by GUIDE v2.5 15-Jun-2017 14:29:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -31,7 +31,8 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OpeningFcn', @settings_gui_OpeningFcn, ...
                    'gui_OutputFcn',  @settings_gui_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+                   'gui_Callback',   [] , ...
+                   'browse_button', @browse_button_Callback);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -108,3 +109,26 @@ function start_path_submit_Callback(btn, eventdata, handles)
 new_start_path = get(handles.start_path_edit, 'String');
 %Store the new start path value as sys_start_path in the application data
 setappdata(0, 'sys_start_path', new_start_path);
+
+
+% --- Executes on button press in browse_button.
+function browse_button_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile;
+if filename ~= 0
+    setappdata(0, 'img_path', filename);
+else
+    setappdata(0, 'img_path', '');
+end
+
+function browse_button_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+function browse_button_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
