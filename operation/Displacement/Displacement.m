@@ -105,15 +105,15 @@ classdef Displacement < RepeatableOperation
             % Begin Fourier Method Code
             obj.search_area_width   = 2*obj.max_displacement + obj.rect(3);
             obj.search_area_height  = 2*obj.max_displacement + obj.rect(4);
-            obj.template_mean       = mean(mean(template));
+            obj.template_mean       = mean(mean(obj.template));
             
             % Make sure that when darks match up in both the
             % image/template, they count toward the correlation
             % We subtract from the mean as we know that darks are the
             % edges. 
-            obj.processed_template  = obj.template_mean - template; 
+            obj.processed_template  = obj.template_mean - obj.template; 
             
-            obj.fft_conj_processed_template = conj(fft2(obj.processed_tempate, obj.search_area_height, obj.sesarch_area_width));
+            obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height, obj.search_area_width));
         end
         
         function execute(obj)  
@@ -221,7 +221,7 @@ classdef Displacement < RepeatableOperation
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj)
             %% Whole Pixel Precision Coordinates
             
-            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
+            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, search_area, search_area_height, search_area_width, rect, 120);
             
             % Put the new min values relative to img, not search_area
             new_xmin = xpeak+round(search_area_rect(1))-1; 
