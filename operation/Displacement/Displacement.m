@@ -156,18 +156,17 @@ classdef Displacement < RepeatableOperation
             %% Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
+            
             c = normxcorr2(obj.template, search_area);
             [ypeak, xpeak] = find(c==max(c(:)));
+            ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
+            xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
              
-            % Shouldn't we be subtracting to account for normxcorr2
-            % padding? 
-            xpeak = xpeak + round(search_area_rect(1)) - 1;%move xpeak to the other side of the template rect.
-            ypeak = ypeak + round(search_area_rect(2)) - 1;%move ypeak down to the bottom of the template rect.
             %% Subpixel Precision Coordinates
             
-            % What? 
-            new_xmin = xpeak - obj.rect(3);
-            new_ymin = ypeak - obj.rect(4);
+            % put the new min values relative to img, not search_area
+            new_xmin = xpeak + round(search_area_rect(1)) - 1;
+            new_ymin = ypeak + round(search_area_rect(2)) - 1;
             [moved_templated, displaced_rect] = imcrop(img, [new_xmin new_ymin, obj.rect(3) obj.rect(4)]);
             
             new_search_area_xmin = new_xmin - obj.min_displacement;
@@ -221,12 +220,12 @@ classdef Displacement < RepeatableOperation
             %% Whole Pixel Precision Coordinates
             
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
-            xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
-            ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
+            
+            % Put the new min values relative to img, not search_area
+            new_xmin = xpeak+round(search_area_rect(1))-1; 
+            new_ymin = ypeak+round(search_area_rect(2))-1; 
         
             %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
-            new_xmin = xpeak - obj.rect(3);
-            new_ymin = ypeak - obj.rect(4);
             [moved_templated, displaced_rect] = imcrop(img, [new_xmin new_ymin, obj.rect(3) obj.rect(4)]);
             
             new_search_area_xmin = new_xmin - obj.min_displacement;
@@ -306,11 +305,6 @@ classdef Displacement < RepeatableOperation
                 r = ifft2(R);
                 
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
-                
-                % Add the template size to the get right most corner rather than the
-                % origin to match the output of normxcorr2
-                ypeak = ypeak + obj.rect(4) - 1;
-                xpeak = xpeak + obj.rect(3) - 1;
             end
 
         

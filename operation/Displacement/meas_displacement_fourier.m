@@ -15,7 +15,7 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
 %"\tFourier"
-[ypeak, xpeak, maxval] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
+[ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
 
 %toc
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
