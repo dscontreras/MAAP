@@ -93,6 +93,10 @@ classdef (Abstract) Operation < handle
             obj.error_report_handle = handle;
         end
         
+        function bool = check_stop(obj)
+            bool = true;
+        end
+        
     end
     
 end
