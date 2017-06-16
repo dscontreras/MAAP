@@ -91,8 +91,8 @@ classdef Displacement < RepeatableOperation
             if ~strcmp(path,'')
                 %[obj.template, obj.rect, xtemp, ytemp] = get_template(obj.current_frame, obj.axes);
                 [obj.rect, obj.xtemp, obj.ytemp] = find_rect(obj.vid_src.get_filepath(), path);
-                obj.template = gather(grab_frame(obj.vid_src, obj));
-                obj.template = imcrop(obj.template, obj.rect);
+                obj.template = imcrop(obj.current_frame, obj.rect);
+                imshow(obj.template)
             else
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
                 obj.rect = ceil(obj.rect); 
@@ -105,7 +105,6 @@ classdef Displacement < RepeatableOperation
                 obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
                 obj.fft_conj_template = conj(fft2(obj.template_padded));
             end
-            
         end
         
         function execute(obj)  
@@ -131,7 +130,8 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-              obj.im.CData = gather(obj.current_frame);
+              % this is making the frames yellow for some reason % 
+              set(obj.im, 'CData', gather(obj.current_frame));
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
