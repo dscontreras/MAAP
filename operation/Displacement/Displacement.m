@@ -301,7 +301,7 @@ classdef Displacement < RepeatableOperation
                 % fourier transforms of the signals f, g
                 R = dtft_of_frame.*fft_conj_template;
                 R = R./abs(R); % normalize to get rid of values related to intensity of light
-                r = ifft2(R);
+                r = real(ifft2(R)); 
                 
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
         end
