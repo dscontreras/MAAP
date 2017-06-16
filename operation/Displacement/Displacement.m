@@ -219,7 +219,7 @@ classdef Displacement < RepeatableOperation
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj)
             %% Whole Pixel Precision Coordinates
             
-            [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
+            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
             xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
             ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
         
@@ -274,6 +274,44 @@ classdef Displacement < RepeatableOperation
             dispy = y * obj.res;
             
         end
+        
+        function [xpeak, ypeak] = fouier_cross_correlation(obj, fft_conj_template, search_area, search_area_height, search_area_width, grayscale_inversion)
+                
+                % TEMPLATE and SEARCH_AERA should be grayscaled images
+                % Performs cross correlation of SEARCH_AREA and TEMPLATE
+                % is not normalized and differs from normxcorr2
+                % GRAYSCALE_INVERSION is the value used to invert the image
+                % if it's a 255 bit image, it should be 120
+                % if it's not (an the values range from 0...1, it should be 0.5
+                % Or at least, I've had the most luck with these values
+                % These values were gotten experimentally, they may need to be tweaked
+                
+                
+                % Some image preprocessing; Assumes a gray scale image and inverts the
+                % colors to make the edges stand out
+                search_area = (grayscale_inversion-search_area)*4.5; % To ensure that motion blur doesn't "erase" critical contours
+                
+                % Pad search_area; Necessary to avoid corruption at edges
+                search_area_padded = padarray(search_area, [search_area_height, search_area_width], 'post');
+                
+                % Find the DTFT of the two
+                dtft_of_frame = fft2(search_area_padded);
+                
+                % Take advantage of the correlation theorem
+                % Corr(f, g) <=> element multiplication of F and conj(G) where F, G are
+                % fourier transforms of the signals f, g
+                R = dtft_of_frame.*fft_conj_template;
+                R = R./abs(R); % normalize to get rid of values related to intensity of light
+                r = ifft2(R);
+                
+                [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
+                
+                % Add the template size to the get right most corner rather than the
+                % origin to match the output of normxcorr2
+                ypeak = ypeak + obj.rect(4) - 1;
+                xpeak = xpeak + obj.rect(3) - 1;
+            end
+
         
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
