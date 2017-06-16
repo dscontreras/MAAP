@@ -1,10 +1,10 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/45V_1.avi');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_3.mov');
 vWidth = v.Width;
 vHeight = v.Height;
 %rect = [730, 550, 70, 30];
 %rect = [584, 493, 74, 35];
-rect = [731, 550, 74, 35];
-rect2 = find_rect(v, 'template.png') 
+%rect = [731, 550, 74, 35];
+%rect2 = find_rect(v, 'template.png') 
 originalFrame = rgb2gray(readFrame(v));
 k = 1;
 mov = struct('cdata',zeros(vHeight,vWidth,3,'uint8'),'colormap',[]);
@@ -15,6 +15,8 @@ while v.hasFrame
     mov(k).cdata = frame;
     k = k + 1;
 end
+k
+%{
 template = imcrop(originalFrame, rect);
 img = mov(21).cdata;
 displacement = 50;
@@ -33,6 +35,7 @@ while i < k - 1
     end
     i = i + 1;
 end
+%}
 %{
 tic
 [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);

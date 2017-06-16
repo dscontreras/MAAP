@@ -25,7 +25,7 @@ function varargout = settings_gui(varargin)
 % Last Modified by GUIDE v2.5 16-Jun-2017 11:16:07
 
 % Begin initialization code - DO NOT EDIT
-
+default_settings = [];
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -54,18 +54,11 @@ function settings_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to settings_gui (see VARARGIN)
 
-% Checks if user chose a template previously. If so, display it. %
-img_path = getappdata(0, 'img_path');
-if ~strcmp(img_path, '')
-    set(handles.selected_file, 'String', img_path);
-end
-
 % Choose default command line output for settings_gui
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
-
 
 % UIWAIT makes settings_gui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -118,6 +111,7 @@ new_start_path = get(handles.start_path_edit, 'String');
 %Store the new start path value as sys_start_path in the application data
 setappdata(0, 'sys_start_path', new_start_path);
 
+
 % --- Executes on button press in browse_button.
 function browse_button_Callback(hObject, eventdata, handles)
 % hObject    handle to browse_button (see GCBO)
@@ -131,12 +125,15 @@ else
     setappdata(0, 'img_path', '');
     set(handles.selected_file, 'String', 'No file selected');
 end
-
 % --- Executes during object creation, after setting all properties.
 function selected_file_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to selected_file (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+img_path = getappdata(0, 'img_path');
+if ~strcmp(img_path, '')
+    set(handles.selected_file, 'String', img_path);
+end
 
 function browse_button_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to browse_button (see GCBO)
