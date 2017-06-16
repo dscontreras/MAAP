@@ -89,8 +89,11 @@ classdef Displacement < RepeatableOperation
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'')
-                [obj.rect, obj.xtemp, obj.ytemp] = find_rect(obj.vid_src.get_filepath(), path);
+                %[template, rect, xtemp1, ytemp1] = get_template(obj.current_frame, obj.axes);
+                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
+                obj.xtemp = 666
+                obj.ytemp = 528
                 imshow(obj.template)
             else
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
