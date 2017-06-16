@@ -89,7 +89,6 @@ classdef Displacement < RepeatableOperation
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'')
-                %[obj.template, obj.rect, xtemp, ytemp] = get_template(obj.current_frame, obj.axes);
                 [obj.rect, obj.xtemp, obj.ytemp] = find_rect(obj.vid_src.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 imshow(obj.template)
@@ -130,7 +129,6 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-              % this is making the frames yellow for some reason % 
               set(obj.im, 'CData', gather(obj.current_frame));
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
