@@ -94,6 +94,8 @@ classdef Displacement < RepeatableOperation
             obj.search_area_height = 2*obj.max_displacement + obj.rect(4);
             
             obj.template_grayscale_inverted = (120 - obj.template)*2; % Assumes image is 255 bit grayscale
+            
+            % + 1 needed as imcrop(I, rect) adds 1 to each dimension
             obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
             obj.fft_conj_template = conj(fft2(obj.template_padded));
             
@@ -102,19 +104,24 @@ classdef Displacement < RepeatableOperation
         function execute(obj)  
             %obj.current_frame = grab_frame(obj.vid_src, obj);
             obj.current_frame = gather(grab_frame(obj.vid_src, obj)); 
-            tic
+            %tic
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    toc
-                    "End1"
-                    tic
+%                     toc
+%                     "End1"
+%                     tic
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res, obj.fft_conj_template);
-                    "End2"
-                    toc
+%                     "End2"
+%                     toc
+                    if xoffSet ~= xoffSet | yoffSet ~= yoffSet
+                        "Fuck"
+                    else
+                        "Not Fuck"
+                    end
                 end
               else
                 if(obj.vid_src.gpu_supported)

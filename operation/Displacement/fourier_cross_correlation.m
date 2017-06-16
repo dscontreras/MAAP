@@ -10,15 +10,11 @@ function [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_ar
     % These values were gotten experimentally, they may need to be tweaked
 
     
-    % Some image preprocessing
-    % Assumes a grayscale image and inverts the colors to make the edges stand
-    % out
+    % Some image preprocessing; Assumes a gray scale image and inverts the
+    % colors to make the edges stand out
     search_area = (grayscale_inversion-search_area)*4.5; % To ensure that motion blur doesn't "erase" critical contours
 
-    % Pad search_area
-    % This is necessary because the convolution theorem/correlation theorem
-    % assumes that the images are periodic so without this padding there would
-    % be corruption at the edges
+    % Pad search_area; Necessary to avoid corruption at edges
     search_area_padded = padarray(search_area, [search_area_height, search_area_width], 'post');
     
     % Find the DTFT of the two
@@ -31,7 +27,6 @@ function [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_ar
     R = R./abs(R); % normalize to get rid of values related to intensity of light
     r = ifft2(R); 
     
-    % Find maximum value. 
     [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
 
     % Add the template size to the get right most corner rather than the
