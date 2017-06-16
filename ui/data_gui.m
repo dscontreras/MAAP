@@ -73,6 +73,7 @@ setappdata(0, 'pixel_precision', -1);
 setappdata(0, 'wait_status', 0);
 setappdata(0, 'cam_name', '');
 setappdata(0, 'outputfolderpath', [pwd FileSystemParser.get_file_separator() 'outputs']);
+setappdata(0, 'draw_rect', 0);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
@@ -898,7 +899,8 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
-        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res);
+        draw = getappdata(0, 'draw_rect');
+        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
         q.add_to_queue(displacement);
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
         if(get(handles.data_collect_check, 'Value'))
@@ -1144,3 +1146,14 @@ function reset_button_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 close(gcbf);
 data_gui;
+
+
+% --- Executes on button press in imrect_button.
+function imrect_button_Callback(hObject, eventdata, handles)
+% hObject    handle to imrect_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% determines whether button is toggled or not
+draw = get(hObject, 'Value');
+setappdata(0, 'draw_rect', draw);

@@ -19,6 +19,7 @@ classdef Displacement < RepeatableOperation
         res;
         xoff;
         yoff;
+        draw; % toggles imrect
         
         % Properties for use when using fft2
         fft_conj_template;
@@ -47,7 +48,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -66,8 +67,8 @@ classdef Displacement < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
-            
-            if(nargin > 9) %8 is the number of params for displacement
+            obj.draw = draw;
+            if(nargin > 10) % 9 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
         end
@@ -109,13 +110,10 @@ classdef Displacement < RepeatableOperation
         end
         
         function execute(obj)  
-            %obj.current_frame = grab_frame(obj.vid_src, obj);
             obj.current_frame = gather(grab_frame(obj.vid_src, obj)); 
-            %tic
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
@@ -126,18 +124,15 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-              set(obj.im, 'CData', gather(obj.current_frame));
+              if obj.draw == 1
+                  draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
+              else
+                  set(obj.im, 'CData', gather(obj.current_frame));
+              end
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
               obj.outputs('done') = obj.check_stop();
-              if obj.check_stop()
-                  % draws rect around last location of template in blue %
-                  draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
-                  % draws rect around first location of template in red %
-                  h = imrect(obj.axes, [obj.rect(1), obj.rect(2), obj.rect(3), obj.rect(4)]);
-                  setColor(h, 'red');
-              end
               obj.xoff = [obj.xoff xoffSet];
               obj.yoff = [obj.yoff yoffSet];
               xoff3 = obj.xoff;

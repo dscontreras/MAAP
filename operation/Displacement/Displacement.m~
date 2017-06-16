@@ -19,6 +19,7 @@ classdef Displacement < RepeatableOperation
         res;
         xoff;
         yoff;
+        draw; % toggles imrect
         
         % Properties for use when using fft2
         fft_conj_template;
@@ -47,7 +48,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -66,10 +67,10 @@ classdef Displacement < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
-            
-            if(nargin > 9) %8 is the number of params for displacement
+            obj.draw = draw;
+            if(nargin > 10) % 9 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
-            end
+            end   
         end
 
         %For carrying out one time method calls that should be done before
@@ -89,9 +90,11 @@ classdef Displacement < RepeatableOperation
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'')
-                %[obj.template, obj.rect, xtemp, ytemp] = get_template(obj.current_frame, obj.axes);
-                [obj.rect, obj.xtemp, obj.ytemp] = find_rect(obj.vid_src.get_filepath(), path);
+                %[template, rect, xtemp1, ytemp1] = get_template(obj.current_frame, obj.axes);
+                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
+                [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
+                imshow(obj.template);
             else
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
                 obj.rect = ceil(obj.rect); 
@@ -107,20 +110,12 @@ classdef Displacement < RepeatableOperation
         end
         
         function execute(obj)  
-            obj.current_frame = grab_frame(obj.vid_src, obj);
-            %tic
+            obj.current_frame = gather(grab_frame(obj.vid_src, obj)); 
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    %toc
-                    %"End1"
-                    %tic
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res, obj.fft_conj_template);
-                    %"End2"
-                    %toc
                 end
               else
                 if(obj.vid_src.gpu_supported)
@@ -129,14 +124,15 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-              % this is making the frames yellow for some reason %    
               set(obj.im, 'CData', gather(obj.current_frame));
-
+              if obj.draw == 1
+                  imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+              end
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
               obj.outputs('done') = obj.check_stop();
-              if obj.check_stop()
+              if obj.check_stop() & objdraw == 0
                   % draws rect around last location of template in blue %
                   draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
                   % draws rect around first location of template in red %
