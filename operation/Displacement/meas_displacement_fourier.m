@@ -69,7 +69,7 @@ c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cro
 %FIND PEAK CROSS-CORRELATION
 [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
 
-[new_ypeak1, new_xpeak1] = fourier_cross_correlation(fft_conj_interp_template, interp_search_area, interp_search_area_height, interp_search_area_width, rect, 0.5);
+%[new_ypeak1, new_xpeak1] = fourier_cross_correlation(fft_conj_interp_template, interp_search_area, interp_search_area_height, interp_search_area_width, rect, 0.5);
 
 % "\t Normxcorr2 2"
 % toc
