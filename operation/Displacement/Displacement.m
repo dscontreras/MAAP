@@ -28,9 +28,9 @@ classdef Displacement < RepeatableOperation
         min_displacement; 
         
         % Properties for use when using fft2
-        fft_conj_template;
-        template_padded;
-        template_grayscale_inverted;
+        fft_conj_processed_template;
+        processed_template; 
+        template_mean; % Average value of template
     end
 
     properties (SetAccess = public)
@@ -103,15 +103,17 @@ classdef Displacement < RepeatableOperation
             obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;
             
             % Begin Fourier Method Code
-            obj.search_area_width = 2*obj.max_displacement + obj.rect(3);
-            obj.search_area_height = 2*obj.max_displacement + obj.rect(4);
+            obj.search_area_width   = 2*obj.max_displacement + obj.rect(3);
+            obj.search_area_height  = 2*obj.max_displacement + obj.rect(4);
+            obj.template_mean       = mean(mean(template));
             
-            obj.template_grayscale_inverted = (120 - obj.template)*2; % Assumes image is 255 bit grayscale
+            % Make sure that when darks match up in both the
+            % image/template, they count toward the correlation
+            % We subtract from the mean as we know that darks are the
+            % edges. 
+            obj.processed_template  = obj.template_mean - template; 
             
-            % + 1 needed as imcrop(I, rect) adds 1 to each dimension
-            obj.template_padded = padarray(obj.template_grayscale_inverted, [(2*obj.search_area_height - obj.rect(4) + 1), (2*obj.search_area_width - obj.rect(3) + 1)], 'post');
-            obj.fft_conj_template = conj(fft2(obj.template_padded));
-            
+            obj.fft_conj_processed_template = conj(fft2(obj.processed_tempate, obj.search_area_height, obj.sesarch_area_width));
         end
         
         function execute(obj)  
@@ -275,7 +277,9 @@ classdef Displacement < RepeatableOperation
             
         end
         
-        function [xpeak, ypeak] = fouier_cross_correlation(obj, fft_conj_template, search_area, search_area_height, search_area_width, grayscale_inversion)
+        % Finds the cross correlation using fourier transforms
+        % TODO: implement ability to be used for interpolated images
+        function [xpeak, ypeak] = fouier_cross_correlation(obj, fft_conj_template, search_area)
                 
                 % TEMPLATE and SEARCH_AERA should be grayscaled images
                 % Performs cross correlation of SEARCH_AREA and TEMPLATE
@@ -287,15 +291,11 @@ classdef Displacement < RepeatableOperation
                 % These values were gotten experimentally, they may need to be tweaked
                 
                 
-                % Some image preprocessing; Assumes a gray scale image and inverts the
-                % colors to make the edges stand out
-                search_area = (grayscale_inversion-search_area)*4.5; % To ensure that motion blur doesn't "erase" critical contours
+                % Some image preprocessing; Assumes an 8bit grayscale image
+                search_area = obj.template_mean - search_area;
                 
-                % Pad search_area; Necessary to avoid corruption at edges
-                search_area_padded = padarray(search_area, [search_area_height, search_area_width], 'post');
-                
-                % Find the DTFT of the two
-                dtft_of_frame = fft2(search_area_padded);
+                % Find the DTFT
+                dtft_of_frame = fft2(search_area);
                 
                 % Take advantage of the correlation theorem
                 % Corr(f, g) <=> element multiplication of F and conj(G) where F, G are
@@ -307,7 +307,6 @@ classdef Displacement < RepeatableOperation
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
             end
 
-        
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
