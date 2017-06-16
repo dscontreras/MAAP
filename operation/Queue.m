@@ -95,25 +95,25 @@ classdef Queue < handle
             end
             while(i <= obj.length)
                 if(~obj.list{i}.new || feval(obj.list{i}.start_check_callback))
+                    
                     if(obj.paused)
                         obj.pause_index = i;
                         return;
                     end
+                    
                     if(obj.list{i}.new)
                         obj.list{i}.new = false;
                         obj.list{i}.startup();
                     end
-                    if(isempty(obj.list{i}.rx_data))                      
+                    
+                    if(isempty(obj.list{i}.rx_data))
                         obj.list{i}.execute();
                     else
                         inputs = obj.retrieve_operation_inputs(obj.list{i});
                         obj.list{i}.execute(inputs); 
-                    end                   
-                    if(isa(obj.list{i}, 'RepeatableOperation'))
-                        stopped = obj.list{i}.check_stop();
-                    else
-                        stopped = true;
                     end
+                    
+                    stopped = obj.list{i}.check_stop();
                     if(stopped)
                         obj.list(i) = [];
                         obj.length = length(obj.list);
@@ -122,6 +122,7 @@ classdef Queue < handle
                             obj.active = false;
                         end
                     end
+                    
                 end
                 i = i + 1;
             end

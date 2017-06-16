@@ -1,4 +1,4 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement_fourier(template,rect, img, xtemp, ytemp, precision, displacement, res, fft_conj_template)
+function [xoffSet, yoffSet, dispx,dispy,x, y, maxval] = meas_displacement_fourier(template,rect, img, xtemp, ytemp, precision, displacement, res, fft_conj_template, fft_conj_interp_template, interp_template2)
 min_displacement = 2; %pixel unit
 Xm =40*10^(-6); %distance according to chip dimensions in microns
 Xp = 184.67662; %distance according image in pixels. Correspond to Xm
@@ -16,7 +16,6 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 %"\tFourier"
 [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
-
 %toc
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
@@ -62,13 +61,19 @@ interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
 %"\tInterpolation"
 %toc
 
+
  %PERFORM NORMALIZED CROSS-CORRELATION
- c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
+c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
 
 %FIND PEAK CROSS-CORRELATION
+
 [new_ypeak, new_xpeak] = find(c1==max(c1(:)));  
-%"\t Normxcorr2 2"
-%toc
+
+
+%[new_ypeak1, new_xpeak1] = fourier_cross_correlation(fft_conj_interp_template, interp_search_area, interp_search_area_height, interp_search_area_width, rect, 0.5);
+
+% "\t Normxcorr2 2"
+% toc
 new_xpeak = new_xpeak/(1/precision);
 new_ypeak = new_ypeak/(1/precision);
 new_xpeak = new_xpeak+round(new_search_area_rect(1));
