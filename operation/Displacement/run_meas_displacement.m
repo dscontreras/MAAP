@@ -1,10 +1,10 @@
-v = VideoReader('/Users/timmytimmyliu/research/maap/videos/50V_3.mov');
+v = VideoReader('/Users/timmytimmyliu/research/maap/videos/30V_1.mov');
 vWidth = v.Width;
 vHeight = v.Height;
 %rect = [730, 550, 70, 30];
 %rect = [584, 493, 74, 35];
 %rect = [731, 550, 74, 35];
-%rect2 = find_rect(v, 'template.png') 
+rect = find_rect('/Users/timmytimmyliu/research/maap/videos/30V_1.mov', 'template.png');
 originalFrame = rgb2gray(readFrame(v));
 k = 1;
 mov = struct('cdata',zeros(vHeight,vWidth,3,'uint8'),'colormap',[]);
@@ -15,8 +15,7 @@ while v.hasFrame
     mov(k).cdata = frame;
     k = k + 1;
 end
-k
-%{
+
 template = imcrop(originalFrame, rect);
 img = mov(21).cdata;
 displacement = 50;
@@ -27,15 +26,15 @@ res = 0.5;
 i = 1;
 while i < k - 1
     img = mov(i).cdata;
-    [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
-    [xoffSet1, yoffSet1, dispx1,dispy1,x1, y1, c11] = meas_displacement(template, rect2, img, xtemp, ytemp, precision, displacement, res);
-    if xoffSet ~= xoffSet1 | yoffSet ~= yoffSet1
-        i, "fuck"
-        break
-    end
+    img = imcrop(img, rect);
+    tic;
+    c = normxcorr2(template, img);
+    [x, y] = find(c==max(c(:)));
+    time = toc;
+    times = [time 0 0 0];
+    dlmwrite('normxcorr2_times.dat', times, '-append');
     i = i + 1;
 end
-%}
 %{
 tic
 [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template, rect, img, xtemp, ytemp, precision, displacement, res);
