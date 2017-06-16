@@ -22,7 +22,7 @@ function varargout = settings_gui(varargin)
 
 % Edit the above text to modify the response to help settings_gui
 
-% Last Modified by GUIDE v2.5 16-Jun-2017 11:16:07
+% Last Modified by GUIDE v2.5 16-Jun-2017 15:12:53
 
 % Begin initialization code - DO NOT EDIT
 
@@ -54,10 +54,16 @@ function settings_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to settings_gui (see VARARGIN)
 
-% Checks if user chose a template previously. If so, display it. %
+% Checks if user chose a template previously
 img_path = getappdata(0, 'img_path');
 if ~strcmp(img_path, '')
     set(handles.selected_file, 'String', img_path);
+end
+
+% Checks if user defined a default path previously
+folder_path = getappdata(0, 'sys_start_path');
+if ~strcmp('sys_start_path', '/Users/')
+    set(handles.path_folder, 'String', folder_path);
 end
 
 % Choose default command line output for settings_gui
@@ -118,6 +124,21 @@ new_start_path = get(handles.start_path_edit, 'String');
 %Store the new start path value as sys_start_path in the application data
 setappdata(0, 'sys_start_path', new_start_path);
 
+% --- Executes on button press in browse_files.
+function browse_files_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_files (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+foldername = uigetdir;
+if foldername ~= 0
+    %Store the new start path value as sys_start_path in the application data
+    setappdata(0, 'sys_start_path', foldername);
+    set(handles.path_folder, 'String', foldername);
+else
+    setappdata(0, 'sys_start_path', '/Users/');
+    set(handles.selected_file, 'String', '/Users/');
+end
+
 % --- Executes on button press in browse_button.
 function browse_button_Callback(hObject, eventdata, handles)
 % hObject    handle to browse_button (see GCBO)
@@ -147,6 +168,3 @@ function browse_button_DeleteFcn(hObject, eventdata, handles)
 % hObject    handle to browse_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-
-
