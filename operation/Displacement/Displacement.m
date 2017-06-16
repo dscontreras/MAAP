@@ -216,6 +216,66 @@ classdef Displacement < RepeatableOperation
             
         end
         
+        function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj)
+            %% Whole Pixel Precision Coordinates
+            
+            [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
+            xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
+            ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
+        
+            %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
+            new_xmin = xpeak - obj.rect(3);
+            new_ymin = ypeak - obj.rect(4);
+            [moved_templated, displaced_rect] = imcrop(img, [new_xmin new_ymin, obj.rect(3) obj.rect(4)]);
+            
+            new_search_area_xmin = new_xmin - obj.min_displacement;
+            new_search_area_ymin = new_ymin - obj.min_displacement; 
+            new_search_area_width = 2*obj.min_displacement  + obj.rect(3);
+            new_search_area_height = 2*obj.min_displacement + obj.rect(4);
+            
+            [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
+            
+            %% Interpolation
+            %Interpolate both the new object area and the old and then compare
+            %those that have subpixel precision in a normalized cross
+            %correlation
+            % BICUBIC INTERPOLATION - TEMPLATE
+            interp_template = im2double(obj.template);
+            [numRows,numCols,~] = size(interp_template); % Replace with rect? 
+            [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes
+            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
+            V=interp_template; %copy interp_template into V
+            interp_template = interp2(X,Y,V,Xq,Yq, 'cubic');
+
+            % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
+            interp_search_area = im2double(new_search_area);
+            [numRows,numCols,~] = size(interp_search_area);
+            [X,Y] = meshgrid(1:numCols,1:numRows);
+            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
+            V=interp_search_area;
+            interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
+            
+            c1 = normxcorr2(interp_template, interp_search_area);
+            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
+            new_xpeak = new_xpeak/(1/obj.pixel_precision);
+            new_ypeak = new_ypeak/(1/obj.pixel_precision);
+            new_xpeak = new_xpeak+round(new_search_area_rect(1));
+            new_ypeak = new_ypeak+round(new_search_area_rect(2));
+            
+            yoffSet = new_ypeak-obj.rect(4);
+            xoffSet = new_xpeak-obj.rect(3);
+            
+            %DISPLACEMENT IN PIXELS
+            y = new_ypeak-obj.ytemp;
+            x = new_xpeak-obj.xtemp;
+            
+            %DISPLACEMENT IN MICRONS
+            dispx = x * obj.res;
+            dispy = y * obj.res;
+            
+        end
+        
+        
         
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
