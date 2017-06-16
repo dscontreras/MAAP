@@ -1135,3 +1135,12 @@ function pushbutton32_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton32 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Resets GUI to initial state. Does not clear settings
+function reset_button_Callback(hObject, eventdata, handles)
+% hObject    handle to reset_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+close(gcbf);
+data_gui;
