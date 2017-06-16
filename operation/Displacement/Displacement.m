@@ -275,8 +275,6 @@ classdef Displacement < RepeatableOperation
             
         end
         
-        
-        
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
