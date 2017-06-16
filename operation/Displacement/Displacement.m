@@ -289,8 +289,7 @@ classdef Displacement < RepeatableOperation
                 % if it's not (an the values range from 0...1, it should be 0.5
                 % Or at least, I've had the most luck with these values
                 % These values were gotten experimentally, they may need to be tweaked
-                
-                
+
                 % Some image preprocessing; Assumes an 8bit grayscale image
                 search_area = obj.template_mean - search_area;
                 
@@ -305,8 +304,8 @@ classdef Displacement < RepeatableOperation
                 r = ifft2(R);
                 
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
-            end
-
+        end
+        
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
