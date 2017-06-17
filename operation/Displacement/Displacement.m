@@ -128,6 +128,7 @@ classdef Displacement < RepeatableOperation
                   hrect = imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
               end
               updateTable(dispx, dispy, obj.table);
+              data = get(obj.table, 'Data');
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
               obj.outputs('dispy') = [obj.outputs('dispy') dispy];
               obj.outputs('done') = obj.check_stop();
@@ -136,6 +137,8 @@ classdef Displacement < RepeatableOperation
               xoff3 = obj.xoff;
               yoff3 = obj.yoff;
               save('gpu_displacement.mat', 'xoff3', 'yoff3');    
+              
+              % To have GUI table update continuously, remove nocallbacks
               drawnow limitrate nocallbacks;
               if obj.draw == 1
                   delete(hrect);
@@ -229,4 +232,3 @@ classdef Displacement < RepeatableOperation
     end
 
 end
-
