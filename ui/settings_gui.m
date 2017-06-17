@@ -136,7 +136,7 @@ if foldername ~= 0
     set(handles.path_folder, 'String', foldername);
 else
     setappdata(0, 'sys_start_path', '/Users/');
-    set(handles.selected_file, 'String', '/Users/');
+    set(handles.path_folder, 'String', '/Users/');
 end
 
 % --- Executes on button press in browse_button.

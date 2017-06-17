@@ -123,10 +123,9 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
+              set(obj.im, 'CData', gather(obj.current_frame));
               if obj.draw == 1
-                  draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
-              else
-                  set(obj.im, 'CData', gather(obj.current_frame));
+                  hrect = imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
               end
               updateTable(dispx, dispy, obj.table);
               obj.outputs('dispx') = [obj.outputs('dispx') dispx];
@@ -138,6 +137,9 @@ classdef Displacement < RepeatableOperation
               yoff3 = obj.yoff;
               save('gpu_displacement.mat', 'xoff3', 'yoff3');    
               drawnow limitrate nocallbacks;
+              if obj.draw == 1
+                  delete(hrect);
+              end
         end
 
         %error_tag is now deprecated
