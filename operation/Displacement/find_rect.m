@@ -1,3 +1,4 @@
+%% TODO: Subtract mean of template from template and firstFrame to account for light intensity %%
 function rect = find_rect(video, templateFilePath)
     videoReader = VideoReader(video);
     firstFrame = rgb2gray(readFrame(videoReader));
