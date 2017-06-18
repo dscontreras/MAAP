@@ -99,20 +99,23 @@ classdef Displacement < RepeatableOperation
             [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
             obj.rect = ceil(obj.rect); 
              
-            obj.search_area_height  = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
             obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
             obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;  
             
-            
+            % Make sure that when darks match up in both the
+            % image/template, they count toward the correlation
+            % We subtract from the mean as we know that darks are the
+            % edges. 
             obj.template_average    = mean(mean(obj.template));
             obj.processed_template  = obj.template_average - obj.template; 
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
             
             % The frame we will crop out when interpolating will have size (template_height + 2*min + 1, template_width+2*min+1)
             % Interpolation takes that and the resulting dimension size is (k - 1)/obj.pixel_precision + 1; 
-            obj.interp_search_area_width 	= (obj.rect(4) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
-            obj.interp_search_area_height 	= (obj.rect(3) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
+            obj.interp_search_area_width 	= (obj.rect(3) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
+            obj.interp_search_area_height 	= (obj.rect(4) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
             
             obj.interp_template = im2double(obj.template);
             numRows 			= obj.rect(4);
@@ -125,14 +128,6 @@ classdef Displacement < RepeatableOperation
             obj.interp_template_average = mean(mean(obj.interp_template));
             obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
             obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_interp_template, obj.interp_search_area_height*2, obj.interp_search_area_width*2));
-            
-            % Make sure that when darks match up in both the
-            % image/template, they count toward the correlation
-            % We subtract from the mean as we know that darks are the
-            % edges. 
-            obj.processed_template  = obj.template_average - obj.template; 
-            
-            obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_template, obj.interp_search_area_height*2, obj.interp_search_area_width*2));
         end
         
         function execute(obj)  
@@ -242,14 +237,18 @@ classdef Displacement < RepeatableOperation
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
             
-            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, search_area, obj.search_area_height, obj.search_area_width);
+            processed_search_area = obj.template_average - search_area;
             
-            new_xmin = xpeak;
-            new_ymin = ypeak;
+            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
+            
+            new_xmin = xpeak - obj.min_displacement;
+            new_ymin = ypeak - obj.min_displacement;
         
             %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
             
-            [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin obj.interp_search_area_width obj.interp_search_area_height]);
+            new_width   = obj.rect(3)+2*obj.min_displacement;
+            new_height  = obj.rect(4)+2*obj.min_displacement;
+            [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
             
             %% Interpolation
             %Interpolate both the new object area and the old and then compare
@@ -267,11 +266,13 @@ classdef Displacement < RepeatableOperation
             processed_interp_search_area = obj.interp_template_average - interp_search_area;
             
             [new_ypeak, new_xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_interp_template, processed_interp_search_area, obj.interp_search_area_height, obj.interp_search_area_width);
-            new_xpeak = new_xpeak/(1/obj.pixel_precision);
-            new_ypeak = new_ypeak/(1/obj.pixel_precision);
             
-            new_xpeak = new_xpeak+round(new_search_area_rect(1));
-            new_ypeak = new_ypeak+round(new_search_area_rect(2));
+            new_ypeak = new_ypeak/(1/obj.pixel_precision);
+            new_xpeak = new_xpeak/(1/obj.pixel_precision);
+            
+            % TODO: Fix
+            new_ypeak = new_ypeak + obj.rect(2) + new_ymin;
+            new_xpeak = new_xpeak + obj.rect(1) + new_xmin;
             
             yoffSet = new_ypeak-obj.rect(4);
             xoffSet = new_xpeak-obj.rect(3);
@@ -298,12 +299,6 @@ classdef Displacement < RepeatableOperation
                 % if it's not (an the values range from 0...1, it should be 0.5
                 % Or at least, I've had the most luck with these values
                 % These values were gotten experimentally, they may need to be tweaked
-
-                % Some image preprocessing; Assumes an 8bit grayscale image
-                % TODO :change obj.template average? 
-                % In general, obj.template_average and obj.interp_average aren't
-                % too different so perhaps not needed
-                search_area = obj.template_average - search_area;
                 
                 % Find the DTFT
                 dtft_of_frame = fft2(search_area, height*2, width*2);
