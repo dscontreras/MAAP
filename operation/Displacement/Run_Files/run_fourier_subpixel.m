@@ -6,8 +6,10 @@ mov = struct('cdata',zeros(vHeight,vWidth,3,'uint8'),'colormap',[]);
 
 displacement = 50;
 
-%rect = [730, 550, 70, 30];
-%%
+rect = [590, 500, 60, 25];
+
+originalFrame = rgb2gray(readFrame(v));
+mov(1).cdata = originalFrame;
 k = 2;
 while v.hasFrame 
     frame = readFrame(v);
@@ -15,104 +17,83 @@ while v.hasFrame
     mov(k).cdata = frame;
     k = k + 1;
 end
-
-rect = [590, 500, 60, 25];
-
-originalFrame = rgb2gray(readFrame(v));
-mov(1).cdata = originalFrame;
-mov(2).cdata = rgb2gray(readFrame(v));
+%% Initialization
 template = imcrop(originalFrame, rect);
-background = mov(18).cdata;
-background = imcrop(background, [rect(1)-50 rect(2)-50 rect(3)+100 rect(4)+100]);
-imshow(background)
-%% Fourier
-template = imcrop(mov(2).cdata, rect);
-background = mov(291).cdata;
-background = imcrop(background, [rect(1)-50 rect(2)-50 rect(3)+100 rect(4)+100]);
-imshow(background);
-% calculate padding
-bx = size(background, 2); 
-by = size(background, 1);
+%[ty, tx] = size(template);
+average = mean(mean(template));
+fy = rect(4)+100+1;
+fx = rect(3)+100+1;
+processed_template = average-template;
+template_dtft_conj = conj(fft2(processed_template, fy*2, fx*2));
 
-tx = size(template, 2); % used for bbox placement
-ty = size(template, 1);
+precision = 1/3;
 
-%% fft from stackoverflow
-%c = real(ifft2(fft2(background) .* fft2(template, by, bx)));
+min_displacement = 2;
+f_interp_y = (rect(4)+2*min_displacement+1 -1)/precision + 1;
+f_interp_x = (rect(3)+2*min_displacement+1 -1)/precision + 1;
 
-%// Change - Compute the cross power spectrum
-gray_inversion = mean(mean(template));
-background_gray = gray_inversion - background;
+interp_template = im2double(template);
+[numRows,numCols,~] = size(interp_template); % Replace with rect? 
+[X, Y] = meshgrid(1:numCols, 1:numRows);
+[Xq, Yq] = meshgrid(1:precision:numCols, 1:precision:numRows);
+V = interp_template;
+interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
 
-template_gray = gray_inversion - template;
+interp_average = mean(mean(interp_template));
+processed_interp_template = interp_average - interp_template;
+interp_template_dtft_conj = conj(fft2(processed_interp_template, f_interp_y*2, f_interp_x*2));
+%imshow(interp_template)
 
-Ga = fft2(background_gray);
-Gb = fft2(template_gray, by, bx);
-c = real(ifft2((Ga.*conj(Gb))./abs(Ga.*conj(Gb))));
-
-%%
-template = imcrop(mov(2).cdata, rect);
-background = mov(291).cdata;
-background = imcrop(background, [rect(1)-50 rect(2)-50 rect(3)+100 rect(4)+100]);
-
-gray_inversion = mean(mean(template));
-background_gray = gray_inversion - background;
-template_gray = gray_inversion - template;
-
-bx = size(background, 2); 
-by = size(background, 1);
-tx = size(template, 2); % used for bbox placement
-ty = size(template, 1);
-gray_inversion = mean(mean(template));
-template_gray = gray_inversion - template;
-Gb = conj(fft2(template_gray, by*2, bx*2));
-%%
-tic
-background_gray = gray_inversion - background;
-Ga = fft2(background_gray, by*2, bx*2);
-
-R = Ga.*Gb;
+%% Pixel Precision
+frame = mov(290).cdata;
+frame = imcrop(frame, [rect(1)-50 rect(2)-50 rect(3)+100 rect(4)+100]);
+processed_frame = average - frame;
+dtft_of_frame = fft2(processed_frame, fy*2, fx*2);
+R = dtft_of_frame.*template_dtft_conj;
 R = R./abs(R);
-c1 = real(ifft2(R));
-[max_c, imax]   = max(abs(c(:)));
-[ypeak, xpeak] = find(c == max(c(:)));
-toc
+r = real(ifft2(R));
+
+[ypeak, xpeak] = find(r==max(r(:)));
+
+%% Subpixel 
+smaller_frame = imcrop(frame, [xpeak, ypeak, rect(3)+2*min_displacement, rect(4) + 2*min_displacement]);
+
+interp_search_area = im2double(smaller_frame);
+[numRows,numCols,~] = size(smaller_frame); % Replace with rect? 
+[X, Y] = meshgrid(1:numCols, 1:numRows);
+[Xq, Yq] = meshgrid(1:precision:numCols, 1:precision:numRows);
+V = interp_search_area;
+interp_search_area = interp2(X, Y, V, Xq, Yq, 'cubic');
+processed_interp_search_area = interp_average - interp_search_area;
+
+%% Fourier 
+
+dtft_of_interp_frame = fft2(processed_interp_search_area, f_interp_y*2, f_interp_x*2);
+R = dtft_of_interp_frame.*interp_template_dtft_conj;
+R = R./abs(R);
+r = real(ifft2(R));
+
+[ypeak_sub, xpeak_sub] = find(r == max(r(:)));
+
+final_ypeak = ypeak_sub * precision;
+final_xpeak = xpeak_sub * precision;
+
+
+
+
+
+%% Normxcorr
+
+c = normxcorr2(template, smaller_frame);
+[ypeak_sub_n, xpeak_sub_n] = find(c==max(c(:)));
+ypeak = ypeak - ty
+xpeak = xpeak - tx
+
+
 %%
-
-% find peak correlation
-[max_c, imax]   = max(abs(c(:)));
-[ypeak, xpeak] = find(c == max(c(:)));
-figure; surf(c), shading flat; % plot correlation    
-
-% display best match
-hFig = figure;
-hAx  = axes;
-
-%// New - no need to offset the coordinates anymore
-%// xpeak and ypeak are already the top left corner of the matched window
-position = [xpeak(1), ypeak(1), tx, ty];
-imshow(background, 'Parent', hAx);
-imrect(hAx, position);
-
-figure; imshow(template)
-
-%% Normxcorr2
-tic
-c = normxcorr2(template, background);
-[yp, xp] = find(c==max(c(:)));
-toc
-%%
-yp = yp - ty;
-xp = xp - tx;
-
-[max_c, imax]   = max(abs(c(:)));
-[ypeak, xpeak] = find(c == max(c(:)));
-figure; surf(c), shading flat; % plot correlation   
-hFig = figure;
-hAx  = axes;
-position = [xp, yp, tx, ty];
-imshow(background, 'Parent', hAx);
-imrect(hAx, position);
-
-figure; imshow(template)
+interp_search_area = interp2(X, Y, V, Xq, Yq, 'cubic');
+interp_search_area(ypeak_sub:ypeak_sub+10, xpeak_sub:xpeak_sub+10) = 1;
+% interp_search_area(ypeak_sub_n:ypeak_sub_n+10, xpeak_sub_n:xpeak_sub_n+10) = 1;
+%interp_search_area(0:0+10, 0:xpeak_sub+10) = 1;
+imshow(interp_search_area)
 
