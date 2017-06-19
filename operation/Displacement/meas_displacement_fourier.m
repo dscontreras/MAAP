@@ -16,6 +16,7 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 
 %"\tFourier"
 [ypeak, xpeak] = fourier_cross_correlation(fft_conj_template, search_area, search_area_height, search_area_width, rect, 120);
+
 %toc
 xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
 ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
@@ -68,7 +69,6 @@ c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cro
 %FIND PEAK CROSS-CORRELATION
 
 [new_ypeak, new_xpeak] = find(c1==max(c1(:)));  
-
 
 %[new_ypeak1, new_xpeak1] = fourier_cross_correlation(fft_conj_interp_template, interp_search_area, interp_search_area_height, interp_search_area_width, rect, 0.5);
 
