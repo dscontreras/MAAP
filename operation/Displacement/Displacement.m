@@ -21,6 +21,7 @@ classdef Displacement < RepeatableOperation
         res;
         xoff;
         yoff;
+        draw; % toggles imrect
         
         % Properties needed for fourier analysis
         search_area_width; search_area_height;
@@ -55,7 +56,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -74,10 +75,10 @@ classdef Displacement < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
+            obj.draw = draw;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            
+            if(nargin > 9) % 9 is the number of params for displacement
             % TODO: Better Error Handling
-            if(nargin > 9) %8 is the number of params for displacement
                 obj.error_report_handle = error_report_handle;
             end
         end
@@ -96,9 +97,18 @@ classdef Displacement < RepeatableOperation
        
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
-            obj.rect = ceil(obj.rect); 
-             
+            path = getappdata(0, 'img_path');
+            % if template path is specified, use path. Else use user input%
+            if ~strcmp(path,'')
+                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
+                obj.template = imcrop(obj.current_frame, obj.rect);
+                [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
+                imshow(obj.template);
+            else
+                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+                obj.rect = ceil(obj.rect); 
+            end
+            
             obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
             obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
             obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
@@ -147,25 +157,26 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-            
-            obj.im.CData = obj.current_frame;
+            set(obj.im, 'CData', gather(obj.current_frame));
+            if obj.draw == 1
+                hrect = imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+            end
             updateTable(dispx, dispy, obj.table);
+            data = get(obj.table, 'Data');
             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
             obj.outputs('done') = obj.check_stop();
-            if obj.check_stop()
-                % draws rect around last location of template in blue %
-                draw_rect(obj.current_frame, obj.im, xoffSet, yoffSet, obj.template, obj.axes);
-                % draws rect around first location of template in red %
-                h = imrect(obj.axes, [obj.rect(1), obj.rect(2), obj.rect(3), obj.rect(4)]);
-                setColor(h, 'red');
-            end
             obj.xoff = [obj.xoff xoffSet];
             obj.yoff = [obj.yoff yoffSet];
             xoff3 = obj.xoff;
             yoff3 = obj.yoff;
-            save('gpu_displacement.mat', 'xoff3', 'yoff3');
+            save('gpu_displacement.mat', 'xoff3', 'yoff3');    
+
+            % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
+            if obj.draw == 1 & ~obj.check_stop()
+                delete(hrect);
+            end
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
@@ -396,4 +407,3 @@ classdef Displacement < RepeatableOperation
     end
 
 end
-
