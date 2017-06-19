@@ -164,7 +164,8 @@ classdef Displacement < RepeatableOperation
             obj.yoff = [obj.yoff yoffSet];
             xoff3 = obj.xoff;
             yoff3 = obj.yoff;
-            save('gpu_displacement.mat', 'xoff3', 'yoff3');
+            % TODO: save gpu_displacement.mat somewhere else. 
+            %save('gpu_displacement.mat', 'xoff3', 'yoff3');
             drawnow limitrate nocallbacks;
         end
 
