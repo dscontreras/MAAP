@@ -1050,8 +1050,10 @@ setappdata(0, 'preview_done', true);
 function display_error(msg)
 setappdata(0, 'error_msg', msg);
 setappdata(0, 'wait_status', 1);
+setappdata(0, 'acknowledged', 
 error_gui;
 uiwait;
+
 
 
 function source_resolution_entry_Callback(hObject, eventdata, handles)

@@ -59,15 +59,16 @@ interp_search_area = im2double(new_search_area);
 V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic'); 
-[interp_search_area_height, interp_search_area_width] = size(interp_search_area);
-% "\tInterpolation"
-% toc
+%"\tInterpolation"
+%toc
+
 
  %PERFORM NORMALIZED CROSS-CORRELATION
 c1 = normxcorr2(interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
 
 %FIND PEAK CROSS-CORRELATION
-[new_ypeak, new_xpeak] = find(c1==max(c1(:)));
+
+[new_ypeak, new_xpeak] = find(c1==max(c1(:)));  
 
 %[new_ypeak1, new_xpeak1] = fourier_cross_correlation(fft_conj_interp_template, interp_search_area, interp_search_area_height, interp_search_area_width, rect, 0.5);
 

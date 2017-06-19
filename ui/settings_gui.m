@@ -22,16 +22,18 @@ function varargout = settings_gui(varargin)
 
 % Edit the above text to modify the response to help settings_gui
 
-% Last Modified by GUIDE v2.5 01-Feb-2017 16:29:57
+% Last Modified by GUIDE v2.5 16-Jun-2017 15:12:53
 
 % Begin initialization code - DO NOT EDIT
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @settings_gui_OpeningFcn, ...
                    'gui_OutputFcn',  @settings_gui_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+                   'gui_Callback',   [] , ...
+                   'browse_button', @browse_button_Callback);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -52,11 +54,24 @@ function settings_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to settings_gui (see VARARGIN)
 
+% Checks if user chose a template previously
+img_path = getappdata(0, 'img_path');
+if ~strcmp(img_path, '')
+    set(handles.selected_file, 'String', img_path);
+end
+
+% Checks if user defined a default path previously
+folder_path = getappdata(0, 'sys_start_path');
+if ~strcmp('sys_start_path', '/Users/')
+    set(handles.path_folder, 'String', folder_path);
+end
+
 % Choose default command line output for settings_gui
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
+
 
 % UIWAIT makes settings_gui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -108,3 +123,48 @@ function start_path_submit_Callback(btn, eventdata, handles)
 new_start_path = get(handles.start_path_edit, 'String');
 %Store the new start path value as sys_start_path in the application data
 setappdata(0, 'sys_start_path', new_start_path);
+
+% --- Executes on button press in browse_files.
+function browse_files_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_files (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+foldername = uigetdir;
+if foldername ~= 0
+    %Store the new start path value as sys_start_path in the application data
+    setappdata(0, 'sys_start_path', foldername);
+    set(handles.path_folder, 'String', foldername);
+else
+    setappdata(0, 'sys_start_path', '/Users/');
+    set(handles.path_folder, 'String', '/Users/');
+end
+
+% --- Executes on button press in browse_button.
+function browse_button_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
+if filename ~= 0
+    setappdata(0, 'img_path', filename);
+    set(handles.selected_file, 'String', filename);
+else
+    setappdata(0, 'img_path', '');
+    set(handles.selected_file, 'String', 'No file selected');
+end
+
+% --- Executes during object creation, after setting all properties.
+function selected_file_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to selected_file (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+function browse_button_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+function browse_button_DeleteFcn(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
