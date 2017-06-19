@@ -140,7 +140,7 @@ classdef Displacement < RepeatableOperation
               
               % To have GUI table update continuously, remove nocallbacks
               drawnow limitrate nocallbacks;
-              if obj.draw == 1
+              if obj.draw == 1 & ~obj.check_stop()
                   delete(hrect);
               end
         end
