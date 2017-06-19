@@ -77,7 +77,7 @@ classdef Displacement < RepeatableOperation
             obj.yoff = [];
             obj.draw = draw;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 9) % 9 is the number of params for displacement
+            if(nargin > 10) % 9 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -108,11 +108,12 @@ classdef Displacement < RepeatableOperation
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
                 obj.rect = ceil(obj.rect); 
             end
-            
+            %{
             obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
             obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
             obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
             obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;  
+            %}
             
             % Make sure that when darks match up in both the
             % image/template, they count toward the correlation
@@ -133,7 +134,7 @@ classdef Displacement < RepeatableOperation
             [X, Y] 				= meshgrid(1:numCols, 1:numRows);
             [Xq, Yq] 			= meshgrid(1:obj.pixel_precision:numCols, 1:obj.pixel_precision:numRows);
             V 					= obj.interp_template;
-            obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
+            %obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
 
             obj.interp_template_average = mean(mean(obj.interp_template));
             obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
@@ -147,8 +148,8 @@ classdef Displacement < RepeatableOperation
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement_fourier();
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement_fourier();
                 end
             else
                 if(obj.vid_src.gpu_supported)
