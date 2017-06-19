@@ -19,8 +19,7 @@ classdef Displacement < RepeatableOperation
         stop_check_callback = @check_stop;
         im;
         res;
-        xoff;
-        yoff;
+        x_peak; y_peak;
         draw; % toggles imrect
 
         % Properties needed for fourier analysis
@@ -155,22 +154,22 @@ classdef Displacement < RepeatableOperation
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                 else
-                    [xoffSet, yoffSet, dispx, dispy, x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
             set(obj.im, 'CData', gather(obj.current_frame));
             if obj.draw == 1
-                hrect = imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+                hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
             end
             updateTable(dispx, dispy, obj.table);
             data = get(obj.table, 'Data');
-            obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-            obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+            obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
+            obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
             obj.outputs('done') = obj.check_stop();
-            obj.xoff = [obj.xoff xoffSet];
-            obj.yoff = [obj.yoff yoffSet];
-            xoff3 = obj.xoff;
-            yoff3 = obj.yoff;
+            obj.x_peak = [obj.x_peak x_peak];
+            obj.y_peak = [obj.y_peak y_peak];
+            % xoff3 = obj.xoff;
+            % yoff3 = obj.yoff;
             % TODO: save gpu_displacement.mat somewhere else.
             % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
@@ -245,7 +244,7 @@ classdef Displacement < RepeatableOperation
 
         end
 
-        function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_fourier(obj)
+        function [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement_fourier(obj)
             %% Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
@@ -283,20 +282,16 @@ classdef Displacement < RepeatableOperation
             new_ypeak = new_ypeak/(1/obj.pixel_precision);
             new_xpeak = new_xpeak/(1/obj.pixel_precision);
 
-            % TODO: Fix
-            new_ypeak = new_ypeak + obj.rect(2) + new_ymin;
-            new_xpeak = new_xpeak + obj.rect(1) + new_xmin;
-
-            yoffSet = new_ypeak-obj.rect(4);
-            xoffSet = new_xpeak-obj.rect(3);
+            y_peak = new_ypeak + obj.search_area_ymin + new_ymin;
+            x_peak = new_xpeak + obj.search_area_xmin + new_xmin;
 
             %DISPLACEMENT IN PIXELS
-            y = new_ypeak-obj.ytemp;
-            x = new_xpeak-obj.xtemp;
+            disp_y_pixel = new_ypeak-obj.ytemp;
+            disp_x_pixel = new_xpeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            dispx = x * obj.res;
-            dispy = y * obj.res;
+            disp_x_micron = x * obj.res;
+            disp_y_micron = y * obj.res;
 
         end
 
