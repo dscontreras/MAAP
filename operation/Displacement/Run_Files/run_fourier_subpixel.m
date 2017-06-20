@@ -84,25 +84,18 @@ while i < k - 1 & j < i
     new_width   = rect(3)+2*min_displacement;
     new_height  = rect(4)+2*min_displacement;
 
-    pixel_precision = 2;
+    pixel_precision = 2.8;
     [new_search_area, new_search_area_rect] = imcrop(search_area, [xpeak, ypeak, new_width, new_height]);
     
     interp_search_area = im2double(new_search_area);
-    l = interp_search_area;
-    l = imresize(l, 1/pixel_precision);
     [numRows,numCols,~] = size(interp_search_area);
     [X,Y] = meshgrid(1:numCols,1:numRows);
     [Xq,Yq]= meshgrid(1:pixel_precision:numCols,1:pixel_precision:numRows);
     V=interp_search_area;
     interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
     
-    subplot(2, 1, 1)
-    imshow(l);
-    subplot(2, 1, 2)
-    imshow(interp_search_area)
-    size(l)
-    size(interp_search_area)
     size(new_search_area)
+    size(interp_search_area)
     
     processed_interp_search_area = interp_template_average - interp_search_area;
 
