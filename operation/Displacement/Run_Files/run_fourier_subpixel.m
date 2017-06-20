@@ -12,14 +12,23 @@ rect = [584 493  74  35];
 originalFrame = rgb2gray(readFrame(v));
 mov(1).cdata = originalFrame;
 k = 2;
-while v.hasFrame
+
+
+while v.hasFrame & k < 5
     frame = readFrame(v);
     frame = rgb2gray(frame);
     mov(k).cdata = frame;
     k = k + 1;
 end
+%%
+
+aFrame = imcrop(mov(1).cdata, rect);
+
+
 
 %% Initialization
+max_displacement = 50;
+min_displacement = 2;
 template = imcrop(originalFrame, rect);
 rect = [rect(1) rect(2) rect(3)+1 rect(4)+1];
 pixel_precision = 0.5;
@@ -54,61 +63,99 @@ interp_template_average = mean(mean(interp_template));
 processed_interp_template = interp_template_average - interp_template;
 fft_conj_processed_interp_template = conj(fft2(processed_interp_template, interp_search_area_height*2, interp_search_area_width*2));
 
-%% Pixel Precision
+%% While Loop
 i = 1;
-search_area = mov(i).cdata;
-search_area = imcrop(search_area, [search_area_xmin, search_area_ymin, search_area_width, search_area_height]);
-processed_search_area = template_average - search_area;
-dtft_of_search_area = fft2(processed_search_area, search_area_height*2, search_area_width*2);
-R = dtft_of_search_area.*fft_conj_processed_template;
-R = R./abs(R);
-r = real(ifft2(R));
+j = 0;
+k = 300;
+while i < k - 1 & j < i
+    % Pixel Precision
+    search_area = mov(i).cdata;
+    search_area = imcrop(search_area, [search_area_xmin, search_area_ymin, search_area_width, search_area_height]);
+    processed_search_area = template_average - search_area;
+    dtft_of_search_area = fft2(processed_search_area, search_area_height*2, search_area_width*2);
+    R = dtft_of_search_area.*fft_conj_processed_template;
+    R = R./abs(R);
+    r = real(ifft2(R));
+    r = r(1:search_area_height, 1:search_area_width);
 
-[ypeak, xpeak] = find(r==max(r(:)));
+    [ypeak, xpeak] = find(r==max(r(:)));
 
-%% Subpixel
-new_width   = rect(3)+2*min_displacement;
-new_height  = rect(4)+2*min_displacement;
+    % Subpixel
+    new_width   = rect(3)+2*min_displacement;
+    new_height  = rect(4)+2*min_displacement;
 
-[new_search_area, new_search_area_rect] = imcrop(search_area, [xpeak, ypeak, new_width, new_height]);
+    [new_search_area, new_search_area_rect] = imcrop(search_area, [xpeak, ypeak, new_width, new_height]);
+    tic 
+    interp_search_area = im2double(new_search_area);
+    [numRows,numCols,~] = size(interp_search_area);
+    [X,Y] = meshgrid(1:numCols,1:numRows);
+    [Xq,Yq]= meshgrid(1:pixel_precision:numCols,1:pixel_precision:numRows);
+    V=interp_search_area;
+    interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
+    toc
+    tic
+    
+    l = im2double(new_search_area);
+    l = imresize(l, 1/pixel_precision);
+    toc
+%     subplot(2, 1, 1)
+%     imshow(l);
+%     subplot(2, 1, 2)
+%     imshow(interp_search_area)
+%     size(l)
+%     size(interp_search_area)
+%     size(new_search_area)
+    
+    processed_interp_search_area = interp_template_average - interp_search_area;
 
-interp_search_area = im2double(new_search_area);
-[numRows,numCols,~] = size(interp_search_area);
-[X,Y] = meshgrid(1:numCols,1:numRows);
-[Xq,Yq]= meshgrid(1:pixel_precision:numCols,1:pixel_precision:numRows);
-V=interp_search_area;
-interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
+    % Fourier
 
-processed_interp_search_area = interp_template_average - interp_search_area;
+    new_xmin = xpeak - min_displacement;
+    new_ymin = ypeak - min_displacement;
 
-%% Fourier
+    dtft_of_interp_frame = fft2(processed_interp_search_area, interp_search_area_height*2, interp_search_area_width*2);
+    R = dtft_of_interp_frame.*fft_conj_processed_interp_template;
+    R = R./abs(R);
+    r = real(ifft2(R));
+    r = r(1:interp_search_area_height, 1:interp_search_area_width);
 
-new_xmin = xpeak - min_displacement;
-new_ymin = ypeak - min_displacement;
+    [ypeak_sub, xpeak_sub] = find(r == max(r(:)));
 
-dtft_of_interp_frame = fft2(processed_interp_search_area, interp_search_area_height*2, interp_search_area_width*2);
-R = dtft_of_interp_frame.*fft_conj_processed_interp_template;
-R = R./abs(R);
-r = real(ifft2(R));
+    K = processed_interp_search_area;
+    K(ypeak_sub:ypeak_sub+10, xpeak_sub:xpeak_sub+10) = 255;
 
-[ypeak_sub, xpeak_sub] = find(r == max(r(:)));
+    final_ypeak = ypeak_sub * pixel_precision;
+    final_xpeak = xpeak_sub * pixel_precision;
 
-K = processed_interp_search_area;
-K(ypeak_sub:ypeak_sub+10, xpeak_sub:xpeak_sub+10) = 255;
+    new_y_peak = final_ypeak + search_area_ymin + new_ymin;
+    new_x_peak = final_xpeak + search_area_xmin + new_xmin;
 
-final_ypeak = ypeak_sub * pixel_precision;
-final_xpeak = xpeak_sub * pixel_precision;
+    sortedValues = unique(r(:));          %# Unique sorted values
+    maxValues = sortedValues(end-4:end);  %# Get the 5 largest values
+    maxIndex = ismember(r,maxValues);     %# Get a logical index of all values
+                                          %#   equal to the 5 largest values
+    
+    yoffSet = new_y_peak-rect(4);
+    xoffSet = new_x_peak-rect(3);
+    if (new_y_peak > 500)
+        i
+    end
+    i = i + 1;
+    j = 1000;
+end
+"Done"
 
-new_ypeak = final_ypeak + search_area_ymin + new_ymin;
-new_xpeak = final_xpeak + search_area_xmin + new_xmin;
+%%
 
-yoffSet = new_ypeak-rect(4);
-xoffSet = new_xpeak-rect(3);
+subplot(2, 1, 1)
+imshow(processed_interp_search_area);
+subplot(2, 1, 2)
+imshow(processed_interp_template);
 
 %% imshow
 
-A = mov(i).cdata;
-A(round(new_ypeak):round(new_ypeak)+10, round(new_xpeak):round(new_xpeak)+10) = 255;
+A = mov(i-1).cdata;
+A(round(new_y_peak):round(new_y_peak)+10, round(new_x_peak):round(new_x_peak)+10) = 255;
 imshow(A)
 
 
