@@ -53,6 +53,7 @@ classdef Queue < handle
         end
         
         function add_to_queue(obj, operation)
+            %TODO assert operation is of type operation
             obj.length = obj.length + 1;
             %set the object in the queue's callback for error handling to
             %this Queue's error handling function, so that the error can
@@ -105,7 +106,7 @@ classdef Queue < handle
                         obj.list{i}.new = false;
                         obj.list{i}.startup();
                     end
-                    
+                    % TODO: No need to check if it's empty, should be handled by operation itself
                     if(isempty(obj.list{i}.rx_data))
                         obj.list{i}.execute();
                     else
