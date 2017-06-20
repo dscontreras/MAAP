@@ -498,7 +498,7 @@ function maximum_displacement_edit_displacement_CreateFcn(hObject, eventdata, ha
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-max_displacement = getappdata(0, 'maximum_displacement');
+load('displacement_variables.mat');
 if ~strcmp(max_displacement, '')
     set(hObject, 'String', max_displacement);
 end
@@ -525,7 +525,7 @@ function pixel_precision_edit_displacement_CreateFcn(hObject, eventdata, handles
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-pixel_precision = getappdata(0, 'pixel_precision');
+load('displacement_variables.mat');
 if ~strcmp(pixel_precision, '')
     set(hObject, 'String', pixel_precision);
 end
@@ -896,8 +896,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         end
         %Reset the video error tag
         set(handles.vid_error_tag, 'String', '');
-        pixel_precision = getappdata(0, 'pixel_precision');
-        max_displacement = getappdata(0, 'maximum_displacement');  
+        load('displacement_variables.mat');
         img_options = findobj('Tag', 'img_options');
         src_type = img_options.UserData;
         if(strcmp(src_type, 'stream'))
@@ -943,8 +942,9 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % hObject    handle to save_displacement_options (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
-setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
+pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
+max_displacement = get(handles.maximum_displacement_edit_displacement, 'String');
+save('displacement_variables.mat', 'pixel_precision', 'max_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
