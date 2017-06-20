@@ -19,7 +19,7 @@ classdef Displacement < RepeatableOperation
         stop_check_callback = @check_stop;
         im;
         res;
-        x_peak; y_peak;
+        xoff; yoff;
         draw; % toggles imrect
 
         % Properties needed for fourier analysis
@@ -148,28 +148,31 @@ classdef Displacement < RepeatableOperation
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement_fourier();
+                    [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
                 if(obj.vid_src.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                 else
-                    [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
             set(obj.im, 'CData', gather(obj.current_frame));
             if obj.draw == 1
                 hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
             end
-            updateTable(dispx, dispy, obj.table);
+            updateTable(disp_x_micron, disp_y_micron, obj.table);
             data = get(obj.table, 'Data');
-            obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
-            obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
-            obj.outputs('done') = obj.check_stop();
-            obj.x_peak = [obj.x_peak x_peak];
-            obj.y_peak = [obj.y_peak y_peak];
-            % xoff3 = obj.xoff;
-            % yoff3 = obj.yoff;
+
+            % TODO: Understand the following lines of code below and what
+            % the purpose of these variables are
+            %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
+            %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
+            %obj.outputs('done') = obj.check_stop();
+%             obj.xoff = [obj.xoff x_peak];
+%             obj.yoff = [obj.yoff y_peak];
+%             xoff3 = obj.xoff;
+%             yoff3 = obj.yoff;
             % TODO: save gpu_displacement.mat somewhere else.
             % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
@@ -235,12 +238,12 @@ classdef Displacement < RepeatableOperation
             xoffSet = new_xpeak-obj.rect(3);
 
             %DISPLACEMENT IN PIXELS
-            y = new_ypeak-obj.ytemp;
-            x = new_xpeak-obj.xtemp;
+            disp_y_pixel = new_ypeak-obj.ytemp;
+            disp_x_pixel = new_xpeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            dispx = x * obj.res;
-            dispy = y * obj.res;
+            dispx = disp_x_pixel * obj.res;
+            dispy = disp_y_pixel * obj.res;
 
         end
 
@@ -290,8 +293,13 @@ classdef Displacement < RepeatableOperation
             disp_x_pixel = new_xpeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            disp_x_micron = x * obj.res;
-            disp_y_micron = y * obj.res;
+            disp_x_micron = disp_x_pixel * obj.res;
+            disp_y_micron = disp_y_pixel * obj.res;
+            
+            if (y_peak > obj.rect(2)+10)
+                "Hello"
+            end
+            
 
         end
 
@@ -316,7 +324,8 @@ classdef Displacement < RepeatableOperation
                 % fourier transforms of the signals f, g
                 R = dtft_of_frame.*fft_conj_template;
                 R = R./abs(R); % normalize to get rid of values related to intensity of light
-                r = real(ifft2(R));
+                r = real(ifft2(R));%, height, width));
+                r = r(1:height, 1:width); % limit the location of where I look for the max
 
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
         end
