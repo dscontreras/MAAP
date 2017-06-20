@@ -498,6 +498,10 @@ function maximum_displacement_edit_displacement_CreateFcn(hObject, eventdata, ha
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+max_displacement = getappdata(0, 'maximum_displacement');
+if ~strcmp(max_displacement, '')
+    set(hObject, 'String', max_displacement);
+end
 
 
 
@@ -520,6 +524,10 @@ function pixel_precision_edit_displacement_CreateFcn(hObject, eventdata, handles
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+pixel_precision = getappdata(0, 'pixel_precision');
+if ~strcmp(pixel_precision, '')
+    set(hObject, 'String', pixel_precision);
 end
 
 
@@ -856,12 +864,12 @@ function preview_start_Callback(btn, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %TODO: Let user select which camera feed they want to use for live preview
-if(isempty(videoinput('macvideo')))
+if(isempty(videoinput('winvideo')))
     error('Video input: macvideo does not exist!');
 else
     setappdata(0, 'preview_done', false);
     set(handles.image_cover, 'Visible', 'Off');
-    stream = videoinput('macvideo');
+    stream = videoinput('winvideo');
     set(stream, 'FramesPerTrigger', Inf);
     triggerconfig(stream, 'manual');
     start(stream);
