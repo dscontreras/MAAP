@@ -134,6 +134,8 @@ classdef Displacement < RepeatableOperation
             [Xq, Yq] 			= meshgrid(1:obj.pixel_precision:numCols, 1:obj.pixel_precision:numRows);
             V 					= obj.interp_template;
             obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
+            
+            [obj.interp_search_area_height, obj.interp_search_area_width] = size(Xq);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
             obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
