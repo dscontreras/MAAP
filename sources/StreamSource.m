@@ -20,24 +20,34 @@ classdef StreamSource < VideoSource
         %Outputs:
         %Object of class StreamSource
         function obj = StreamSource(camname, opts)
-            try
+            %try
                 %Set the input camera of the stream source to a videoinput
                 %with identifier camname
-                obj.inputcam = videoinput(camname);
+                obj.inputcam = videoinput(camname, 1);
+                obj.inputcam.FramesPerTrigger = 50;
+                obj.inputcam.TriggerFrameDelay = 5;
+                src = getselectedsource(obj.inputcam);
+                set(src, 'FrameRate', 5);
+                %src.FrameRate = frameRates{1};
+
                 obj.gpu_supported = obj.determine_gpu_support();
-            catch E
+            %catch E
                 %If camname does not actually correctly identify any image
                 %acquisition camera then set the camera automatically to
                 %pointgey
+                %{
                 if(strcmp(E.identifier, 'imaq:videoinput:invalidAdaptorName'))
                     available_cams = getfield(imaqhwinfo, 'InstalledAdaptors');
                     index_of_pointgrey = strmatch('pointgrey', available_cams);
                     obj.inputcam = videoinput(char(available_cams(index_of_pointgrey)));
                 end
+                
                 delete(obj.inputcam);
                 imaqreset;
                 error('selected inputcam in use!');
-            end
+                %}
+            %end
+                
             if(nargin > 1)
                 obj.options = opts;
             else
@@ -47,6 +57,7 @@ classdef StreamSource < VideoSource
             obj.inputcam.FramesPerTrigger = obj.options{1};
             triggerconfig(obj.inputcam, obj.options{2});
             obj.inputcam.TriggerRepeat = obj.options{3};
+            
             %now start the camera
             start(obj.inputcam);
         end
@@ -63,7 +74,8 @@ classdef StreamSource < VideoSource
             if(obj.gpu_supported)
                 frame = gpuArray(getdata(obj.inputcam, 1, 'uint8'));
             else
-                frame = getdata(obj.inputcam, 1, 'uint8');
+                %frame = getdata(obj.inputcam, 1, 'uint8');
+                frame = getsnapshot(obj.inputcam)
             end
         end
         

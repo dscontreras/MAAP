@@ -160,7 +160,7 @@ classdef Displacement < RepeatableOperation
             end
             set(obj.im, 'CData', gather(obj.current_frame));
             if obj.draw == 1
-                hrect = imrect(obj.axes,[xoffSet, yoffSet, size(obj.template,2), size(obj.template,1)]);
+                hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
             end
             updateTable(dispx, dispy, obj.table);
             data = get(obj.table, 'Data');
@@ -384,7 +384,6 @@ classdef Displacement < RepeatableOperation
         function frame = get_frame(obj)
             frame = obj.vid_src.extractFrame();
         end
-
 
         function path = get_vid_path(obj)
             path = obj.vid_path;

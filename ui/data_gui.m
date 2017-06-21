@@ -941,7 +941,6 @@ if(getappdata(0, 'wait_status'))
     uiresume;
 end
     
-
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
 % hObject    handle to save_video_options (see GCBO)
