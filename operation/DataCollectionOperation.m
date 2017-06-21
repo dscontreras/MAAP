@@ -1,4 +1,4 @@
-classdef DataCollector < Operation
+classdef DataCollectionOperation < Operation
     %DATACOLLECTER Summary of this class goes here
     %   Detailed explanation goes here
     properties(SetAccess = private)
