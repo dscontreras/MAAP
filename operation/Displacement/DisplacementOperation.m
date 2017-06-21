@@ -1,4 +1,4 @@
-classdef DisplacementOperation < CollectionOperation
+classdef DisplacementOperation < CalculationOperation
     % Displacement
     % Given a video, finds the location of the a template image within the
     % video and findes the displacement between the first frame and every
@@ -49,7 +49,6 @@ classdef DisplacementOperation < CollectionOperation
     end
 
     properties (Constant)
-        rx_data = {};
         name = 'Displacement';
         insertion_type = 'end';
     end

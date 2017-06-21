@@ -8,5 +8,8 @@ classdef (Abstract) CalculationOperation < Operation
         % anything, a video file, livestream, etc.
         % TODO: In the future, force this to be of a certain SourceType. 
         source; 
+        % A list of operation to complete. This may be useful for
+        % operations that would like to use an existing operation. 
+        operations; 
     end  
 end
