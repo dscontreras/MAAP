@@ -5,7 +5,6 @@ classdef DisplacementOperation < CalculationOperation
     % frame within the video.
 
     properties (SetAccess = private)
-        vid_src;
         axes;
         error_tag;
         pixel_precision;
@@ -33,7 +32,6 @@ classdef DisplacementOperation < CalculationOperation
         interp_search_area_width; interp_search_area_height;
         interp_template; interp_template_average;
         processed_interp_template; fft_conj_processed_interp_template;
-
     end
 
     properties (SetAccess = public)
@@ -55,7 +53,7 @@ classdef DisplacementOperation < CalculationOperation
 
     methods
         function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
-            obj.vid_src = src;
+            obj.source = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -89,16 +87,16 @@ classdef DisplacementOperation < CalculationOperation
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
             obj.table_data = {'DispX'; 'DispY'};
-            obj.im = zeros(obj.vid_src.get_num_pixels());
+            obj.im = zeros(obj.source.get_num_pixels());
             obj.im = imshow(obj.im);
         end
 
         function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'')
-                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
+                obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -140,9 +138,9 @@ classdef DisplacementOperation < CalculationOperation
         end
 
         function execute(obj)
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
-                if(obj.vid_src.gpu_supported)
+            obj.current_frame = gather(grab_frame(obj.source, obj));
+            if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
+                if(obj.source.gpu_supported)
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
@@ -150,7 +148,7 @@ classdef DisplacementOperation < CalculationOperation
                     [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
-                if(obj.vid_src.gpu_supported)
+                if(obj.source.gpu_supported)
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
@@ -294,11 +292,11 @@ classdef DisplacementOperation < CalculationOperation
             %DISPLACEMENT IN MICRONS
             disp_x_micron = disp_x_pixel * obj.res;
             disp_y_micron = disp_y_pixel * obj.res;
-            
+
             if (y_peak > obj.rect(2)+10)
                 "Hello"
             end
-            
+
 
         end
 
@@ -332,7 +330,7 @@ classdef DisplacementOperation < CalculationOperation
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
-            while(~strcmp(VideoSource.getSourceType(obj.vid_src), 'stream') && ~FileSystemParser.is_file(obj.vid_src.filepath))
+            while(~strcmp(VideoSource.getSourceType(obj.source), 'stream') && ~FileSystemParser.is_file(obj.source.filepath))
                 str = 'Displacement: Not passed a valid path on the filesystem'
                 err = Error(Displacement.name, str, error_tag);
                 feval(obj.error_report_handle, str);
@@ -385,7 +383,7 @@ classdef DisplacementOperation < CalculationOperation
         end
 
         function frame = get_frame(obj)
-            frame = obj.vid_src.extractFrame();
+            frame = obj.source.extractFrame();
         end
 
 
@@ -402,11 +400,11 @@ classdef DisplacementOperation < CalculationOperation
         end
 
         function bool = check_stop(obj)
-            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.vid_src.finished();
+            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.source.finished();
         end
 
-        function vid_source = get.vid_src(obj)
-            vid_source = obj.vid_src;
+        function vid_source = get.source(obj)
+            vid_source = obj.source;
         end
 
     end
