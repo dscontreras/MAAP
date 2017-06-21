@@ -1,4 +1,4 @@
-classdef Displacement < RepeatableOperation
+classdef DisplacementOperation < CollectionOperation
     % Displacement
     % Given a video, finds the location of the a template image within the
     % video and findes the displacement between the first frame and every
