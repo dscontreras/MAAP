@@ -4,10 +4,11 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
     
     % TODO: Add scalable error handling. The current `error_report_handle`
     % is not adequate
-    properties(Access = public, Abstract)
-    end
-    
-    properties(Access = public, Abstract, Constant)
+    properties(Abstract)
+        % Source from which the data is to be extracted. This can be
+        % anything, a video file, livestream, etc.
+        % TODO: In the future, force this to be of a certain SourceType.
+        source;
     end
 
     methods(Abstract)      
