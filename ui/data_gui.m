@@ -912,7 +912,6 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
         if(get(handles.data_collect_check, 'Value'))
             d = DataCollectionOperation(@displacement.check_stop, output_file_location, 'mat');
-            output_file_location
             q.add_to_queue(d);
         end
     end

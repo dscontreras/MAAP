@@ -33,6 +33,10 @@ classdef FileSource < VideoSource
             end
         end
         
+        function bool = hasNext(obj)
+            bool = obj.videoReader.hasFrame;
+        end
+        
         function bool = finished(obj)
             if(hasFrame(obj.videoReader))
                 bool = false;
