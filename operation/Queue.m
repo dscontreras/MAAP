@@ -59,7 +59,6 @@ classdef Queue < handle
             %this Queue's error handling function, so that the error can
             %correctly propagate up the object hierarchy, from operation to
             %queue to the data_gui itself
-            operation.set_error_report_handle(@obj.report_error);
             %If the object should be inserted at the start of the list
             if(strcmp(operation.insertion_type, 'start'))
                 for i = obj.length:1
@@ -101,7 +100,7 @@ classdef Queue < handle
         function successful = run_to_finish(obj, starting_index)
             % Because we aren't implementing pause/resume functionality, 
             % this just calls execute
-            obj.execute();
+            obj.execute(1);
             successful = true;
         end
         
