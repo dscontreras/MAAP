@@ -3,7 +3,7 @@ classdef (Abstract) CalculationOperation < Operation
     %An abstract type to represent operations that do a series of
     %calculatons. Does not collect or save the data in any way.
 
-    properties(Access = private, Abstract)
+    properties(Access = protected, Abstract)
         % Source from which the data is to be extracted. This can be
         % anything, a video file, livestream, etc.
         % TODO: In the future, force this to be of a certain SourceType.

@@ -166,10 +166,10 @@ classdef DisplacementOperation < CalculationOperation
             %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
             %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
             %obj.outputs('done') = obj.check_stop();
-%             obj.xoff = [obj.xoff x_peak];
-%             obj.yoff = [obj.yoff y_peak];
-%             xoff3 = obj.xoff;
-%             yoff3 = obj.yoff;
+            %obj.xoff = [obj.xoff x_peak];
+            %obj.yoff = [obj.yoff y_peak];
+            %xoff3 = obj.xoff;
+            %yoff3 = obj.yoff;
             % TODO: save gpu_displacement.mat somewhere else.
             % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
