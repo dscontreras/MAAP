@@ -907,11 +907,12 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             src = FileSource(path, res);
         end
         draw = getappdata(0, 'draw_rect');
-        displacement = DisplacementOperation(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
+        displacement = DisplacementOperation(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw, @display_error);
         q.add_to_queue(displacement);
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
         if(get(handles.data_collect_check, 'Value'))
             d = DataCollectionOperation(@displacement.check_stop, output_file_location, 'mat');
+            output_file_location
             q.add_to_queue(d);
         end
     end

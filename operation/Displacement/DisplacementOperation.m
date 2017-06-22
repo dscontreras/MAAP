@@ -33,6 +33,12 @@ classdef DisplacementOperation < CalculationOperation
         interp_template; interp_template_average;
         processed_interp_template; fft_conj_processed_interp_template;
     end
+    
+    properties
+        % Inherited
+        source;
+    end
+    
 
     properties (SetAccess = public)
         pause_bool;
@@ -52,7 +58,7 @@ classdef DisplacementOperation < CalculationOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
+        function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
             obj.source = src;
             obj.axes = axes;
             obj.table = table;
@@ -73,7 +79,7 @@ classdef DisplacementOperation < CalculationOperation
             obj.yoff = [];
             obj.draw = draw;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 10) % 10 is the number of params for displacement
+            if(nargin > 9) % 10 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
