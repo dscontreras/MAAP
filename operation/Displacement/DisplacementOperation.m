@@ -135,7 +135,7 @@ classdef DisplacementOperation < Operation
             
             
             [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement, 1:obj.pixel_precision:numRows+2*obj.min_displacement);
-            [obj.interp_search_area_width, obj.interp_search_area_height] = size(Xq);
+            [obj.interp_search_area_height, obj.interp_search_area_width] = size(Xq);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
             obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
@@ -143,8 +143,8 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
-            while obj.source.hasNext()
-                obj.current_frame = gather(grab_frame(obj.source, obj));
+            while ~obj.source.finished()
+                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
                     if(obj.source.gpu_supported)
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);

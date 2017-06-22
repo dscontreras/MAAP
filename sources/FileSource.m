@@ -34,7 +34,7 @@ classdef FileSource < VideoSource
         end
         
         function bool = finished(obj)
-            bool = hasFrame(obj.videoReader);
+            bool = ~hasFrame(obj.videoReader);
         end
         
         function resolution = get_num_pixels(obj)
