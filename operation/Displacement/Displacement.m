@@ -149,8 +149,8 @@ classdef Displacement < RepeatableOperation
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
+                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    %[x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
                 if(obj.vid_src.gpu_supported)
@@ -163,20 +163,20 @@ classdef Displacement < RepeatableOperation
             if obj.draw == 1
                 hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
             end
-            updateTable(disp_x_micron, disp_y_micron, obj.table);
-            data = get(obj.table, 'Data');
+            %updateTable(disp_x_micron, disp_y_micron, obj.table);
+            %data = get(obj.table, 'Data');
 
             % TODO: Understand the following lines of code below and what
             % the purpose of these variables are
-            %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
-            %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
-            %obj.outputs('done') = obj.check_stop();
-%             obj.xoff = [obj.xoff x_peak];
-%             obj.yoff = [obj.yoff y_peak];
-%             xoff3 = obj.xoff;
-%             yoff3 = obj.yoff;
-            % TODO: save gpu_displacement.mat somewhere else.
-            % save('gpu_displacement.mat', 'xoff3', 'yoff3');
+             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
+             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+             obj.outputs('done') = obj.check_stop();  
+             obj.xoff = [obj.xoff xoffSet];
+             obj.yoff = [obj.yoff yoffSet];
+             xoff3 = obj.xoff;
+             yoff3 = obj.yoff;
+             %TODO: save gpu_displacement.mat somewhere else.
+             save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;

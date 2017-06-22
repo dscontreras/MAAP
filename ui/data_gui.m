@@ -78,6 +78,7 @@ qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
 set(hObject, 'KeyPressFcn', key_handle);
+set(handles.velocity_panel, 'Visible', 'off');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -271,7 +272,7 @@ function displacement_check_Callback(displacement_switch, eventdata, handles)
 
 toggle_visibility(displacement_switch, handles.displacement_panel);
 %if we are measuring displacement
-check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles);
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
 guidata(displacement_switch, handles);
 % Hint: get(hObject,'Value') returns toggle state of displacement_check
 
@@ -347,9 +348,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-
-
 function frames_on_trigger_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to frames_on_trigger_edit_trigger (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -371,9 +369,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-
 function file_destination_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to file_destination_edit_trigger (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -394,9 +389,6 @@ function file_destination_edit_trigger_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-
 
 function time_between_frames_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to time_between_frames_edit_trigger (see GCBO)
@@ -455,7 +447,7 @@ function capture_check_Callback(capture_check, eventdata, handles)
 %The still selection panel is a panel used for specifying settings for
 %taking photos of a stream or a video
 toggle_visibility(capture_check, handles.still_selection_panel);
-check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles);
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
 %Now save changes to the GUI
 guidata(capture_check, handles);
 % Hint: get(hObject,'Value') returns toggle state of capture_check
@@ -466,9 +458,19 @@ function voltage_check_Callback(hObject, eventdata, handles)
 % hObject    handle to voltage_check (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
+guidata(handles.velocity_check, handles);
 % Hint: get(hObject,'Value') returns toggle state of voltage_check
 
+% --- Executes on button press in velocity_check.
+function velocity_check_Callback(hObject, eventdata, handles)
+% hObject    handle to velocity_check (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+toggle_visibility(handles.velocity_check, handles.velocity_panel);
+% Hint: get(hObject,'Value') returns toggle state of velocity_check
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
+guidata(handles.velocity_check, handles);
 
 % --- Executes during object creation, after setting all properties.
 function img_viewer_CreateFcn(hObject, eventdata, handles)
@@ -972,11 +974,12 @@ setappdata(0, 'file_destination', get(handles.file_destination_edit_trigger));
 setappdata(0, 'time_between_frames', get(handles.time_between_frames_edit_trigger));
 setappdata(0, 'file_type', get(handles.file_type_edit_trigger));
 
-function check_operations(displacement_check, capture_check, voltage_check, handles)
+function check_operations(displacement_check, capture_check, voltage_check, velocity_check, handles)
 measuring_displacement = get(displacement_check, 'Value');
 capturing_stills = get(capture_check, 'Value');
 measuring_voltage = get(voltage_check, 'Value');
-if(~measuring_displacement && ~measuring_voltage && ~capturing_stills)
+measuring_velocity = get(velocity_check, 'Value');
+if(~measuring_displacement && ~measuring_voltage && ~capturing_stills && ~measuring_velocity)
     set(handles.begin_operation_btn, 'Visible', 'Off');
 else
     set(handles.begin_operation_btn, 'Visible', 'On');
