@@ -59,7 +59,7 @@ classdef DisplacementOperation < CalculationOperation
 
     methods
         function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
-            obj.source = src;
+            obj.source = src; % TODO: remove assumption that src is of type FileSource
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -125,11 +125,6 @@ classdef DisplacementOperation < CalculationOperation
             obj.processed_template  = obj.template_average - obj.template;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
-            % The frame we will crop out when interpolating will have size (template_height + 2*min + 1, template_width+2*min+1)
-            % Interpolation takes that and the resulting dimension size is (k - 1)/obj.pixel_precision + 1;
-            obj.interp_search_area_width 	= (obj.rect(3) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
-            obj.interp_search_area_height 	= (obj.rect(4) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
-
             obj.interp_template = im2double(obj.template);
             numRows 			= obj.rect(4);
             numCols 			= obj.rect(3);
@@ -137,6 +132,10 @@ classdef DisplacementOperation < CalculationOperation
             [Xq, Yq] 			= meshgrid(1:obj.pixel_precision:numCols, 1:obj.pixel_precision:numRows);
             V 					= obj.interp_template;
             obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
+            
+            
+            [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement, 1:obj.pixel_precision:numRows+2*obj.min_displacement);
+            [obj.interp_search_area_width, obj.interp_search_area_height] = size(Xq);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
             obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
@@ -167,7 +166,8 @@ classdef DisplacementOperation < CalculationOperation
                 end
                 updateTable(disp_x_micron, disp_y_micron, obj.table);
                 data = get(obj.table, 'Data');
-
+                x_peak = -1;
+                y_peak = -1;
                 % TODO: Understand the following lines of code below and what
                 % the purpose of these variables are
                 %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
@@ -301,9 +301,9 @@ classdef DisplacementOperation < CalculationOperation
             disp_x_micron = disp_x_pixel * obj.res;
             disp_y_micron = disp_y_pixel * obj.res;
 
-            if (y_peak > obj.rect(2)+10)
-                "Hello"
-            end
+%             if (y_peak > obj.rect(2)+10)
+%                 "Hello"
+%             end
 
 
         end
