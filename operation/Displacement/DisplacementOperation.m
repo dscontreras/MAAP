@@ -189,7 +189,7 @@ classdef DisplacementOperation < CalculationOperation
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
-            %% Whole Pixel Precision Coordinates
+            % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
@@ -198,7 +198,7 @@ classdef DisplacementOperation < CalculationOperation
             ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
 
-            %% Subpixel Precision Coordinates
+            % Subpixel Precision Coordinates
 
             % put the new min values relative to img, not search_area
             new_xmin = xpeak + round(search_area_rect(1)) - 1;
@@ -212,7 +212,7 @@ classdef DisplacementOperation < CalculationOperation
 
             [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
 
-            %% Interpolation
+            % Interpolation
             %Interpolate both the new object area and the old and then compare
             %those that have subpixel precision in a normalized cross
             %correlation
@@ -253,7 +253,7 @@ classdef DisplacementOperation < CalculationOperation
         end
 
         function [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement_fourier(obj)
-            %% Whole Pixel Precision Coordinates
+            % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
@@ -264,13 +264,13 @@ classdef DisplacementOperation < CalculationOperation
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
 
-            %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
+            % Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
 
             new_width   = obj.rect(3)+2*obj.min_displacement;
             new_height  = obj.rect(4)+2*obj.min_displacement;
             [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
 
-            %% Interpolation
+            % Interpolation
             %Interpolate both the new object area and the old and then compare
             %those that have subpixel precision in a normalized cross
             %correlation
