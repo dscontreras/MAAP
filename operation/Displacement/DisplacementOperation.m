@@ -166,8 +166,6 @@ classdef DisplacementOperation < Operation
                 end
                 updateTable(disp_x_micron, disp_y_micron, obj.table);
                 data = get(obj.table, 'Data');
-                x_peak = -1;
-                y_peak = -1;
                 % TODO: Understand the following lines of code below and what
                 % the purpose of these variables are
                 %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
@@ -182,10 +180,9 @@ classdef DisplacementOperation < Operation
 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
-                if obj.draw == 1 & ~obj.check_stop()
-                    delete(hrect);
-                end
+                delete(hrect);
             end
+            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
