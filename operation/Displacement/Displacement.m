@@ -1,7 +1,7 @@
 classdef Displacement < RepeatableOperation
     % Displacement
     % Given a video, finds the location of the a template image within the
-    % video and findes the displacement between the first frame and every
+    % video and finds the displacement between the first frame and every
     % frame within the video.
 
     properties (SetAccess = private)

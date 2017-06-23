@@ -1165,3 +1165,92 @@ function imrect_button_Callback(hObject, eventdata, handles)
 % determines whether button is toggled or not
 draw = get(hObject, 'Value');
 setappdata(0, 'draw_rect', draw);
+
+
+% --- Executes on button press in scale_img_select.
+function scale_img_select_Callback(hObject, eventdata, handles)
+% hObject    handle to scale_img_select (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+imgfile = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
+if imgfile ~= 0
+    setappdata(0, 'imgfile', imgfile);
+    set(handles.scale_img_display, 'String', imgfile);
+else
+    setappdata(0, 'imgfile', '');
+    set(handles.scale_img_display, 'String', 'No file selected');
+end
+
+function scale_length_text_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to scale_length_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of scale_length_text_velocity as text
+%        str2double(get(hObject,'String')) returns contents of scale_length_text_velocity as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function scale_length_text_velocity_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to scale_length_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function maximum_displacement_text_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_displacement_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of maximum_displacement_text_velocity as text
+%        str2double(get(hObject,'String')) returns contents of maximum_displacement_text_velocity as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function maximum_displacement_text_velocity_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maximum_displacement_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function pixel_precision_text_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to pixel_precision_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of pixel_precision_text_velocity as text
+%        str2double(get(hObject,'String')) returns contents of pixel_precision_text_velocity as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function pixel_precision_text_velocity_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pixel_precision_text_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in save_velocity_options.
+function save_velocity_options_Callback(hObject, eventdata, handles)
+% hObject    handle to save_velocity_options (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
