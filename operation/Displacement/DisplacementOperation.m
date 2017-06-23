@@ -122,7 +122,7 @@ classdef DisplacementOperation < Operation
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = obj.template_average - obj.template;
+            obj.processed_template  = obj.template - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
             obj.interp_template = im2double(obj.template);
@@ -133,11 +133,12 @@ classdef DisplacementOperation < Operation
             V 					= obj.interp_template;
             obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
 
-            [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement, 1:obj.pixel_precision:numRows+2*obj.min_displacement);
+            % I add 1 as imcrop will add 1 to each dimension
+            [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement+1, 1:obj.pixel_precision:numRows+2*obj.min_displacement+1);
             [obj.interp_search_area_height, obj.interp_search_area_width] = size(Xq);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
-            obj.processed_interp_template = obj.interp_template_average - obj.interp_template;
+            obj.processed_interp_template = obj.interp_template - obj.interp_template_average;
             obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_interp_template, obj.interp_search_area_height*2, obj.interp_search_area_width*2));
         end
 
@@ -149,7 +150,8 @@ classdef DisplacementOperation < Operation
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
                 else
@@ -161,7 +163,7 @@ classdef DisplacementOperation < Operation
                 end
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
-                    hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
+                    hrect = impoint(obj.axes,[x_peak, y_peak]);% obj.rect(3) obj.rect(4)]); TODO: revert back to hrect
                     drawnow limitrate nocallbacks;
                     delete(hrect);
                 else
@@ -196,6 +198,8 @@ classdef DisplacementOperation < Operation
             ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
 
+            %[ypeak, xpeak]
+            
             % Subpixel Precision Coordinates
 
             % put the new min values relative to img, not search_area
@@ -241,12 +245,12 @@ classdef DisplacementOperation < Operation
             xoffSet = new_xpeak-obj.rect(3);
 
             %DISPLACEMENT IN PIXELS
-            disp_y_pixel = new_ypeak-obj.ytemp;
-            disp_x_pixel = new_xpeak-obj.xtemp;
+            x = new_xpeak-obj.ytemp;
+            y = new_ypeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            dispx = disp_x_pixel * obj.res;
-            dispy = disp_y_pixel * obj.res;
+            dispx = x * obj.res;
+            dispy = y * obj.res;
 
         end
 
@@ -255,14 +259,12 @@ classdef DisplacementOperation < Operation
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
-            processed_search_area = obj.template_average - search_area;
+            processed_search_area = search_area - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
-
+            
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
-
-            % Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
 
             new_width   = obj.rect(3)+2*obj.min_displacement;
             new_height  = obj.rect(4)+2*obj.min_displacement;
@@ -281,7 +283,7 @@ classdef DisplacementOperation < Operation
             V=interp_search_area;
             interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
 
-            processed_interp_search_area = obj.interp_template_average - interp_search_area;
+            processed_interp_search_area = interp_search_area - obj.interp_template_average;
 
             [new_ypeak, new_xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_interp_template, processed_interp_search_area, obj.interp_search_area_height, obj.interp_search_area_width);
 
@@ -292,12 +294,12 @@ classdef DisplacementOperation < Operation
             x_peak = new_xpeak + obj.search_area_xmin + new_xmin;
 
             %DISPLACEMENT IN PIXELS
-            disp_y_pixel = new_ypeak-obj.ytemp;
-            disp_x_pixel = new_xpeak-obj.xtemp;
+            disp_y_pixel = obj.rect(2) - y_peak;
+            disp_x_pixel = obj.rect(1) - x_peak;
 
             %DISPLACEMENT IN MICRONS
-            disp_x_micron = disp_x_pixel * obj.res;
             disp_y_micron = disp_y_pixel * obj.res;
+            disp_x_micron = disp_x_pixel * obj.res;
 
 %             if (y_peak > obj.rect(2)+10)
 %                 "Hello"
@@ -331,6 +333,8 @@ classdef DisplacementOperation < Operation
                 r = r(1:height, 1:width); % limit the location of where I look for the max
 
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
+                ypeak = ypeak - 1;
+                xpeak = xpeak - 1;
         end
 
         %error_tag is now deprecated
@@ -388,30 +392,14 @@ classdef DisplacementOperation < Operation
             set(handles.pause_vid, 'String', 'Pause Video');
         end
 
-        function frame = get_frame(obj)
-            frame = obj.source.extractFrame();
-        end
-
-
-        function path = get_vid_path(obj)
-            path = obj.vid_path;
-        end
-
         function pixel_precision = get_pixel_precision(obj)
             pixel_precision = obj.pixel_precision;
-        end
-
-        function max_displacement = get_max_displacement(obj)
-           max_displacement = obj.max_displacement;
         end
 
         function bool = check_stop(obj)
             bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.source.finished();
         end
 
-        function vid_source = get.source(obj)
-            vid_source = obj.source;
-        end
 
     end
 
