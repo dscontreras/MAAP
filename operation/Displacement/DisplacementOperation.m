@@ -1,11 +1,10 @@
-classdef Displacement < RepeatableOperation
+classdef DisplacementOperation < Operation
     % Displacement
     % Given a video, finds the location of the a template image within the
     % video and findes the displacement between the first frame and every
     % frame within the video.
 
     properties (SetAccess = private)
-        vid_src;
         axes;
         error_tag;
         pixel_precision;
@@ -33,8 +32,13 @@ classdef Displacement < RepeatableOperation
         interp_search_area_width; interp_search_area_height;
         interp_template; interp_template_average;
         processed_interp_template; fft_conj_processed_interp_template;
-
     end
+    
+    properties
+        % Inherited
+        source;
+    end
+    
 
     properties (SetAccess = public)
         pause_bool;
@@ -49,14 +53,13 @@ classdef Displacement < RepeatableOperation
     end
 
     properties (Constant)
-        rx_data = {};
         name = 'Displacement';
         insertion_type = 'end';
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
-            obj.vid_src = src;
+        function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
+            obj.source = src; % TODO: remove assumption that src is of type FileSource
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -76,7 +79,7 @@ classdef Displacement < RepeatableOperation
             obj.yoff = [];
             obj.draw = draw;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 10) % 10 is the number of params for displacement
+            if(nargin > 9) % 10 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -90,16 +93,16 @@ classdef Displacement < RepeatableOperation
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
             obj.table_data = {'DispX'; 'DispY'};
-            obj.im = zeros(obj.vid_src.get_num_pixels());
+            obj.im = zeros(obj.source.get_num_pixels());
             obj.im = imshow(obj.im);
         end
 
         function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'')
-                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
+                obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -122,11 +125,6 @@ classdef Displacement < RepeatableOperation
             obj.processed_template  = obj.template_average - obj.template;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
-            % The frame we will crop out when interpolating will have size (template_height + 2*min + 1, template_width+2*min+1)
-            % Interpolation takes that and the resulting dimension size is (k - 1)/obj.pixel_precision + 1;
-            obj.interp_search_area_width 	= (obj.rect(3) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
-            obj.interp_search_area_height 	= (obj.rect(4) + 2 * obj.min_displacement + 1 - 1)/obj.pixel_precision + 1;
-
             obj.interp_template = im2double(obj.template);
             numRows 			= obj.rect(4);
             numCols 			= obj.rect(3);
@@ -135,6 +133,7 @@ classdef Displacement < RepeatableOperation
             V 					= obj.interp_template;
             obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
             
+            [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement, 1:obj.pixel_precision:numRows+2*obj.min_displacement);
             [obj.interp_search_area_height, obj.interp_search_area_width] = size(Xq);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
@@ -143,50 +142,50 @@ classdef Displacement < RepeatableOperation
         end
 
         function execute(obj)
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
-                if(obj.vid_src.gpu_supported)
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+            while ~obj.source.finished()
+                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
+                    if(obj.source.gpu_supported)
+                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    else
+                        % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
+                    end
                 else
-                    % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
+                    if(obj.source.gpu_supported)
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    else
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    end
                 end
-            else
-                if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                else
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                set(obj.im, 'CData', gather(obj.current_frame));
+                if obj.draw == 1
+                    hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
                 end
-            end
-            set(obj.im, 'CData', gather(obj.current_frame));
-            if obj.draw == 1
-                hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
-            end
-            updateTable(disp_x_micron, disp_y_micron, obj.table);
-            data = get(obj.table, 'Data');
+                updateTable(disp_x_micron, disp_y_micron, obj.table);
+                data = get(obj.table, 'Data');
+                % TODO: Understand the following lines of code below and what
+                % the purpose of these variables are
+                %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
+                %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
+                %obj.outputs('done') = obj.check_stop();
+                %obj.xoff = [obj.xoff x_peak];
+                %obj.yoff = [obj.yoff y_peak];
+                %xoff3 = obj.xoff;
+                %yoff3 = obj.yoff;
+                % TODO: save gpu_displacement.mat somewhere else.
+                % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
-            % TODO: Understand the following lines of code below and what
-            % the purpose of these variables are
-            %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
-            %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
-            %obj.outputs('done') = obj.check_stop();
-%             obj.xoff = [obj.xoff x_peak];
-%             obj.yoff = [obj.yoff y_peak];
-%             xoff3 = obj.xoff;
-%             yoff3 = obj.yoff;
-            % TODO: save gpu_displacement.mat somewhere else.
-            % save('gpu_displacement.mat', 'xoff3', 'yoff3');
-
-            % To have GUI table update continuously, remove nocallbacks
-            drawnow limitrate nocallbacks;
-            if obj.draw == 1 & ~obj.check_stop()
+                % To have GUI table update continuously, remove nocallbacks
+                drawnow limitrate nocallbacks;
                 delete(hrect);
             end
+            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
-            %% Whole Pixel Precision Coordinates
+            % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
@@ -195,7 +194,7 @@ classdef Displacement < RepeatableOperation
             ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
 
-            %% Subpixel Precision Coordinates
+            % Subpixel Precision Coordinates
 
             % put the new min values relative to img, not search_area
             new_xmin = xpeak + round(search_area_rect(1)) - 1;
@@ -209,7 +208,7 @@ classdef Displacement < RepeatableOperation
 
             [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
 
-            %% Interpolation
+            % Interpolation
             %Interpolate both the new object area and the old and then compare
             %those that have subpixel precision in a normalized cross
             %correlation
@@ -250,7 +249,7 @@ classdef Displacement < RepeatableOperation
         end
 
         function [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement_fourier(obj)
-            %% Whole Pixel Precision Coordinates
+            % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
@@ -261,13 +260,13 @@ classdef Displacement < RepeatableOperation
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
 
-            %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
+            % Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
 
             new_width   = obj.rect(3)+2*obj.min_displacement;
             new_height  = obj.rect(4)+2*obj.min_displacement;
             [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
 
-            %% Interpolation
+            % Interpolation
             %Interpolate both the new object area and the old and then compare
             %those that have subpixel precision in a normalized cross
             %correlation
@@ -297,11 +296,11 @@ classdef Displacement < RepeatableOperation
             %DISPLACEMENT IN MICRONS
             disp_x_micron = disp_x_pixel * obj.res;
             disp_y_micron = disp_y_pixel * obj.res;
-            
-            if (y_peak > obj.rect(2)+10)
-                "Hello"
-            end
-            
+
+%             if (y_peak > obj.rect(2)+10)
+%                 "Hello"
+%             end
+
 
         end
 
@@ -335,7 +334,7 @@ classdef Displacement < RepeatableOperation
         %error_tag is now deprecated
         function valid = validate(obj, error_tag)
             valid = true;
-            while(~strcmp(VideoSource.getSourceType(obj.vid_src), 'stream') && ~FileSystemParser.is_file(obj.vid_src.filepath))
+            while(~strcmp(VideoSource.getSourceType(obj.source), 'stream') && ~FileSystemParser.is_file(obj.source.filepath))
                 str = 'Displacement: Not passed a valid path on the filesystem'
                 err = Error(Displacement.name, str, error_tag);
                 feval(obj.error_report_handle, str);
@@ -388,7 +387,7 @@ classdef Displacement < RepeatableOperation
         end
 
         function frame = get_frame(obj)
-            frame = obj.vid_src.extractFrame();
+            frame = obj.source.extractFrame();
         end
 
 
@@ -405,11 +404,11 @@ classdef Displacement < RepeatableOperation
         end
 
         function bool = check_stop(obj)
-            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.vid_src.finished();
+            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.source.finished();
         end
 
-        function vid_source = get.vid_src(obj)
-            vid_source = obj.vid_src;
+        function vid_source = get.source(obj)
+            vid_source = obj.source;
         end
 
     end
