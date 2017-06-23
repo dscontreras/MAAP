@@ -434,8 +434,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 % --- Executes on button press in capture_check.
 %Brief: This function executes when the checkbox under Still Selection is
 %toggled
