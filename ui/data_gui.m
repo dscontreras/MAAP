@@ -909,12 +909,10 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         draw = getappdata(0, 'draw_rect');
         operation = Displacement(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_displacement, res, draw);    
-    
-        
+            pixel_precision, max_displacement, res, draw);        
         %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
-        
     elseif get(handles.velocity_check, 'Value') == 1
+        "here"
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
         if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)

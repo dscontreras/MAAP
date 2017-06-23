@@ -10,6 +10,7 @@ classdef Velocity < RepeatableOperation
         scale_length;
         img_cover;
         pause_button;
+        stop_check_callback = @check_stop;
     end
     
     properties (SetAccess = public)
@@ -64,8 +65,14 @@ classdef Velocity < RepeatableOperation
             obj.finished();
         end
         
-        function bool = finished(obj)
-            bool = 1;
+        
+        
+        function bool = check_stop(obj)
+            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.vid_src.finished();
+        end
+        
+        function valid = validate(obj, error_tag)
+            valid = obj.displacement.validate(error_tag);
         end
     end    
 end

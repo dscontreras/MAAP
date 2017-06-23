@@ -6,8 +6,11 @@ classdef Velocity < RepeatableOperation
     properties (SetAccess = private)
         scale_img; % image that contains scale
         displacement;
-        calibration; % converts px/frame to um/s
+        calibration; % converts px to um
         scale_length;
+        img_cover;
+        pause_button;
+        stop_check_callback = @check_stop;
     end
     
     properties (SetAccess = public)
@@ -40,11 +43,34 @@ classdef Velocity < RepeatableOperation
                 resolution, draw, error_report_handle);
             
             obj.scale_length = scale_length;
+            obj.img_cover = img_cover;
+            obj.pause_button = pause_button;
         end
         
-        % Method 
+        %For carrying out one time method calls that should be done before
+        %calling of execute
+        function startup(obj)
+            set(obj.img_cover, 'Visible', 'Off');
+            set(obj.pause_button, 'Visible', 'On');
+            obj.initialize_algorithm();
+            %obj.displacement.startup();
+        end  
         
+        function initialize_algorithm(obj)
+            imshow(obj.scale_img);
+            scale = imdistline;
+            user_input = iptgetapi(scale);
+            dist_in_pixels = user_input.getDistance();
+            obj.calibration = obj.scale_length / dist_in_pixels;
+            obj.finished();
+        end
         
+        function bool = check_stop(obj)
+            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.vid_src.finished();
+        end
         
+        function valid = validate(obj, error_tag)
+            
+        end
     end    
 end
