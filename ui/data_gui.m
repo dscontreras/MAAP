@@ -905,30 +905,47 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         else
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
-        end
-        %%% TODO: Modify operations so you can select multiple at once %%%
-        if get(handles.displacement_check, 'Value') & get(handles.velocity_check, 'Value')
-            msg = "You can only select one operation currently";
-            disp(msg);
-            return;       
-        elseif get(handles.velocity_check, 'Value')
-            scale_img = get(handles.scale_img_display, 'String')
-            scale_length = get(handles.scale_length_text_velocity, 'String')
-            
-            operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-                handles.vid_error_tag, handles.img_cover, handles.pause_operation,... 
-                pixel_precision, max_displacement, res, scale_img, scale_length);
-        else
-            draw = getappdata(0, 'draw_rect');
-            operation = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
-        end
+        end 
+        draw = getappdata(0, 'draw_rect');
+        operation = Displacement(src, handles.img_viewer, handles.data_table, ...
+            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+            pixel_precision, max_displacement, res, draw);    
+    
+        
         %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
-        q.add_to_queue(operation);
-        output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-        if(get(handles.data_collect_check, 'Value'))
-            d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-            q.add_to_queue(d);
+        
+    elseif get(handles.velocity_check, 'Value') == 1
+        res_entry_obj = findobj('Tag', 'source_resolution_entry');
+        resolution = res_entry_obj.UserData;
+        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
+            res = resolution;
+        else
+            res = 5.86E-6;
         end
+        set(handles.vid_error_tag, 'String', '');
+        load('velocity_variables.mat');
+        img_options = findobj('Tag', 'img_options');
+        src_type = img_options.UserData;
+        if(strcmp(src_type, 'stream'))
+            cam_name = getappdata(0, 'cam_name');
+            src = StreamSource(cam_name);    
+        else
+            path = getappdata(0, 'vid_path');
+            src = FileSource(path, res);
+        end
+        
+        scale_img = get(handles.scale_img_display, 'String');
+        scale_length = get(handles.scale_length_text_velocity, 'String');
+
+        operation = Velocity(src, handles.img_viewer, handles.data_table, ...
+        handles.vid_error_tag, handles.image_cover, handles.pause_operation,... 
+        pixel_precision, max_displacement, res, scale_img, scale_length);
+    end
+    q.add_to_queue(operation);
+    output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
+    if(get(handles.data_collect_check, 'Value'))
+        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
+        q.add_to_queue(d);
     end
     tic;
     q.run_to_finish();
@@ -1272,7 +1289,7 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_displacement = get(handles.maximum_displacement_edit_displacement, 'String');
 img = get(handles.scale_img_display, 'String');
 img_scale = get(handles.scale_length_text_velocity, 'String');
-save('displacement_variables.mat', 'pixel_precision', 'max_displacement', 'img', 'img_scale');
+save('velocity_variables.mat', 'pixel_precision', 'max_displacement', 'img', 'img_scale');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end

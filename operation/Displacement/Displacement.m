@@ -166,22 +166,18 @@ classdef Displacement < RepeatableOperation
             end
             set(obj.im, 'CData', gather(obj.current_frame));
             if obj.draw == 1
-                hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
+                hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
             end
-            %updateTable(disp_x_micron, disp_y_micron, obj.table);
-            %data = get(obj.table, 'Data');
             updateTable(dispx, dispy, obj.table);
-            % TODO: Understand the following lines of code below and what
-            % the purpose of these variables are
-             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
-             obj.outputs('done') = obj.check_stop();  
-             obj.xoff = [obj.xoff xoffSet];
-             obj.yoff = [obj.yoff yoffSet];
-             xoff3 = obj.xoff;
-             yoff3 = obj.yoff;
-             %TODO: save gpu_displacement.mat somewhere else.
-             save('gpu_displacement.mat', 'xoff3', 'yoff3');
+            obj.outputs('dispx') = [obj.outputs('dispx') dispx];
+            obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+            obj.outputs('done') = obj.check_stop();  
+            obj.xoff = [obj.xoff xoffSet];
+            obj.yoff = [obj.yoff yoffSet];
+            xoff3 = obj.xoff;
+            yoff3 = obj.yoff;
+            %TODO: save gpu_displacement.mat somewhere else.
+            save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
