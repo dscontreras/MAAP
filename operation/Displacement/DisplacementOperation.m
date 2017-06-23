@@ -33,12 +33,12 @@ classdef DisplacementOperation < Operation
         interp_template; interp_template_average;
         processed_interp_template; fft_conj_processed_interp_template;
     end
-    
+
     properties
         % Inherited
         source;
     end
-    
+
 
     properties (SetAccess = public)
         pause_bool;
@@ -59,7 +59,7 @@ classdef DisplacementOperation < Operation
 
     methods
         function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
-            obj.source = src; % TODO: remove assumption that src is of type FileSource
+            obj.source = src; % TODO: remove assumption that src is of type VideoSource
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -132,7 +132,7 @@ classdef DisplacementOperation < Operation
             [Xq, Yq] 			= meshgrid(1:obj.pixel_precision:numCols, 1:obj.pixel_precision:numRows);
             V 					= obj.interp_template;
             obj.interp_template = interp2(X, Y, V, Xq, Yq, 'cubic');
-            
+
             [Xq, Yq] = meshgrid(1:obj.pixel_precision:numCols+2*obj.min_displacement, 1:obj.pixel_precision:numRows+2*obj.min_displacement);
             [obj.interp_search_area_height, obj.interp_search_area_width] = size(Xq);
 
