@@ -162,6 +162,10 @@ classdef DisplacementOperation < Operation
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
                     hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
+                    drawnow limitrate nocallbacks;
+                    delete(hrect);
+                else
+                    drawnow limitrate nocallbacks;
                 end
                 updateTable(disp_x_micron, disp_y_micron, obj.table);
                 data = get(obj.table, 'Data');
@@ -178,8 +182,6 @@ classdef DisplacementOperation < Operation
                 % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
                 % To have GUI table update continuously, remove nocallbacks
-                drawnow limitrate nocallbacks;
-                delete(hrect);
             end
             hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
         end
