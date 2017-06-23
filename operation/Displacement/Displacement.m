@@ -89,7 +89,7 @@ classdef Displacement < RepeatableOperation
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
-            obj.table_data = {'DispX'; 'DispY'};
+            obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
             obj.im = zeros(obj.vid_src.get_num_pixels());
             obj.im = imshow(obj.im);
         end
@@ -170,7 +170,7 @@ classdef Displacement < RepeatableOperation
             end
             %updateTable(disp_x_micron, disp_y_micron, obj.table);
             %data = get(obj.table, 'Data');
-
+            updateTable(dispx, dispy, obj.table);
             % TODO: Understand the following lines of code below and what
             % the purpose of these variables are
              obj.outputs('dispx') = [obj.outputs('dispx') dispx];

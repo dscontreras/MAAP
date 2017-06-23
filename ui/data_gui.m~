@@ -907,20 +907,14 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             src = FileSource(path, res);
         end
         %%% TODO: Modify operations so you can select multiple at once %%%
-        if get(handles.displacement_check, 'Value') & get(handles.velocity_check, 'Value')
-            msg = "You can only select one operation currently";
-            disp(msg);
-            return;       
-        elseif get(handles.velocity_check, 'Value')
-            scale_img = get(handles.scale_img_display, 'String')
-            scale_length = get(handles.scale_length_text_velocity, 'String')
-            
-            operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-                handles.vid_error_tag, handles.img_cover, handles.pause_operation,... 
-                pixel_precision, max_displacement, res, scale_img, scale_length);
-        else
+        if get(handles.displacement_check, 'Value')
             draw = getappdata(0, 'draw_rect');
             operation = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
+        elseif get(handles.velocity_check, 'Value')
+            operation = Velocity;
+        else
+            "You can only select one operation cu"
+            return;
         end
         %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
         q.add_to_queue(operation);
