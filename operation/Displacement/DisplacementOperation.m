@@ -4,7 +4,7 @@ classdef DisplacementOperation < Operation
     % video and findes the displacement between the first frame and every
     % frame within the video.
 
-    properties (SetAccess = private)
+    properties (SetAccess = protected)
         axes;
         error_tag;
         pixel_precision;
@@ -151,7 +151,7 @@ classdef DisplacementOperation < Operation
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                        
+
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
                 else
@@ -199,7 +199,7 @@ classdef DisplacementOperation < Operation
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
 
             %[ypeak, xpeak]
-            
+
             % Subpixel Precision Coordinates
 
             % put the new min values relative to img, not search_area
@@ -262,7 +262,7 @@ classdef DisplacementOperation < Operation
             processed_search_area = search_area - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
-            
+
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
 
@@ -365,7 +365,7 @@ classdef DisplacementOperation < Operation
 
         function valid = valid_max_displacement(obj)
             valid = true;
-            frame = obj.get_frame();
+            frame = obj.source.extractFrame();
             if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
                 valid = false;
             end
