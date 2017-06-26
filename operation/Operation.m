@@ -1,7 +1,7 @@
 classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
     %OPERATION Summary of this class goes here
     %   Detailed explanation goes here
-    
+
     % TODO: Add scalable error handling. The current `error_report_handle`
     % is not adequate
     properties(Abstract)
@@ -11,7 +11,7 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
         source;
     end
 
-    methods(Abstract)      
+    methods(Abstract)
         %METHOD: execute
         %The most important method of the operational design model
         %implemented for this GUI.  This method specifies what operation
@@ -23,11 +23,17 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
         execute(obj, argsin);
         %METHOD: startup
         %Does any initial calculation that may not have been possible
-        %during the instantiation of the operation. 
+        %during the instantiation of the operation.
         %TODO: remove the need for such a function. In the end, I should
             %only have to use instnantiate and call execute
         startup(obj, varargin);
-        
+    end
+
+    methods
+        %METHOD: validate
+        %Makes sure that the operation is "executable". This must be override. Assumes that the operation is not valid
+        function bool = validate(obj)
+            bool = false;
+        end
     end
 end
-
