@@ -116,7 +116,7 @@ src_type = '-1';
 clear_error(handles.vid_error_tag);
 %top_level is a boolean that indicates whether the listbox is at the top
 %level of selections
-global top_level; 
+global top_level;
 %parser is the FileSystemParser object, responsible for navigating the file
 %system
 global parser;
@@ -125,7 +125,7 @@ global parser;
 global vid_width;
 global vid_height;
 
-%If at the top level of the parsing system 
+%If at the top level of the parsing system
 if(top_level)
     %Make the text to the side of the listbox about directly entering a
     %video source path visible, and also make visible the direct path entry
@@ -161,7 +161,7 @@ if(top_level)
         ListboxOperations.change_options(img_options, get_sys_cams());
     end
 %Must be selecting an element in the filesystem or a camera
-else 
+else
     if(is_cam_name(value))
         src_type = 'stream';
         setappdata(0, 'cam_name', value);
@@ -193,7 +193,7 @@ else
             %Iterate through the supported extensions
             for i = 1:length(supported_extensions)
                 %if the extension is an accepted extension
-                if(strcmp(extension, supported_extensions(i))) 
+                if(strcmp(extension, supported_extensions(i)))
                     supported = true;
                 end
             end
@@ -833,14 +833,14 @@ function settings_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%Brief: Used for displaying error tags on a MATLAB GUI. 
+%Brief: Used for displaying error tags on a MATLAB GUI.
 %Params:
 %error_tag: is the GUI error's object tag
 %msg: The error message to be displayed on the GUI
 function disp_error(msg, error_tag)
     set(error_tag, 'Visible', 'On');
     set(error_tag, 'String', msg);
- 
+
 %Brief: Used for clearing error tags on a MATLAB GUI. Error tag is the GUI
 %error's object tag
 %Params:
@@ -901,14 +901,14 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         src_type = img_options.UserData;
         if(strcmp(src_type, 'stream'))
             cam_name = getappdata(0, 'cam_name');
-            src = StreamSource(cam_name);    
+            src = StreamSource(cam_name);
         else
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
         draw = getappdata(0, 'draw_rect');
         % TODO: Put this back. For now, use DisplacementComb
-        displacement = DisplacementComb(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw, @display_error, 50);
+        displacement = DisplacementComb(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw, @display_error, 70);
         q.add_to_queue(displacement);
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
         if(get(handles.data_collect_check, 'Value'))
@@ -949,7 +949,7 @@ save('displacement_variables.mat', 'pixel_precision', 'max_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
-    
+
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
@@ -1003,7 +1003,7 @@ if(length(operation_queue) > 0)
     current_operation = item_up;
     item_up.execute(handles);
 end
-    
+
 function add_to_queue(operation)
 global operation_queue;
 operation_queue{length(operation_queue) + 1} = operation;

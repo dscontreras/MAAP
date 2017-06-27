@@ -88,7 +88,8 @@ classdef DisplacementOperation < Operation
         %For carrying out one time method calls that should be done before
         %calling of execute
         function startup(obj)
-            obj.valid = obj.validate(obj.error_tag);
+            %obj.valid = obj.validate(obj.error_tag);
+            obj.valid = obj.validate();
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
@@ -150,7 +151,7 @@ classdef DisplacementOperation < Operation
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        %[xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
 
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
@@ -161,9 +162,10 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     end
                 end
+
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
-                    hrect = impoint(obj.axes,[x_peak, y_peak]);% obj.rect(3) obj.rect(4)]); TODO: revert back to hrect
+                    hrect = hrect(obj.axes,[x_peak y_peak obj.rect(3) obj.rect(4)]);
                     drawnow limitrate nocallbacks;
                     delete(hrect);
                 else
@@ -197,8 +199,6 @@ classdef DisplacementOperation < Operation
             [ypeak, xpeak] = find(c==max(c(:)));
             ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
-
-            %[ypeak, xpeak]
 
             % Subpixel Precision Coordinates
 
@@ -338,29 +338,34 @@ classdef DisplacementOperation < Operation
         end
 
         %error_tag is now deprecated
-        function valid = validate(obj, error_tag)
-            valid = true;
-            while(~strcmp(VideoSource.getSourceType(obj.source), 'stream') && ~FileSystemParser.is_file(obj.source.filepath))
-                str = 'Displacement: Not passed a valid path on the filesystem'
-                err = Error(Displacement.name, str, error_tag);
-                feval(obj.error_report_handle, str);
-                valid = false;
-            end
-            while(~valid_max_displacement(obj))
-                str = 'Displacement: Max Displacement invalid';
-                err = Error(Displacement.name, str, error_tag);
-                feval(obj.error_report_handle, str);
-                valid = false;
-            end
-            while(~valid_pixel_precision(obj))
-                str = 'Displacement: Pixel Precision inputted not a number';
-                err = Error(Displacement.name, str, error_tag);
-                feval(obj.error_report_handle, str);
-                valid = false;
-            end
-            if(valid)
-                set(error_tag, 'Visible', 'Off');
-            end
+        % function valid = validate(obj, error_tag)
+        %     valid = true;
+        %     while(~strcmp(VideoSource.getSourceType(obj.source), 'stream') && ~FileSystemParser.is_file(obj.source.filepath))
+        %         str = 'Displacement: Not passed a valid path on the filesystem'
+        %         err = Error(Displacement.name, str, error_tag);
+        %         feval(obj.error_report_handle, str);
+        %         valid = false;
+        %     end
+        %     while(~valid_max_displacement(obj))
+        %         str = 'Displacement: Max Displacement invalid';
+        %         err = Error(Displacement.name, str, error_tag);
+        %         feval(obj.error_report_handle, str);
+        %         valid = false;
+        %     end
+        %     while(~valid_pixel_precision(obj))
+        %         str = 'Displacement: Pixel Precision inputted not a number';
+        %         err = Error(Displacement.name, str, error_tag);
+        %         feval(obj.error_report_handle, str);
+        %         valid = false;
+        %     end
+        %     if(valid)
+        %         set(error_tag, 'Visible', 'Off');
+        %     end
+        % end
+
+        function valid = validate(obj)
+            valid = obj.valid_max_displacement();
+            valid = valid & obj.valid_pixel_precision();
         end
 
         function valid = valid_max_displacement(obj)

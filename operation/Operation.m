@@ -32,7 +32,8 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
     methods
         %METHOD: validate
         %Makes sure that the operation is "executable". This must be override. Assumes that the operation is not valid
-        function bool = validate(obj)
+        % TODO: Add an error msg option
+        function valid = validate(obj)
             bool = false;
         end
     end
