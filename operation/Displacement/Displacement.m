@@ -97,13 +97,9 @@ classdef Displacement < RepeatableOperation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             path = getappdata(0, 'img_path');
-            % If user never used 'browse' in settings_gui for img_path,
-            % path is undefined. Change this to empty char
-            if isequal(path, [])
-                path = '';
-            end
+
             % if template path is specified, use path. Else use user input%
-            if ~strcmp(path,'')
+            if ~strcmp(path,'') & ~isequal(path, [])
                 obj.rect = find_rect(obj.vid_src.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
