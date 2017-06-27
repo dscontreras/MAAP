@@ -908,7 +908,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         end
         draw = getappdata(0, 'draw_rect');
         % TODO: Put this back. For now, use DisplacementComb
-        displacement = DisplacementComb(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw, @display_error, 70);
+        displacement = DisplacementComb(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw, @display_error, 30);
         q.add_to_queue(displacement);
         output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
         if(get(handles.data_collect_check, 'Value'))

@@ -212,6 +212,8 @@ classdef DisplacementOperation < Operation
             new_search_area_width = 2*obj.min_displacement  + obj.rect(3);
             new_search_area_height = 2*obj.min_displacement + obj.rect(4);
 
+
+
             [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
 
             % Interpolation
@@ -241,8 +243,12 @@ classdef DisplacementOperation < Operation
             new_xpeak = new_xpeak+round(new_search_area_rect(1));
             new_ypeak = new_ypeak+round(new_search_area_rect(2));
 
+            % ERROR? It subtracts the size(template) not
+            % size(interp_template)
             yoffSet = new_ypeak-obj.rect(4);
             xoffSet = new_xpeak-obj.rect(3);
+            %yoffSet = new_ypeak - size(interp_template, 1);
+            %xoffSet = new_xpeak - size(interp_template, 2);
 
             %DISPLACEMENT IN PIXELS
             x = new_xpeak-obj.ytemp;
