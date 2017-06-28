@@ -123,7 +123,7 @@ classdef DisplacementOperation < Operation
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = obj.template - obj.template_average;
+            obj.processed_template  = int8(obj.template) - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
             obj.interp_template = im2double(obj.template);
