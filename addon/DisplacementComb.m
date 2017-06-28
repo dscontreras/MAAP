@@ -65,8 +65,8 @@ classdef DisplacementComb < DisplacementOperation
             [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
 
             % Account for padding (the 1 is to account for imcrop)
-            new_xpeak = new_xpeak - size(obj.interp_template, 2);%-obj.smaller_search_area_length-1;
-            new_ypeak = new_ypeak - size(obj.interp_template, 1);%-obj.smaller_search_area_length-1;
+            new_xpeak = new_xpeak - obj.smaller_search_area_length-1;
+            new_ypeak = new_ypeak - obj.smaller_search_area_length-1;
             
             % Account for precision
             new_xpeak = new_xpeak/(1/obj.pixel_precision);
