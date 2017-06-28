@@ -8,7 +8,7 @@ classdef DisplacementOperation < Operation
         axes;
         error_tag;
         pixel_precision;
-        max_displacement;
+        max_displacement_x; max_displacement_y;
         template; rect; xtemp; ytemp;
         current_frame;
         table;
@@ -67,7 +67,11 @@ classdef DisplacementOperation < Operation
             obj.pause_button = pause_button;
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
-            obj.max_displacement = str2double(max_displacement);
+
+            % TODO: separate into two different parameters
+            obj.max_displacement_x = str2double(max_displacement);
+            obj.max_displacement_y = str2double(max_displacement);
+
             obj.res = resolution;
             obj.new = true;
             obj.valid = true;
@@ -113,10 +117,10 @@ classdef DisplacementOperation < Operation
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
-            obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;
+            obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_width   = 2 * obj.max_displacement_x + obj.rect(3) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_xmin    = obj.rect(1) - obj.max_displacement_x;
+            obj.search_area_ymin    = obj.rect(2) - obj.max_displacement_y;
 
             % Make sure that when darks match up in both the
             % image/template, they count toward the correlation
@@ -156,10 +160,11 @@ classdef DisplacementOperation < Operation
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
                 else
+                    % TODO: update to use both types of max_displacement
                     if(obj.source.gpu_supported)
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement_x, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement_x, obj.res);
                     end
                 end
                 set(obj.im, 'CData', gather(obj.current_frame));
@@ -373,10 +378,11 @@ classdef DisplacementOperation < Operation
             valid = valid & obj.valid_pixel_precision();
         end
 
+        % TODO: Fix the max_displacement test in order to also check obj.max_displacement_y
         function valid = valid_max_displacement(obj)
             valid = true;
             frame = obj.source.extractFrame();
-            if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
+            if(size(frame, 2) <= obj.max_displacement_x || isnan(obj.max_displacement_x) || size(frame, 1) <= obj.max_displacement_x);
                 valid = false;
             end
         end

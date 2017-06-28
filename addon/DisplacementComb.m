@@ -28,7 +28,7 @@ classdef DisplacementComb < DisplacementOperation
             obj.interp_search_area_height = obj.smaller_search_area_length+1;
             obj.interp_search_area_width = obj.smaller_search_area_length+1;
 
-            obj.interp_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length obj.smaller_search_area_length]);            
+            obj.interp_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length obj.smaller_search_area_length]);
         end
 
 
@@ -37,21 +37,19 @@ classdef DisplacementComb < DisplacementOperation
             % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
-            
+
             processed_search_area = search_area - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
-            
+
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
 
             new_width   = obj.smaller_search_area_length-1;
             new_height  = obj.smaller_search_area_length-1;
-            %new_width   = size(obj.template, 2) + obj.min_displacement*2; 
-            %new_height  = size(obj.template, 1) + obj.min_displacement*2;
-            
+
             [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
-            
+
             % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
             interp_search_area = im2double(new_search_area);
             numCols = new_search_area_rect(3)+1;
@@ -60,17 +58,17 @@ classdef DisplacementComb < DisplacementOperation
             [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
             V=interp_search_area;
             interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
-            
+
             % TODO: Subtract mean from interp_search_area?
-            
+
             c1 = normxcorr2(obj.interp_template, interp_search_area);
-            
+
             [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
 
             % Account for padding (the 1 is to account for imcrop)
             new_xpeak = new_xpeak - obj.smaller_search_area_length-1;
             new_ypeak = new_ypeak - obj.smaller_search_area_length-1;
-            
+
             % Account for precision
             new_xpeak = new_xpeak/(1/obj.pixel_precision);
             new_ypeak = new_ypeak/(1/obj.pixel_precision);
@@ -88,7 +86,7 @@ classdef DisplacementComb < DisplacementOperation
             disp_x_micron = disp_x_pixel * obj.res;
         end
     end
-    
+
     % TODO: Make sure that smaller length < size of template/size of
     % search_area
 end
