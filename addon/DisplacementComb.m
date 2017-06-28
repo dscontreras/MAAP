@@ -37,7 +37,7 @@ classdef DisplacementComb < DisplacementOperation
             % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
-
+            
             processed_search_area = search_area - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
@@ -61,7 +61,10 @@ classdef DisplacementComb < DisplacementOperation
             V=interp_search_area;
             interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
             
+            % TODO: Subtract mean from interp_search_area?
+            
             c1 = normxcorr2(obj.interp_template, interp_search_area);
+            
             [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
 
             % Account for padding (the 1 is to account for imcrop)
