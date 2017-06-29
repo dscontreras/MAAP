@@ -60,6 +60,7 @@ classdef DisplacementOperation < Operation
     methods
         function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
             obj.source = src; % TODO: remove assumption that src is of type VideoSource
+            %obj.source = FileSource('/Users/hyunkyu/Developer/Swarm Lab/R1C1/35V_2017-05-26-151039-0000.avi', resolution);
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -105,7 +106,8 @@ classdef DisplacementOperation < Operation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
-            % if template path is specified, use path. Else use user input%
+            % if template path is specified, use path. Else use user input
+            % TODO: Fix this comparision. It doesn't work. 
             if ~strcmp(path,'')
                 obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
@@ -113,12 +115,16 @@ classdef DisplacementOperation < Operation
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
                 imshow(obj.template);
             else
+            % TODO: fix obj.rect relationship with obj.template
+            % Right now, I just ceiling the values to be ints. I should
+            % recut the template such that that is the actual value I want.
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_displacement_x + obj.rect(3) + 1; % imcrop will add 1 to the dimension
+            % Set up some of the sizes that will be used in the future
+            obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4);
+            obj.search_area_width   = 2 * obj.max_displacement_x + obj.rect(3);
             obj.search_area_xmin    = obj.rect(1) - obj.max_displacement_x;
             obj.search_area_ymin    = obj.rect(2) - obj.max_displacement_y;
 
@@ -130,6 +136,7 @@ classdef DisplacementOperation < Operation
             obj.processed_template  = obj.template - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
+            % Find the interpolated template
             obj.interp_template = im2double(obj.template);
             numRows 			= obj.rect(4);
             numCols 			= obj.rect(3);
@@ -155,7 +162,7 @@ classdef DisplacementOperation < Operation
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-%                         [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
 
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
