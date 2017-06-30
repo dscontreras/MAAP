@@ -884,6 +884,7 @@ end
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
+    draw = getappdata(0, 'draw_rect');
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
@@ -906,7 +907,6 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end 
-        draw = getappdata(0, 'draw_rect');
         operation = Displacement(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
             pixel_precision, max_displacement, res, draw);        
@@ -934,9 +934,12 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         scale_img = get(handles.scale_img_display, 'String');
         scale_length = get(handles.scale_length_text_velocity, 'String');
 
+        %operation = Velocity(src, handles.img_viewer, handles.data_table, ...
+        %handles.vid_error_tag, handles.image_cover, handles.pause_operation,... 
+        %pixel_precision, max_displacement, res, scale_img, scale_length);
         operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-        handles.vid_error_tag, handles.image_cover, handles.pause_operation,... 
-        pixel_precision, max_displacement, res, scale_img, scale_length);
+            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+            pixel_precision, max_displacement, res, draw);
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];

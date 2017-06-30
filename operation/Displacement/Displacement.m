@@ -161,7 +161,7 @@ classdef Displacement < RepeatableOperation
                 end
             end
             set(obj.im, 'CData', gather(obj.current_frame));
-            if obj.draw == 1
+            if obj.draw
                 hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
             end
             updateTable(dispx, dispy, obj.table);
@@ -184,10 +184,11 @@ classdef Displacement < RepeatableOperation
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
             %% Whole Pixel Precision Coordinates
-            img = obj.current_frame;
+            img = filterImage(obj.current_frame);
+            temp = filterImage(obj.template);
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
-            c = normxcorr2(obj.template, search_area);
+            c = normxcorr2(temp, search_area);
             [ypeak, xpeak] = find(c==max(c(:)));
             ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
             xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
