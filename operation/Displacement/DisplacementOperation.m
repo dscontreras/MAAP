@@ -107,7 +107,7 @@ classdef DisplacementOperation < Operation
             obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input
-            % TODO: Fix this comparision. It doesn't work. 
+            % TODO: Fix this comparision. It doesn't work.
             if ~strcmp(path,'')
                 obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
@@ -133,7 +133,7 @@ classdef DisplacementOperation < Operation
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = obj.template - obj.template_average;
+            obj.processed_template  = int16(obj.template) - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
             % Find the interpolated template
@@ -155,14 +155,17 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
+            diffs = [];
+            i = 0;
             while ~obj.source.finished()
+                i = i + 1;
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
                     if(obj.source.gpu_supported)
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
 
                         [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                     end
@@ -174,6 +177,9 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement_x, obj.res);
                     end
                 end
+
+                diffs(i) = xoffSet - x_peak;
+
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
                     hrect = imrect(obj.axes,[x_peak y_peak obj.rect(3) obj.rect(4)]);
@@ -198,7 +204,10 @@ classdef DisplacementOperation < Operation
 
                 % To have GUI table update continuously, remove nocallbacks
             end
-            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
+            if obj.draw == 1
+                hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
+            end
+            diffs
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
