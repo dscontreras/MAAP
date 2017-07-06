@@ -25,7 +25,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
     methods
         % For now, assumes that m_d_x, m_d_y is a double of some kind
-        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length)
+        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, first_frame)
             obj.source                      = src;
             obj.pixel_precision             = pixel_precision;
             obj.max_displacement_x          = m_d_x;
@@ -36,7 +36,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             % TODO: validate check?
 
             % TODO: Fix the problem of us just discarding the first frame.
-            first_frame = rgb2gray(obj.source.extractFrame());
+            first_frame = rgb2gray(first_frame);
             obj.rect = find_rect(obj.source.get_filepath(), template_file_path);
             obj.template = imcrop(first_frame, obj.rect);
             obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1]; % Account for the +1 that imcrop adds
@@ -72,8 +72,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             obj.processed_interp_template = imcrop(obj.processed_interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);
         end
 
-        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_fourier(obj)
-            img = rgb2gray(obj.source.extractFrame());
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_fourier(obj, img)
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
             processed_search_area = int16(search_area) - obj.template_average;
@@ -112,10 +111,10 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             disp_x_pixel = x_peak - obj.rect(1);
         end
 
-        function interpolated_image = interpolate(obj, img, with_precision, numCols, numRows)
+        function interpolated_image = interpolate(obj, img, pixel_precision, numCols, numRows)
             interpolated_image = im2double(img);
             [X,Y] = meshgrid(1:numCols,1:numRows);
-            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
+            [Xq,Yq]= meshgrid(1:pixel_precision:numCols,1:pixel_precision:numRows);
             V=interpolated_image;
             interpolated_image = interp2(X,Y,V,Xq,Yq, 'cubic');
         end
