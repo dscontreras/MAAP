@@ -9,6 +9,8 @@ classdef Velocity < RepeatableOperation
         error_tag;
         pixel_precision;
         max_displacement;
+        max_x_displacement;
+        max_y_displacement;
         template; rect; xtemp; ytemp;
         current_frame;
         table;
@@ -73,7 +75,9 @@ classdef Velocity < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
-            obj.draw = 1;
+            obj.draw = 1; %TODO: Add option in GUI to toggle this
+            obj.max_x_displacement = 50; %TODO: extend this to GUI
+            obj.max_y_displacement = 0; %TODO: extend this to GUI
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             if(nargin > 10) % 10 is the number of params for displacement
             % TODO: Better Error Handling
@@ -87,17 +91,17 @@ classdef Velocity < RepeatableOperation
             obj.valid = obj.validate(obj.error_tag);
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
+            obj.im = zeros(obj.vid_src.get_num_pixels());
+            obj.im = imshow(obj.im);
             obj.initialize_algorithm();
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
-            %obj.im = zeros(obj.vid_src.get_num_pixels());
-            obj.im = gather(obj.current_frame);
-            obj.im = imshow(obj.im);
         end
 
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            set(obj.im, 'CData', gather(obj.current_frame));
             path = getappdata(0, 'img_path');
-
+            class(obj.im)
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 obj.rect = find_rect(obj.vid_src.get_filepath(), path);
@@ -106,21 +110,22 @@ classdef Velocity < RepeatableOperation
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
                 imshow(obj.template);
             else
-                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+                [vid_height, vid_width] = size(obj.current_frame);
+                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.im.CData, obj.axes, vid_height, vid_width);
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
-            obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;
+            obj.search_area_height  = 2 * obj.max_y_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_width   = 2 * obj.max_x_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_xmin    = obj.rect(1) - obj.max_x_displacement;
+            obj.search_area_ymin    = obj.rect(2) - obj.max_y_displacement;
 
             % Make sure that when darks match up in both the
             % image/template, they count toward the correlation
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = obj.template_average - obj.template;
+            obj.processed_template  = obj.template_average - obj.template; %% change this %%
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
             % The frame we will crop out when interpolating will have size (template_height + 2*min + 1, template_width+2*min+1)
@@ -150,8 +155,9 @@ classdef Velocity < RepeatableOperation
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     %[x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
@@ -161,7 +167,8 @@ classdef Velocity < RepeatableOperation
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-            set(obj.im, 'CData', gather(obj.current_frame));
+            %set(obj.im, 'CData', gather(obj.current_frame));
+            imshow(obj.current_frame);
             if obj.draw
                 hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
             end
@@ -185,8 +192,7 @@ classdef Velocity < RepeatableOperation
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
             %% Whole Pixel Precision Coordinates
-            img = filterImage(gray2rgb(obj.current_frame));
-            temp = filterImage(gray2rgb(obj.template));
+            img = obj.current_frame;
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
             c = normxcorr2(temp, search_area);
             [ypeak, xpeak] = find(c==max(c(:)));

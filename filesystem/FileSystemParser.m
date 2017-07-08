@@ -23,7 +23,7 @@ classdef FileSystemParser
             if(strcmp(SysInfo.get_os(), 'Windows'))
                 vid_formats = {'.avi'};
             else
-                vid_formats = {'.mov', '.m4v'};
+                vid_formats = {'.mov', '.avi'};
             end
         end
         
