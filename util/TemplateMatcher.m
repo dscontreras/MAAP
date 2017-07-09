@@ -1,5 +1,5 @@
 classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
-    %% Given a template and a File Source, finds the location of the template in each frame of the video
+    % Given a template and a File Source, finds the location of the template in each frame of the video
 
     properties
         source;
@@ -82,12 +82,10 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
 
-            %
-            c = normxcorr2(obj.template, search_area);
-            [yp, xp] = find(c==max(c(:)));
-            yp = yp - obj.rect(4);
-            xp = xp - obj.rect(3); 
-            %
+            % c = normxcorr2(obj.template, search_area);
+            % [yp, xp] = find(c==max(c(:)));
+            % yp = yp - obj.rect(4);
+            % xp = xp - obj.rect(3); 
 
             new_xmin = xpeak - obj.min_displacement;
             new_ymin = ypeak - obj.min_displacement;
@@ -97,17 +95,14 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
             [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
 
-            %
-            n_x = xp + round(search_area_rect(1)) - 1;
-            n_y = yp + round(search_area_rect(2)) - 1;
-            n_search_area_xmin = n_x - obj.min_displacement;
-            n_search_area_ymin = n_y - obj.min_displacement;
-            n_search_area_width = 2*obj.min_displacement  + obj.rect(3);
-            n_search_area_height = 2*obj.min_displacement + obj.rect(4);
-            [n_search_area, n_search_area_rect] = imcrop(img, [n_search_area_xmin n_search_area_ymin n_search_area_width n_search_area_height]);
-
-            i_s_a = obj.interpolate(n_search_area, obj.pixel_precision, n_search_area_rect(3)+1, n_search_area_rect(4)+1);
-            %
+            % n_x = xp + round(search_area_rect(1)) - 1;
+            % n_y = yp + round(search_area_rect(2)) - 1;
+            % n_search_area_xmin = n_x - obj.min_displacement;
+            % n_search_area_ymin = n_y - obj.min_displacement;
+            % n_search_area_width = 2*obj.min_displacement  + obj.rect(3);
+            % n_search_area_height = 2*obj.min_displacement + obj.rect(4);
+            % [n_search_area, n_search_area_rect] = imcrop(img, [n_search_area_xmin n_search_area_ymin n_search_area_width n_search_area_height]);
+            % i_s_a = obj.interpolate(n_search_area, obj.pixel_precision, n_search_area_rect(3)+1, n_search_area_rect(4)+1);
 
             interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_rect(3)+1, new_search_area_rect(4)+1);
 
@@ -119,23 +114,21 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             new_ypeak = new_ypeak - obj.smaller_search_area_length;
             new_xpeak = new_xpeak - obj.smaller_search_area_length;
             
-            %
-            c2 = normxcorr2(obj.interp_template, i_s_a);
-            [n_y, n_x] = find(c2==max(c2(:)));
+             %
+            % c2 = normxcorr2(obj.interp_template, i_s_a);
+            % [n_y, n_x] = find(c2==max(c2(:)));
             
-            n_y = n_y - size(obj.interp_template, 1);
-            n_x = n_x - size(obj.interp_template, 2);
+            % n_y = n_y - size(obj.interp_template, 1);
+            % n_x = n_x - size(obj.interp_template, 2);
             
-            n_x = n_x/(1/obj.pixel_precision);
-            n_y = n_y/(1/obj.pixel_precision);
+            % n_x = n_x/(1/obj.pixel_precision);
+            % n_y = n_y/(1/obj.pixel_precision);
             
-            n_x = n_x+round(n_search_area_rect(1));
-            n_y = n_y+round(n_search_area_rect(2));
+            % n_x = n_x+round(n_search_area_rect(1));
+            % n_y = n_y+round(n_search_area_rect(2));
             
-            yoffSet = n_y-obj.rect(4);
-            xoffSet = n_x-obj.rect(3);
-            
-            %
+            % yoffSet = n_y-obj.rect(4);
+            % xoffSet = n_x-obj.rect(3);
 
             new_xpeak = new_xpeak - obj.smaller_search_area_length;
             new_ypeak = new_ypeak - obj.smaller_search_area_length;
@@ -153,6 +146,74 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             disp_x_pixel = x_peak - obj.rect(1);
         end
 
+        % Uses normxcorr2 to find the location of obj.template in IMG for both pixel precision and subpixel precision
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img)
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.norm_cross_correlation(img);
+        end
+
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img)
+            Xm =40*10^(-6); %distance according to chip dimensions in microns
+            Xp = 184.67662; %distance according image in pixels. Correspond to Xm
+            %    ************************** WHOLE PIXEL PRECISION COORDINATES *************************
+
+            %DEFINE SEARCH AREA - obtained from no interpolated image
+            width = obj.max_displacement_x; %search area width
+            height = obj.max_displacement_y; %search area height
+
+            search_area_xmin = obj.rect(1) - width; %xmin of search area
+            search_area_ymin = obj.rect(2)- height; %ymin of search area
+            search_area_width = 2*width+obj.rect(3); %Get total width of search area
+            search_area_height = 2*height+obj.rect(4); %Get total height of search area
+            [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
+
+            %"\tNormxCorr2"
+            c = normxcorr2(obj.template, search_area);
+
+            [ypeak, xpeak] = find(c==max(c(:)));
+
+            xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
+            ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
+
+            % ************************** SUBPIXEL PRECISION COORDINATES *************************
+            %GENERATE MOVED TEMPLATE
+            %new_xmin = (xpeak-xtemp) + rect(1); 
+            new_xmin = (xpeak-obj.rect(3));
+            %new_ymin = (ypeak-ytemp) + rect(2); 
+            new_ymin = (ypeak-obj.rect(4));
+            [moved_template, displaced_rect] = imcrop(img,[new_xmin new_ymin obj.rect(3) obj.rect(4)]);
+
+            %GENERATE NEW SEARCH AREA (BASED IN MOVED TEMPLATE)
+            width1 = obj.min_displacement; %set the width margin between the displaced template, and the search area as width1
+            height1 = obj.min_displacement; %set the height margin between the displaced template, and the search area as height1
+            new_search_area_xmin = displaced_rect(1) - width1; 
+            new_search_area_ymin = displaced_rect(2)- height1;
+            new_search_area_width = 2*width1+displaced_rect(3);
+            new_search_area_height = 2*height1+displaced_rect(4);
+            [new_search_area, new_search_area_rect] = imcrop(img,[new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
+
+            interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_width+1, new_search_area_height+1);
+            
+             %PERFORM NORMALIZED CROSS-CORRELATION
+             c1 = normxcorr2(obj.interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
+
+            %FIND PEAK CROSS-CORRELATION
+            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));  
+
+            new_xpeak = new_xpeak/(1/obj.pixel_precision);
+            new_ypeak = new_ypeak/(1/obj.pixel_precision);
+            new_xpeak = new_xpeak+round(new_search_area_rect(1));
+            new_ypeak = new_ypeak+round(new_search_area_rect(2));
+
+            y_peak = new_ypeak-(size(obj.template,1));
+            x_peak = new_xpeak-(size(obj.template,2));
+
+            %DISPLACEMENT IN PIXELS
+            disp_y_pixel = y_peak - obj.rect(2);
+            disp_x_pixel = x_peak - obj.rect(1);
+        end
+    end
+
+    methods (Access = private)
         function interpolated_image = interpolate(obj, img, pixel_precision, numCols, numRows)
             interpolated_image = im2double(img);
             [X,Y] = meshgrid(1:numCols,1:numRows);
@@ -187,8 +248,6 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 ypeak = ypeak - 1;
                 xpeak = xpeak - 1;
         end
-
     end
-
 
 end

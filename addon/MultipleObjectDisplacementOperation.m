@@ -31,9 +31,9 @@ classdef MultipleObjectDisplacementOperation < Operation
                 % TODO: remove assumption that the source is of type VideoSource
                 img = rgb2gray(obj.source.extractFrame());
                 for idx = 1:numel(obj.template_matchers)
-                    [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matchers{idx}.meas_displacement_fourier(img);
-                    [y_peak, x_peak]
+                    [y_peak, x_peak1, disp_y_pixel, disp_x_pixel] = obj.template_matchers{idx}.meas_displacement(img);
                 end
+                i = i + 1;
             end
         end
 

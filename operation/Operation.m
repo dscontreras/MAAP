@@ -34,7 +34,7 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
         %Makes sure that the operation is "executable". This must be override. Assumes that the operation is not valid
         % TODO: Add an error msg option
         function valid = validate(obj)
-            bool = false;
+            valid = false;
         end
     end
 end

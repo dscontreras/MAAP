@@ -155,10 +155,7 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
-            diffs = [];
-            i = 0;
             while ~obj.source.finished()
-                i = i + 1;
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
                     if(obj.source.gpu_supported)
@@ -177,9 +174,7 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement_x, obj.res);
                     end
                 end
-
-                diffs(i) = xoffSet - x_peak;
-
+                
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
                     hrect = imrect(obj.axes,[x_peak y_peak obj.rect(3) obj.rect(4)]);
@@ -204,10 +199,7 @@ classdef DisplacementOperation < Operation
 
                 % To have GUI table update continuously, remove nocallbacks
             end
-            if obj.draw == 1
-                hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);
-            end
-            diffs
+            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
         end
 
         function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
