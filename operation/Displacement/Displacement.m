@@ -106,7 +106,8 @@ classdef Displacement < RepeatableOperation
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
                 imshow(obj.template);
             else
-                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes);
+                [vid_height, vid_width] = size(obj.current_frame);
+                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
                 obj.rect = ceil(obj.rect);
             end
 

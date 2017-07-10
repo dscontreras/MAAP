@@ -63,7 +63,6 @@ global vid_width;
 % Display image in the specified axis
 frame = imresize(frame,  [vid_height, vid_width]); % 1200, 1920 for other videos 
 [template, rect] = imcrop(frame);
-rect
 
 %set(hAxis, ...
     %'YDir','reverse',...

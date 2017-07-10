@@ -101,7 +101,6 @@ classdef Velocity < RepeatableOperation
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
             set(obj.im, 'CData', gather(obj.current_frame));
             path = getappdata(0, 'img_path');
-            class(obj.im)
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 obj.rect = find_rect(obj.vid_src.get_filepath(), path);
@@ -150,28 +149,29 @@ classdef Velocity < RepeatableOperation
 
         function execute(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            frame = imgaussfilt(obj.current_frame);
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
+                    %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     %[x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
                 if(obj.vid_src.gpu_supported)
-                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                    [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_x_displacement, obj.max_y_displacement, obj.res);
                 else
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-            %set(obj.im, 'CData', gather(obj.current_frame));
             imshow(obj.current_frame);
             if obj.draw
-                hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
+                %hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
+                hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
             end
+            %{
             updateTable(dispx, dispy, obj.table);
             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
@@ -182,10 +182,10 @@ classdef Velocity < RepeatableOperation
             yoff3 = obj.yoff;
             %TODO: save gpu_displacement.mat somewhere else.
             save('gpu_displacement.mat', 'xoff3', 'yoff3');
-
+            %}
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
-            if obj.draw == 1 & ~obj.check_stop()
+            if obj.draw & ~obj.check_stop()
                 delete(hrect);
             end
         end
