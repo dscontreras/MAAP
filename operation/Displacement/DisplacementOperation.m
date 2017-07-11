@@ -155,16 +155,18 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
+            path = getappdata(0, 'img_path');
+            i = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                % TODO: Replace all the gpu stuff with
+                % obj.meas_displacement
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
                     if(obj.source.gpu_supported)
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = obj.meas_displacement();
-
-                        [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
+                        [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = obj.meas_displacement();
                     end
                 else
                     % TODO: update to use both types of max_displacement
@@ -174,7 +176,6 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement_x, obj.res);
                     end
                 end
-                
                 set(obj.im, 'CData', gather(obj.current_frame));
                 if obj.draw == 1
                     hrect = imrect(obj.axes,[x_peak y_peak obj.rect(3) obj.rect(4)]);
@@ -185,15 +186,15 @@ classdef DisplacementOperation < Operation
                 end
                 updateTable(disp_x_micron, disp_y_micron, obj.table);
                 data = get(obj.table, 'Data');
-                % TODO: Understand the following lines of code below and what
-                % the purpose of these variables are
-                %obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
-                %obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
-                %obj.outputs('done') = obj.check_stop();
-                %obj.xoff = [obj.xoff x_peak];
-                %obj.yoff = [obj.yoff y_peak];
-                %xoff3 = obj.xoff;
-                %yoff3 = obj.yoff;
+                TODO: Understand the following lines of code below and what
+                the purpose of these variables are
+                obj.outputs('dispx') = [obj.outputs('dispx') disp_x_pixel];
+                obj.outputs('dispy') = [obj.outputs('dispy') disp_y_pixel];
+                obj.outputs('done') = obj.check_stop();
+                obj.xoff = [obj.xoff x_peak];
+                obj.yoff = [obj.yoff y_peak];
+                xoff3 = obj.xoff;
+                yoff3 = obj.yoff;
                 % TODO: save gpu_displacement.mat somewhere else.
                 % save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
@@ -202,7 +203,7 @@ classdef DisplacementOperation < Operation
             hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
         end
 
-        function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
+        function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
             % Whole Pixel Precision Coordinates
             img = obj.current_frame;
             [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
@@ -257,18 +258,18 @@ classdef DisplacementOperation < Operation
 
             % ERROR? It subtracts the size(template) not
             % size(interp_template)
-            yoffSet = new_ypeak-obj.rect(4);
-            xoffSet = new_xpeak-obj.rect(3);
+            y_peak = new_ypeak-obj.rect(4);
+            x_peak = new_xpeak-obj.rect(3);
             %yoffSet = new_ypeak - size(interp_template, 1);
             %xoffSet = new_xpeak - size(interp_template, 2);
 
             %DISPLACEMENT IN PIXELS
-            x = new_xpeak-obj.ytemp;
-            y = new_ypeak-obj.xtemp;
+            disp_x_pixel = new_xpeak-obj.ytemp;
+            disp_y_pixel = new_ypeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            dispx = x * obj.res;
-            dispy = y * obj.res;
+            disp_x_micron = x * obj.res;
+            disp_y_micron disp_x_pixel ydisp_y_pixel* obj.res;
 
         end
 
@@ -302,7 +303,7 @@ classdef DisplacementOperation < Operation
             interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
 
             processed_interp_search_area = interp_search_area - obj.interp_template_average;
-
+            
             [new_ypeak, new_xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_interp_template, processed_interp_search_area, obj.interp_search_area_height, obj.interp_search_area_width);
 
             new_ypeak = new_ypeak/(1/obj.pixel_precision);
