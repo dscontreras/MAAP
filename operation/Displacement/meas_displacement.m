@@ -10,7 +10,7 @@ width = x_displacement; %search area width
 height = y_displacement; %search area height
 
 search_area_xmin = rect(1) - width; %xmin of search area
-search_area_ymin = rect(2)- height; %ymin of search area
+search_area_ymin = rect(2) - height; %ymin of search area
 search_area_width = 2*width+rect(3); %Get total width of search area
 search_area_height = 2*height+rect(4); %Get total height of search area
 [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
@@ -18,27 +18,30 @@ search_area_height = 2*height+rect(4); %Get total height of search area
 %"\tNormxCorr2"
 c = normxcorr2(template, search_area);
 [ypeak, xpeak] = find(c==max(c(:)));
-%toc
 
-xpeak = xpeak+round(search_area_rect(1)); % original -1 to this %move xpeak to the other side of the template rect.
-ypeak = ypeak+round(search_area_rect(2)); % original -1 to this %move y peak down to the bottom of the template rect.
+xpeak = xpeak+round(search_area_rect(1)) - 1;
+ypeak = ypeak+round(search_area_rect(2)) - 1;
 
 %% ************************** SUBPIXEL PRECISION COORDINATES *************************
 %GENERATE MOVED TEMPLATE
 new_xmin = (xpeak-rect(3));
 new_ymin = (ypeak-rect(4));
 [moved_template, displaced_rect] = imcrop(img,[new_xmin new_ymin rect(3) rect(4)]);
-%displaced_rect
 
 %GENERATE NEW SEARCH AREA (BASED ON MOVED TEMPLATE)
 width1 = min_x_displacement; %set the width margin between the displaced template and the search area as width1
 height1 = min_y_displacement; %set the height margin between the displaced template and the search area as height1
 new_search_area_xmin = displaced_rect(1) - width1; 
-new_search_area_ymin = displaced_rect(2)- height1;
-new_search_area_width = search_area_rect(3);%2*width1+displaced_rect(3);
-new_search_area_height = search_area_rect(4);%2*height1+displaced_rect(4);
+new_search_area_ymin = displaced_rect(2) - height1;
+new_search_area_width = search_area_rect(3);
+new_search_area_height = search_area_rect(4);
 [new_search_area, new_search_area_rect] = imcrop(img,[new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
-new_search_area_rect
+%{
+if abs(new_search_area_rect(2) - search_area_rect(2)) > 2
+    new_search_area_rect
+end
+%}
+
 %Interpolate both the new object area and the old and then compare
 %those that have subpixel precision in a normalized cross
 %correlation

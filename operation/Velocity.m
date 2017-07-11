@@ -149,7 +149,7 @@ classdef Velocity < RepeatableOperation
 
         function execute(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            frame = imgaussfilt(obj.current_frame);
+            frame = imgaussfilt(obj.current_frame, 2.5);
             if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
                 if(obj.vid_src.gpu_supported)
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
@@ -171,7 +171,6 @@ classdef Velocity < RepeatableOperation
                 %hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
             end
-            %{
             updateTable(dispx, dispy, obj.table);
             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
@@ -182,7 +181,6 @@ classdef Velocity < RepeatableOperation
             yoff3 = obj.yoff;
             %TODO: save gpu_displacement.mat somewhere else.
             save('gpu_displacement.mat', 'xoff3', 'yoff3');
-            %}
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
             if obj.draw & ~obj.check_stop()
