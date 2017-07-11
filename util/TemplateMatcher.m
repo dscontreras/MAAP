@@ -57,7 +57,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = obj.template - obj.template_average;
+            obj.processed_template  = medfilt2(obj.template) - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height, obj.search_area_width));
 
             % Find the interpolated template
@@ -67,7 +67,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             [obj.interp_search_area_height, obj.interp_search_area_width] = size(obj.interp_template);
 
             obj.interp_template_average = mean(mean(obj.interp_template));
-            obj.processed_interp_template = obj.interp_template - obj.interp_template_average;
+            obj.processed_interp_template = medfilt2(obj.interp_template);
             obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_interp_template, obj.interp_search_area_height, obj.interp_search_area_width));
 
             % The following is necessary to do the normxcorr2 when looking at a smaller part of an image
@@ -83,41 +83,45 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
             search_area = im2double(search_area);
             
-            processed_search_area = search_area - obj.template_average;
+            processed_search_area = medfilt2(search_area) - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
-
-            new_xmin = xpeak - obj.min_displacement;
-            new_ymin = ypeak - obj.min_displacement;
-
-            new_width   = obj.rect(3)+2*obj.min_displacement;
-            new_height  = obj.rect(4)+2*obj.min_displacement;
-
-            [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
-
-            interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_rect(3)+1, new_search_area_rect(4)+1);
-
-            processed_interp_search_area = interp_search_area - obj.interp_template_average;
             
-            c1 = normxcorr2(obj.processed_interp_template, processed_interp_search_area);
+            if ypeak >= obj.max_displacement_y*2 | xpeak >= obj.max_displacement_x*2
+                [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img);
+            else
+                new_xmin = xpeak - obj.min_displacement;
+                new_ymin = ypeak - obj.min_displacement;
 
-            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
+                new_width   = obj.rect(3)+2*obj.min_displacement;
+                new_height  = obj.rect(4)+2*obj.min_displacement;
 
-            new_ypeak = new_ypeak - size(obj.processed_interp_template, 1);
-            new_xpeak = new_xpeak - size(obj.processed_interp_template, 2);
-            
-            % Account for precision
-            new_xpeak = new_xpeak/(1/obj.pixel_precision);
-            new_ypeak = new_ypeak/(1/obj.pixel_precision);
+                [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
 
-            % Find the peak coordinates in terms of the full image
-            y_peak = new_ypeak + obj.search_area_ymin + new_ymin;
-            x_peak = new_xpeak + obj.search_area_xmin + new_xmin;
-            
+                interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_rect(3)+1, new_search_area_rect(4)+1);
 
-            %DISPLACEMENT IN PIXELS
-            disp_y_pixel = y_peak - obj.rect(2);
-            disp_x_pixel = x_peak - obj.rect(1);
+                processed_interp_search_area = medfilt2(interp_search_area);
+
+                c1 = normxcorr2(obj.processed_interp_template, processed_interp_search_area);
+
+                [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
+
+                new_ypeak = new_ypeak - size(obj.processed_interp_template, 1);
+                new_xpeak = new_xpeak - size(obj.processed_interp_template, 2);
+
+                % Account for precision
+                new_xpeak = new_xpeak/(1/obj.pixel_precision);
+                new_ypeak = new_ypeak/(1/obj.pixel_precision);
+
+                % Find the peak coordinates in terms of the full image
+                y_peak = new_ypeak + obj.search_area_ymin + new_ymin;
+                x_peak = new_xpeak + obj.search_area_xmin + new_xmin;
+
+
+                %DISPLACEMENT IN PIXELS
+                disp_y_pixel = y_peak - obj.rect(2);
+                disp_x_pixel = x_peak - obj.rect(1);
+            end
         end
 
         % Uses normxcorr2 to find the location of obj.template in IMG for both pixel precision and subpixel precision
@@ -144,6 +148,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             c = normxcorr2(im2uint8(obj.template), search_area);
 
             [ypeak, xpeak] = find(c==max(c(:)));
+            [ypeak-size(obj.template, 1), xpeak-size(obj.template, 2)]
 
             xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
             ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
