@@ -8,7 +8,6 @@ classdef Velocity < RepeatableOperation
         axes;
         error_tag;
         pixel_precision;
-        max_displacement;
         max_x_displacement;
         max_y_displacement;
         template; rect; xtemp; ytemp;
@@ -56,7 +55,7 @@ classdef Velocity < RepeatableOperation
     end
 
     methods
-        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
+        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -65,7 +64,8 @@ classdef Velocity < RepeatableOperation
             obj.pause_button = pause_button;
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
-            obj.max_displacement = str2double(max_displacement);
+            obj.max_x_displacement = str2double(max_x_displacement);
+            obj.max_y_displacement = str2double(max_y_displacement);
             obj.res = resolution;
             obj.new = true;
             obj.valid = true;
@@ -76,10 +76,8 @@ classdef Velocity < RepeatableOperation
             obj.xoff = [];
             obj.yoff = [];
             obj.draw = 1; %TODO: Add option in GUI to toggle this
-            obj.max_x_displacement = 50; %TODO: extend this to GUI
-            obj.max_y_displacement = 0; %TODO: extend this to GUI
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 10) % 10 is the number of params for displacement
+            if(nargin > 11) % 11 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -363,7 +361,11 @@ classdef Velocity < RepeatableOperation
         function valid = valid_max_displacement(obj)
             valid = true;
             frame = obj.get_frame();
-            if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
+            if(size(frame, 2) <= obj.max_x_displacement || isnan(obj.max_x_displacement) || size(frame, 1) <= obj.max_x_displacement)
+                valid = false;
+            end
+            
+            if(size(frame, 2) <= obj.max_y_displacement || isnan(obj.max_y_displacement) || size(frame, 1) <= obj.max_y_displacement)
                 valid = false;
             end
         end

@@ -931,15 +931,15 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             src = FileSource(path, res);
         end
         
-        scale_img = get(handles.scale_img_display, 'String');
-        scale_length = get(handles.scale_length_text_velocity, 'String');
+        %scale_img = get(handles.scale_img_display, 'String');
+        %scale_length = get(handles.maximum_y_displacement_velocity, 'String');
 
         %operation = Velocity(src, handles.img_viewer, handles.data_table, ...
         %handles.vid_error_tag, handles.image_cover, handles.pause_operation,... 
         %pixel_precision, max_displacement, res, scale_img, scale_length);
         operation = Velocity(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_displacement, res, draw);
+            pixel_precision, max_x_displacement, max_y_displacement, res, draw);
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
@@ -1214,46 +1214,9 @@ else
     set(handles.scale_img_display, 'String', 'No file selected');
 end
 
-function scale_length_text_velocity_Callback(hObject, eventdata, handles)
-% hObject    handle to scale_length_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of scale_length_text_velocity as text
-%        str2double(get(hObject,'String')) returns contents of scale_length_text_velocity as a double
-
 
 % --- Executes during object creation, after setting all properties.
-function scale_length_text_velocity_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to scale_length_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function maximum_displacement_text_velocity_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of maximum_displacement_text_velocity as text
-%        str2double(get(hObject,'String')) returns contents of maximum_displacement_text_velocity as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function maximum_displacement_text_velocity_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
+function maximum_x_displacement_velocity_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -1287,10 +1250,9 @@ function save_velocity_options_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
-max_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
-img = get(handles.scale_img_display, 'String');
-img_scale = get(handles.scale_length_text_velocity, 'String');
-save('velocity_variables.mat', 'pixel_precision', 'max_displacement', 'img', 'img_scale');
+max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
+max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
+save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1317,3 +1279,36 @@ function maximum_y_displacement_edit_displacement_CreateFcn(hObject, eventdata, 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+
+function maximum_y_displacement_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_y_displacement_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of maximum_y_displacement_velocity as text
+%        str2double(get(hObject,'String')) returns contents of maximum_y_displacement_velocity as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function maximum_y_displacement_velocity_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maximum_y_displacement_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_x_displacement_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of maximum_x_displacement_velocity as text
+%        str2double(get(hObject,'String')) returns contents of maximum_x_displacement_velocity as a double
