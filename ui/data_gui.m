@@ -499,8 +499,8 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 load('displacement_variables.mat');
-if ~strcmp(max_displacement, '')
-    set(hObject, 'String', max_displacement);
+if ~strcmp(max_x_displacement, '')
+    set(hObject, 'String', max_x_displacement);
 end
 
 
@@ -1312,3 +1312,11 @@ function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of maximum_x_displacement_velocity as text
 %        str2double(get(hObject,'String')) returns contents of maximum_x_displacement_velocity as a double
+
+
+% --- Executes on button press in goto_settings.
+function goto_settings_Callback(hObject, eventdata, handles)
+% hObject    handle to goto_settings (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+settings_gui;
