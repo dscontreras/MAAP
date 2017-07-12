@@ -10,6 +10,8 @@ classdef Displacement < RepeatableOperation
         error_tag;
         pixel_precision;
         max_displacement;
+        max_x_displacement;
+        max_y_displacement;
         template; rect; xtemp; ytemp;
         current_frame;
         table;
