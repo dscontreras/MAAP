@@ -479,17 +479,17 @@ function img_viewer_CreateFcn(hObject, eventdata, handles)
 % Hint: place code in OpeningFcn to populate img_viewer
 
 
-function maximum_displacement_edit_displacement_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_edit_displacement (see GCBO)
+function maximum_x_displacement_edit_displacement_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_x_displacement_edit_displacement (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% Hints: get(hObject,'String') returns contents of maximum_displacement_edit_displacement as text
-%        str2double(get(hObject,'String')) returns contents of maximum_displacement_edit_displacement as a double
+% Hints: get(hObject,'String') returns contents of maximum_x_displacement_edit_displacement as text
+%        str2double(get(hObject,'String')) returns contents of maximum_x_displacement_edit_displacement as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function maximum_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_edit_displacement (see GCBO)
+function maximum_x_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maximum_x_displacement_edit_displacement (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -909,7 +909,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         end 
         operation = Displacement(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_displacement, res, draw);        
+            pixel_precision, max_x_displacement, max_y_displacement, res, draw);        
         %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
     elseif get(handles.velocity_check, 'Value') == 1
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
@@ -975,8 +975,9 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
-max_displacement = get(handles.maximum_displacement_edit_displacement, 'String');
-save('displacement_variables.mat', 'pixel_precision', 'max_displacement');
+max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
+max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
+save('displacement_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1286,10 +1287,33 @@ function save_velocity_options_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
-max_displacement = get(handles.maximum_displacement_edit_displacement, 'String');
+max_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 img = get(handles.scale_img_display, 'String');
 img_scale = get(handles.scale_length_text_velocity, 'String');
 save('velocity_variables.mat', 'pixel_precision', 'max_displacement', 'img', 'img_scale');
 if(getappdata(0, 'wait_status'))
     uiresume;
+end
+
+
+
+function maximum_y_displacement_edit_displacement_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_y_displacement_edit_displacement (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of maximum_y_displacement_edit_displacement as text
+%        str2double(get(hObject,'String')) returns contents of maximum_y_displacement_edit_displacement as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function maximum_y_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maximum_y_displacement_edit_displacement (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end

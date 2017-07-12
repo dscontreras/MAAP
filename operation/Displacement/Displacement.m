@@ -9,7 +9,6 @@ classdef Displacement < RepeatableOperation
         axes;
         error_tag;
         pixel_precision;
-        max_displacement;
         max_x_displacement;
         max_y_displacement;
         template; rect; xtemp; ytemp;
@@ -57,7 +56,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_displacement, resolution, draw, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -66,7 +65,8 @@ classdef Displacement < RepeatableOperation
             obj.pause_button = pause_button;
             obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
-            obj.max_displacement = str2double(max_displacement);
+            obj.max_x_displacement = str2double(max_x_displacement);
+            obj.max_y_displacement = str2double(max_y_displacement);
             obj.res = resolution;
             obj.new = true;
             obj.valid = true;
@@ -78,7 +78,7 @@ classdef Displacement < RepeatableOperation
             obj.yoff = [];
             obj.draw = draw;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 10) % 10 is the number of params for displacement
+            if(nargin > 11) % 11 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -113,10 +113,10 @@ classdef Displacement < RepeatableOperation
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.search_area_height  = 2 * obj.max_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_xmin    = obj.rect(1) - obj.max_displacement;
-            obj.search_area_ymin    = obj.rect(2) - obj.max_displacement;
+            obj.search_area_height  = 2 * obj.max_y_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_width   = 2 * obj.max_x_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
+            obj.search_area_xmin    = obj.rect(1) - obj.max_x_displacement;
+            obj.search_area_ymin    = obj.rect(2) - obj.max_y_displacement;
 
             % Make sure that when darks match up in both the
             % image/template, they count toward the correlation
@@ -154,7 +154,7 @@ classdef Displacement < RepeatableOperation
                     % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 else
                      %TODO: Add max x disp and max y disp to displacement.m
-                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.max_displacement, obj.res);
+                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
                     %[x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
                 end
             else
@@ -363,7 +363,10 @@ classdef Displacement < RepeatableOperation
         function valid = valid_max_displacement(obj)
             valid = true;
             frame = obj.get_frame();
-            if(size(frame, 2) <= obj.max_displacement || isnan(obj.max_displacement) || size(frame, 1) <= obj.max_displacement);
+            if(size(frame, 2) <= obj.max_x_displacement || isnan(obj.max_x_displacement) || size(frame, 1) <= obj.max_x_displacement)
+                valid = false;
+            end
+            if (size(frame, 2) <= obj.max_y_displacement || isnan(obj.max_y_displacement) || size(frame, 1) <= obj.max_y_displacement)
                 valid = false;
             end
         end
