@@ -28,13 +28,24 @@ methods
     % TIMES represents all the times in which the array is either fully pulled in or fully pulled out
     % Only markes the times in which it moves from one to the other. 
     % Assumes that it is first pulled out all the way
-    function [times] = execute(obj)
+    % WANTED: For testing purposes only; Ignore for use;
+    function [times] = execute(obj, wanted)
         pulled_out = true;
         prev_location_x = -1;
+        prev_diff = -100; % Assumes that it can't be this large
         frame = rgb2gray(obj.source.extractFrame());
         [height, width ] = size(frame);
-        
-        while ~obj.source.finished()
+        i = 0;
+        if nargin < 2
+            wanted = -1;
+        end
+        while i < wanted
+            obj.source.extractFrame();
+            i = i + 1;
+        end
+        times = [-10:-1];
+        count = 0;
+        while ~obj.source.finished() & (wanted < 0 | i < wanted + 5)
             % Determine set of fingers
             % TODO: Find a better way to get this
             rect = [ceil(width/3)+20, ceil(height/3)+50, 40, 160];
@@ -61,16 +72,32 @@ methods
             end
 
             location = rel_corner.Location;
-            pixel_location = [int16(location(1)) int16(location(2))];
             
+            % Find difference from last location
             if prev_location_x ~= -1
-                diff = pixel_location(1) - prev_location_x
+                diff = location(1) - prev_location_x
+                if abs(diff) >= 0.3
+                    if prev_diff ~= 100 & prev_diff * diff < 0
+                        % prev_diff * diff < 0 iff the sign is different it
+                        % changed state
+                        count = count + 1;
+                        times(count) = i;
+                    end
+                end
+                prev_diff = diff;
             end
+            prev_location_x = location(1);
             
-            prev_location_x = pixel_location(1);
+            % For testing
+            if wanted > 0
+                figure; imshow(cropped); hold on; plot(rel_corner);
+            end
+            %
             
             frame = rgb2gray(obj.source.extractFrame());
+            i = i + 1;
         end
+        %[times, i]
     end
 
     function [rel_corner] = filter_relevant_corner(obj, anchor, c1, c2)
@@ -82,16 +109,16 @@ methods
         x_anchor = anchor.Location(1);
         y_anchor = anchor.Location(2);
 
-        if abs(y1 - y_anchor) < 3
+        if abs(y1 - y_anchor) < 5
             rel_corner = c2;
             return
         end
-        if abs(y2 - y_anchor) < 3
+        if abs(y2 - y_anchor) < 5
             rel_corner = c1;
             return
         end
 
-        if abs(y1 - y2) < 3
+        if abs(y1 - y2) < 5
             if x1 < x2
                 rel_corner = c1;
             else
