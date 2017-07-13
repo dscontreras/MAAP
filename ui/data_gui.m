@@ -1043,13 +1043,10 @@ operation_queue{length(operation_queue) + 1} = operation;
 
 
 
-function src_path_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to src_path_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of src_path_edit as text
-%        str2double(get(hObject,'String')) returns contents of src_path_edit as a double
+%%%%%%% MISCELLANIOUS GUI FUNCTIONS %%%%%%%%
+
+function src_path_edit_Callback(hObject, eventdata, handles)
 img_options = findobj('Tag', 'img_options');
 if(FileSystemParser.is_file(get(hObject, 'String')))
     setappdata(0, 'vid_path', get(hObject, 'String'));
@@ -1061,9 +1058,6 @@ end
 
 % --- Executes on button press in pause_operation.
 function pause_operation_Callback(hObject, eventdata, handles)
-% hObject    handle to pause_operation (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global q;
 if(~q.is_paused())
     set(hObject, 'String', 'Unpause Operation');
@@ -1097,34 +1091,16 @@ uiwait;
 
 
 function source_resolution_entry_Callback(hObject, eventdata, handles)
-% hObject    handle to source_resolution_entry (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of source_resolution_entry as text
-%        str2double(get(hObject,'String')) returns contents of source_resolution_entry as a double
 hObject.UserData = str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
 function source_resolution_entry_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to source_resolution_entry (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 % --- Executes during object creation, after setting all properties.
 function src_path_edit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to src_path_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -1132,79 +1108,44 @@ end
 
 % --- Executes on button press in stream_type.
 function stream_type_Callback(hObject, eventdata, handles)
-% hObject    handle to stream_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 img_options = findobj('Tag', 'img_options');
 if(get(hObject, 'Value') == 1)
     img_options.UserData = 'stream';
 else
     img_options.UserData = '-1';
 end
-% Hint: get(hObject,'Value') returns toggle state of stream_type
 
 
 % --- Executes on button press in file_type.
 function file_type_Callback(hObject, eventdata, handles)
-% hObject    handle to file_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 img_options = findobj('Tag', 'img_options');
 if(get(hObject, 'Value') == 1)
     img_options.UserData = 'file';
 else
     img_options.UserData = '-1';
 end
-% Hint: get(hObject,'Value') returns toggle state of file_type
 
 % --- Executes on button press in end_operation.
 function end_operation_Callback(hObject, eventdata, handles)
-% hObject    handle to end_operation (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global q;
 q.stop_execution();
 
 function data_collect_check_Callback(hObject, eventdata, handles)
-% hObject    handle to data_collect_check (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of data_collect_check
-
-
-% --- Executes on button press in pushbutton32.
-function pushbutton32_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton32 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 
 % --- Resets GUI to initial state. Does not clear settings
 function reset_button_Callback(hObject, eventdata, handles)
-% hObject    handle to reset_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 close(gcbf);
 data_gui;
 
 
 % --- Executes on button press in imrect_button.
 function imrect_button_Callback(hObject, eventdata, handles)
-% hObject    handle to imrect_button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 % determines whether button is toggled or not
 draw = get(hObject, 'Value');
 setappdata(0, 'draw_rect', draw);
 
-
 % --- Executes on button press in scale_img_select.
 function scale_img_select_Callback(hObject, eventdata, handles)
-% hObject    handle to scale_img_select (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 imgfile = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
 if imgfile ~= 0
     setappdata(0, 'imgfile', imgfile);
@@ -1221,34 +1162,16 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function pixel_precision_text_velocity_Callback(hObject, eventdata, handles)
-% hObject    handle to pixel_precision_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of pixel_precision_text_velocity as text
-%        str2double(get(hObject,'String')) returns contents of pixel_precision_text_velocity as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function pixel_precision_text_velocity_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pixel_precision_text_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 % --- Executes on button press in save_velocity_options.
 function save_velocity_options_Callback(hObject, eventdata, handles)
-% hObject    handle to save_velocity_options (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
@@ -1257,66 +1180,25 @@ if(getappdata(0, 'wait_status'))
     uiresume;
 end
 
-
-
 function maximum_y_displacement_edit_displacement_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_y_displacement_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of maximum_y_displacement_edit_displacement as text
-%        str2double(get(hObject,'String')) returns contents of maximum_y_displacement_edit_displacement as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function maximum_y_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maximum_y_displacement_edit_displacement (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function maximum_y_displacement_velocity_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_y_displacement_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of maximum_y_displacement_velocity as text
-%        str2double(get(hObject,'String')) returns contents of maximum_y_displacement_velocity as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function maximum_y_displacement_velocity_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maximum_y_displacement_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_x_displacement_velocity (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of maximum_x_displacement_velocity as text
-%        str2double(get(hObject,'String')) returns contents of maximum_x_displacement_velocity as a double
-
-
-% --- Executes on button press in goto_settings.
+% --- Executes on button press in goto_settings. Opens settings_gui
 function goto_settings_Callback(hObject, eventdata, handles)
-% hObject    handle to goto_settings (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 settings_gui;
+
