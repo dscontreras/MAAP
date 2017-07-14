@@ -5,8 +5,8 @@ Xp = 184.67662; %distance according image in pixels. Correspond to Xm
 %%    ************************** WHOLE PIXEL PRECISION COORDINATES *************************
 
 %DEFINE SEARCH AREA - obtained from no interpolated image
-width = displacement; %search area width
-height = displacement; %search area height
+width = displacement %search area width
+height = displacement %search area height
 
 search_area_xmin = rect(1) - width; %xmin of search area
 search_area_ymin = rect(2)- height; %ymin of search area
