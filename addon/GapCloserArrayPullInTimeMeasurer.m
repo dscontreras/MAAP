@@ -30,9 +30,8 @@ methods
     % Assumes that it is first pulled out all the way
     % WANTED: For testing purposes only; Ignore for use;
     function [times] = execute(obj, wanted)
-        pulled_out = true;
         prev_location_x = -1;
-        prev_diff = -100; % Assumes that it can't be this large
+        moving = false; 
         frame = rgb2gray(obj.source.extractFrame());
         [height, width ] = size(frame);
         i = 0;
@@ -45,6 +44,8 @@ methods
         end
         times = [-10:-1];
         count = 0;
+        have_not_moved_count = 0;
+        pot = -1;
         while ~obj.source.finished() & (wanted < 0 | i < wanted + 5)
             % Determine set of fingers
             % TODO: Find a better way to get this
@@ -75,16 +76,31 @@ methods
             
             % Find difference from last location
             if prev_location_x ~= -1
-                diff = location(1) - prev_location_x
-                if abs(diff) >= 0.3
-                    if prev_diff ~= 100 & prev_diff * diff < 0
-                        % prev_diff * diff < 0 iff the sign is different it
-                        % changed state
+                
+                diff = location(1) - prev_location_x;
+                % Mark the time if you go from movement to no movement
+                if abs(diff) >= 0.5
+                    if ~moving 
                         count = count + 1;
-                        times(count) = i;
+                        times(count) = -(i-1);
                     end
+                    moving = true;
                 end
-                prev_diff = diff;
+                if abs(diff) <= 0.5 & moving % Maybe stopped moving?
+                    if pot == -1
+                        pot = i - 1;
+                    end
+                    have_not_moved_count = have_not_moved_count + 1;
+                    if have_not_moved_count > 3 % Has not moved for 3 frames
+                        count = count + 1;
+                        times(count) = pot;
+                        pot = -1;
+                        moving = false;
+                    end
+                else
+                    have_not_moved_count = 0;
+                end
+                
             end
             prev_location_x = location(1);
             
@@ -97,7 +113,7 @@ methods
             frame = rgb2gray(obj.source.extractFrame());
             i = i + 1;
         end
-        %[times, i]
+        [times, i]
     end
 
     function [rel_corner] = filter_relevant_corner(obj, anchor, c1, c2)
