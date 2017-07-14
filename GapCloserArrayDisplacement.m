@@ -21,6 +21,7 @@ methods
         while ~obj.source.finished()
             img = obj.source.extractFrame();
             [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement(img);
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement_fourier(img);
             displacement_x(index) = disp_x_pixel * obj.res;
             displacement_y(index) = disp_y_pixel * obj.res;
             index = index + 1;
