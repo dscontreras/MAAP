@@ -61,7 +61,7 @@ function [template, rect] = displayImage(hAxis, frame)
 global vid_height;
 global vid_width;
 % Display image in the specified axis
-frame = imresize(frame,  [vid_height, vid_width]); % 1200, 1920 for other videos 
+frame = imresize(frame,  [vid_height, vid_width]);  
 [template, rect] = imcrop(frame);
 
 %set(hAxis, ...

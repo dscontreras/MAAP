@@ -930,13 +930,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
-        
-        %scale_img = get(handles.scale_img_display, 'String');
-        %scale_length = get(handles.maximum_y_displacement_velocity, 'String');
 
-        %operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-        %handles.vid_error_tag, handles.image_cover, handles.pause_operation,... 
-        %pixel_precision, max_displacement, res, scale_img, scale_length);
         operation = Velocity(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
             pixel_precision, max_x_displacement, max_y_displacement, res, draw);
@@ -1144,18 +1138,6 @@ function imrect_button_Callback(hObject, eventdata, handles)
 draw = get(hObject, 'Value');
 setappdata(0, 'draw_rect', draw);
 
-% --- Executes on button press in scale_img_select.
-function scale_img_select_Callback(hObject, eventdata, handles)
-imgfile = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
-if imgfile ~= 0
-    setappdata(0, 'imgfile', imgfile);
-    set(handles.scale_img_display, 'String', imgfile);
-else
-    setappdata(0, 'imgfile', '');
-    set(handles.scale_img_display, 'String', 'No file selected');
-end
-
-
 % --- Executes during object creation, after setting all properties.
 function maximum_x_displacement_velocity_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
@@ -1202,3 +1184,13 @@ function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
 function goto_settings_Callback(hObject, eventdata, handles)
 settings_gui;
 
+
+
+function pixel_to_conversion_text_velocity_Callback(hObject, eventdata, handles)
+
+
+% --- Executes during object creation, after setting all properties.
+function pixel_to_conversion_text_velocity_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
