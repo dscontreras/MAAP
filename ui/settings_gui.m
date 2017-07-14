@@ -22,7 +22,7 @@ function varargout = settings_gui(varargin)
 
 % Edit the above text to modify the response to help settings_gui
 
-% Last Modified by GUIDE v2.5 16-Jun-2017 15:12:53
+% Last Modified by GUIDE v2.5 14-Jul-2017 12:56:21
 
 % Begin initialization code - DO NOT EDIT
 
@@ -110,7 +110,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in start_path_submit.
 %Brief: Assign a new start path to application data to be used when
 %constructing file system parsers
@@ -165,6 +164,72 @@ function browse_button_CreateFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 function browse_button_DeleteFcn(hObject, eventdata, handles)
-% hObject    handle to browse_button (see GCBO)
+
+% --- Executes on button press in select_video_velocity.
+function select_video_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to select_video_velocity (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.mov', '*.avi'}, 'Select a video');
+if filename ~= 0
+    setappdata(0, 'video_conversion', filename);
+    set(handles.video_conversion_velocity, 'String', filename);
+else
+    setappdata(0, 'video_conversion', '');
+    set(handles.video_conversion_velocity, 'String', 'No file selected');
+end
+
+% --- Executes on button press in browse_ref_pic_velocity.
+function browse_ref_pic_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_ref_pic_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
+if filename ~= 0
+    setappdata(0, 'conversion_img', filename);
+    set(handles.ref_pic_velocity, 'String', filename);
+else
+    setappdata(0, 'conversion_img', '');
+    set(handles.ref_pic_velocity, 'String', 'No file selected');
+end
+
+
+% --- Executes on button press in find_dist_button.
+function find_dist_button_Callback(hObject, eventdata, handles)
+% hObject    handle to find_dist_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+vidPath = getappdata(0, 'video_conversion');
+vid = VideoReader(vidPath);
+[vidHeight, vidWidth] = size(rgb2gray(readFrame(vid)));
+img = imread(getappdata(0, 'conversion_img'));
+img = imresize(img, [vidHeight, vidWidth]);
+imtool(img);
+
+
+% --- Executes on button press in find_ratio_button.
+function find_ratio_button_Callback(hObject, eventdata, handles)
+% hObject    handle to find_ratio_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function conversion_ratio_text_Callback(hObject, eventdata, handles)
+input = get(handles.conversion_ratio_text, 'String');
+input
+input = eval(input);
+set(handles.conversion_ratio_text, 'String', input);
+
+
+% --- Executes during object creation, after setting all properties.
+function conversion_ratio_text_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to conversion_ratio_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

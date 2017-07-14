@@ -1184,10 +1184,7 @@ function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
 function goto_settings_Callback(hObject, eventdata, handles)
 settings_gui;
 
-
-
 function pixel_to_conversion_text_velocity_Callback(hObject, eventdata, handles)
-
 
 % --- Executes during object creation, after setting all properties.
 function pixel_to_conversion_text_velocity_CreateFcn(hObject, eventdata, handles)
