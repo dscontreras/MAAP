@@ -1,4 +1,4 @@
-classdef GapCloserArrayDisplacement < Operation
+classdef RyanGCAOperation < Operation
 
 properties
     source
@@ -7,7 +7,7 @@ properties
 end
 
 methods
-    function obj = GapCloserArrayDisplacement(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, resolution)
+    function obj = RyanGCAOperation(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, resolution)
         obj.source = src;
         first_frame = src.extractFrame();
         obj.res = resolution;
