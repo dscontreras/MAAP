@@ -12,14 +12,20 @@ classdef Velocity < RepeatableOperation
         max_y_displacement;
         template; rect; xtemp; ytemp;
         current_frame;
+        cameraFPS;
         table;
         img_cover;
         pause_button;
         table_data;
         stop_check_callback = @check_stop;
         im;
+        index; % current frame count
+        numFrames;
+        velocityTrack;
+        conversion;
         res;
         xoff; yoff;
+        display;
         draw; % toggles imrect
 
         % Properties needed for fourier analysis
@@ -55,11 +61,12 @@ classdef Velocity < RepeatableOperation
     end
 
     methods
-        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, error_report_handle)
+        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, conversion, display, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
+            obj.cameraFPS = 15; % speed of Swarm lab camera
             obj.img_cover = img_cover;
             obj.pause_button = pause_button;
             obj.pause_bool = false;
@@ -75,9 +82,13 @@ classdef Velocity < RepeatableOperation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
-            obj.draw = 1; %TODO: Add option in GUI to toggle this
+            obj.numFrames = [];
+            obj.velocityTrack = [];
+            obj.conversion = conversion;
+            obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 11) % 11 is the number of params for displacement
+            obj.display = display;
+            if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -164,7 +175,9 @@ classdef Velocity < RepeatableOperation
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-            imshow(obj.current_frame);
+            if obj.display
+                imshow(obj.current_frame);
+            end
             if obj.draw
                 %hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
@@ -173,16 +186,29 @@ classdef Velocity < RepeatableOperation
             obj.outputs('dispx') = [obj.outputs('dispx') dispx];
             obj.outputs('dispy') = [obj.outputs('dispy') dispy];
             obj.outputs('done') = obj.check_stop();  
-            obj.xoff = [obj.xoff xoffSet];
-            obj.yoff = [obj.yoff yoffSet];
+            obj.xoff = [obj.xoff x*obj.conversion];
+            obj.yoff = [obj.yoff y*obj.conversion];
+            obj.numFrames = [obj.numFrames obj.index];
+            instVelocity = x*obj.cameraFPS*obj.conversion;
+            obj.velocityTrack = [obj.velocityTrack instVelocity];
             xoff3 = obj.xoff;
             yoff3 = obj.yoff;
-            %TODO: save gpu_displacement.mat somewhere else.
-            save('gpu_displacement.mat', 'xoff3', 'yoff3');
+            time = obj.numFrames;
+            vel = obj.velocityTrack;
+            obj.index = obj.index + 1;
+            save('velocity.mat', 'xoff3', 'yoff3', 'time', 'vel');
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
             if obj.draw & ~obj.check_stop()
                 delete(hrect);
+            end
+            if obj.check_stop() 
+                Data = load('velocity.mat');
+                figure('Name', 'X Displacement Over Time');
+                plot(Data.time, Data.xoff3);
+                
+                figure('Name', 'Velocity over Time');
+                plot(Data.time, Data.vel);
             end
         end
 

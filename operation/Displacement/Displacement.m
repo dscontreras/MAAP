@@ -21,6 +21,7 @@ classdef Displacement < RepeatableOperation
         im;
         res;
         xoff; yoff;
+        display
         draw; % toggles imrect
 
         % Properties needed for fourier analysis
@@ -56,7 +57,7 @@ classdef Displacement < RepeatableOperation
     end
 
     methods
-        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, error_report_handle)
+        function obj = Displacement(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, display, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -77,8 +78,9 @@ classdef Displacement < RepeatableOperation
             obj.xoff = [];
             obj.yoff = [];
             obj.draw = draw;
+            obj.display = display;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
-            if(nargin > 11) % 11 is the number of params for displacement
+            if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -164,7 +166,9 @@ classdef Displacement < RepeatableOperation
                     [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                 end
             end
-            set(obj.im, 'CData', gather(obj.current_frame));
+            if obj.display
+                set(obj.im, 'CData', gather(obj.current_frame));
+            end
             if obj.draw
                 hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
             end

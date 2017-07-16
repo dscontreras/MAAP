@@ -217,7 +217,6 @@ function find_ratio_button_Callback(hObject, eventdata, handles)
 
 function conversion_ratio_text_Callback(hObject, eventdata, handles)
 input = get(handles.conversion_ratio_text, 'String');
-input
 input = eval(input);
 set(handles.conversion_ratio_text, 'String', input);
 

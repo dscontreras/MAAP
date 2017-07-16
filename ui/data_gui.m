@@ -885,6 +885,7 @@ end
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
     draw = getappdata(0, 'draw_rect');
+    display = get(handles.toggle_video_on, 'Value');
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
@@ -909,7 +910,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         end 
         operation = Displacement(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, draw);        
+            pixel_precision, max_x_displacement, max_y_displacement, res, draw, display);        
         %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
     elseif get(handles.velocity_check, 'Value') == 1
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
@@ -933,7 +934,7 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
 
         operation = Velocity(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, draw);
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
@@ -1157,7 +1158,8 @@ function save_velocity_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
-save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
+conversion_rate = get(handles.conversion_rate_velocity, 'String');
+save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1184,10 +1186,10 @@ function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
 function goto_settings_Callback(hObject, eventdata, handles)
 settings_gui;
 
-function pixel_to_conversion_text_velocity_Callback(hObject, eventdata, handles)
+function conversion_rate_velocity_Callback(hObject, eventdata, handles)
 
 % --- Executes during object creation, after setting all properties.
-function pixel_to_conversion_text_velocity_CreateFcn(hObject, eventdata, handles)
+function conversion_rate_velocity_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
