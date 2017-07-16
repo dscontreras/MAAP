@@ -7,18 +7,20 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         max_displacement_x;
         max_displacement_y;
         rect;
-        template;
+        template; template_height; template_width;
         min_displacement;
+        interp_template;
+        
+        
     end
 
     methods
-        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, smaller_search_area_length, first_frame)
+        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
             obj.source                      = src;
             obj.pixel_precision             = pixel_precision;
             obj.max_displacement_x          = m_d_x;
             obj.max_displacement_y          = m_d_y;
             obj.min_displacement            = min_d;
-            obj.smaller_search_area_length  = smaller_search_area_length;
 
             % TODO: validate check?
 
@@ -28,8 +30,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             end
             obj.rect = find_rect(obj.source.get_filepath(), template);
             obj.template = im2double(imcrop(first_frame, obj.rect));
-            [h, w] = size(obj.template);
-            obj.rect = [obj.rect(1) obj.rect(2) w, h];
+            [obj.template_height, obj.template_width] = size(obj.template);
+            obj.rect = [obj.rect(1) obj.rect(2) obj.template_width obj.template_height];
 
             % Find the interpolated template
             obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
@@ -91,9 +93,9 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             new_ypeak = new_ypeak/(1/obj.pixel_precision);
             new_xpeak = new_xpeak+round(new_search_area_rect(1));
             new_ypeak = new_ypeak+round(new_search_area_rect(2));
-
-            y_peak = new_ypeak-(size(obj.template,1));
-            x_peak = new_xpeak-(size(obj.template,2));
+            
+            y_peak = new_ypeak - obj.template_height;
+            x_peak = new_xpeak - obj.template_width;
 
             %DISPLACEMENT IN PIXELS
             disp_y_pixel = y_peak - obj.rect(2);
