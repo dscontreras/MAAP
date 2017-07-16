@@ -38,14 +38,24 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         end
 
         % Uses normxcorr2 to find the location of obj.template in IMG for both pixel precision and subpixel precision
-        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img)
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.meas_displacement_norm_cross_correlation(img);
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img, zero_pad)
+            if nargin ~= 3
+                zero_pad = false;
+            end
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.meas_displacement_norm_cross_correlation(img, zero_pad);
         end
 
-        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img)
-            Xm =40*10^(-6); %distance according to chip dimensions in microns
+        % ZERO_PAD is an argument used to determine whether or not the search_area should be zero_padded. 
+        % How much it should be zero_padded is determined by the max_displacement_x and max_displacement_y
+        % The search_area will be a crop of the IMG determined by OBJ.RECT then zero_padded. 
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img, zero_pad)
+            Xm = 40*10^(-6); %distance according to chip dimensions in microns
             Xp = 184.67662; %distance according image in pixels. Correspond to Xm
             %    ************************** WHOLE PIXEL PRECISION COORDINATES *************************
+
+            if nargin ~= 3
+                zero_pad = false;
+            end
 
             %DEFINE SEARCH AREA - obtained from no interpolated image
             width = obj.max_displacement_x; %search area width
@@ -55,8 +65,15 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             search_area_ymin = obj.rect(2)- height; %ymin of search area
             search_area_width = 2*width+obj.rect(3); %Get total width of search area
             search_area_height = 2*height+obj.rect(4); %Get total height of search area
-            [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
-            
+
+            if zero_pad
+                cropped = imcrop(img, obj.rect);
+                search_area = padarray(cropped, [height, width], 0);
+                search_area_rect = [search_area_xmin search_area_ymin search_area_width search_area_height];
+            else
+                [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
+            end
+
             %"\tNormxCorr2"
             c = normxcorr2(im2uint8(obj.template), search_area);
 
