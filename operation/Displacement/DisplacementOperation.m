@@ -107,7 +107,6 @@ classdef DisplacementOperation < Operation
             obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input
-            % TODO: Fix this comparision. It doesn't work.
             if ~strcmp(path,'')
                 obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);

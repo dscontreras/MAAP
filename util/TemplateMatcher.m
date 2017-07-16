@@ -27,45 +27,45 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
     methods
         % For now, assumes that m_d_x, m_d_y is a double of some kind
-        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, rect)
-            obj.source                      = src;
-            obj.pixel_precision             = pixel_precision;
-            obj.max_displacement_x          = m_d_x;
-            obj.max_displacement_y          = m_d_y;
-            obj.min_displacement            = min_d;
-            obj.template                    = template;
-
-            % Due to the fact that fourier transform probably won't work...this may not be necessary. 
-            obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4);
-            obj.search_area_width   = 2 * obj.max_displacement_x + obj.rect(3);
-            obj.search_area_xmin    = obj.rect(1) - obj.max_displacement_x;
-            obj.search_area_ymin    = obj.rect(2) - obj.max_displacement_y;
-
-            % Make sure that when darks match up in both the
-            % image/template, they count toward the correlation
-            % We subtract from the mean as we know that darks are the
-            % edges.
-            obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = medfilt2(obj.template) - obj.template_average;
-            obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height, obj.search_area_width));
-
-            % Find the interpolated template
-            obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
-
-            % I add 1 as imcrop will add 1 to each dimension
-            [obj.interp_search_area_height, obj.interp_search_area_width] = size(obj.interp_template);
-
-            obj.interp_template_average = mean(mean(obj.interp_template));
-            obj.processed_interp_template = medfilt2(obj.interp_template);
-            obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_interp_template, obj.interp_search_area_height, obj.interp_search_area_width));
-
-            % The following is necessary to do the normxcorr2 when looking at a smaller part of an image
-            % TODO: explain in more detail
-            obj.interp_search_area_height = obj.smaller_search_area_length+1;
-            obj.interp_search_area_width = obj.smaller_search_area_length+1;
-            obj.smaller_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);
-            obj.smaller_processed_interp_template = imcrop(obj.processed_interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);    
-        end
+%         function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, rect)
+%             obj.source                      = src;
+%             obj.pixel_precision             = pixel_precision;
+%             obj.max_displacement_x          = m_d_x;
+%             obj.max_displacement_y          = m_d_y;
+%             obj.min_displacement            = min_d;
+%             obj.template                    = template;
+% 
+%             % Due to the fact that fourier transform probably won't work...this may not be necessary. 
+%             obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4);
+%             obj.search_area_width   = 2 * obj.max_displacement_x + obj.rect(3);
+%             obj.search_area_xmin    = obj.rect(1) - obj.max_displacement_x;
+%             obj.search_area_ymin    = obj.rect(2) - obj.max_displacement_y;
+% 
+%             % Make sure that when darks match up in both the
+%             % image/template, they count toward the correlation
+%             % We subtract from the mean as we know that darks are the
+%             % edges.
+%             obj.template_average    = mean(mean(obj.template));
+%             obj.processed_template  = medfilt2(obj.template) - obj.template_average;
+%             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height, obj.search_area_width));
+% 
+%             % Find the interpolated template
+%             obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
+% 
+%             % I add 1 as imcrop will add 1 to each dimension
+%             [obj.interp_search_area_height, obj.interp_search_area_width] = size(obj.interp_template);
+% 
+%             obj.interp_template_average = mean(mean(obj.interp_template));
+%             obj.processed_interp_template = medfilt2(obj.interp_template);
+%             obj.fft_conj_processed_interp_template = conj(fft2(obj.processed_interp_template, obj.interp_search_area_height, obj.interp_search_area_width));
+% 
+%             % The following is necessary to do the normxcorr2 when looking at a smaller part of an image
+%             % TODO: explain in more detail
+%             obj.interp_search_area_height = obj.smaller_search_area_length+1;
+%             obj.interp_search_area_width = obj.smaller_search_area_length+1;
+%             obj.smaller_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);
+%             obj.smaller_processed_interp_template = imcrop(obj.processed_interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);    
+%         end
 
         function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, first_frame)
             obj.source                      = src;
@@ -81,9 +81,11 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             if length(size(first_frame)) == 3
                 first_frame = rgb2gray(first_frame);
             end
-            obj.rect = find_rect(obj.source.get_filepath(), template_file_path);
+            temp = imread(template_file_path);
+            obj.rect = find_rect(obj.source.get_filepath(), temp);
             obj.template = im2double(imcrop(first_frame, obj.rect));
-            obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1]; % Account for the +1 that imcrop adds
+            [h, w] = size(obj.template);
+            obj.rect = [obj.rect(1) obj.rect(2) w, h]; % Account for the +1 that imcrop adds
             
             % Set up some of the sizes that will be used in the future
             obj.search_area_height  = 2 * obj.max_displacement_y + obj.rect(4);
@@ -210,7 +212,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_width+1, new_search_area_height+1);
             
              %PERFORM NORMALIZED CROSS-CORRELATION
-             c1 = normxcorr2(obj.interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
+            c1 = normxcorr2(obj.interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
 
             %FIND PEAK CROSS-CORRELATION
             [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
@@ -232,7 +234,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         end
     end
 
-    methods (Access = private)
+    methods (Access = public)
         function interpolated_image = interpolate(obj, img, pixel_precision, numCols, numRows)
             interpolated_image = im2double(img);
             [X,Y] = meshgrid(1:numCols,1:numRows);
@@ -262,7 +264,6 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 R = R./abs(R); % normalize to get rid of values related to intensity of light
                 r = real(ifft2(R));%, height, width));
                 r = r(1:height, 1:width); % limit the location of where I look for the max
-
                 [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
                 ypeak = ypeak - 1;
                 xpeak = xpeak - 1;

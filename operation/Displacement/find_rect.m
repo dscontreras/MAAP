@@ -1,8 +1,10 @@
 %% TODO: Subtract mean of template from template and firstFrame to account for light intensity %%
-function rect = find_rect(video, templateFilePath)
+function rect = find_rect(video, template)
     videoReader = VideoReader(video);
     firstFrame = rgb2gray(readFrame(videoReader));
-    template = rgb2gray(imread(templateFilePath));
+    if length(size(template)) == 3
+        template = rgb2gray(template)
+    end
     
     %-- Adapted from https://stackoverflow.com/a/32664730
     frameWidth = size(firstFrame, 2);
