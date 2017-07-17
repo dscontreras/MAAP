@@ -63,6 +63,13 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             disp_y_pixel = y_peak - obj.rect(2);
             disp_x_pixel = x_peak - obj.rect(1);  
         end
+        
+        function change_template(obj, template, rect)
+            obj.template = template;
+            obj.rect = rect;
+            [obj.template_height, obj.template_width] = size(template);
+            obj.rect = [rect(1) rect(2) obj.template_width obj.template_height];
+        end
     end
 
     % Methods for testing; Not to be generally be used outside the class
