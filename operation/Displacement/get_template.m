@@ -17,11 +17,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-function [template, rect, xtemp, ytemp] = get_template(gray, displayObj)
+function [template, rect, xtemp, ytemp] = get_template(gray, displayObj, vid_height, vid_width)
 
     %DEFINE TEMPLATE - Obtained from interpolated image
-    [template, rect] = showCrop(displayObj, gray);
-    
+    [template, rect] = showCrop(displayObj, gray, vid_height, vid_width);
+
     %PERFORM NORMALIZED CROSS-CORRELATION
     c = normxcorr2(template,gray);
     
