@@ -72,12 +72,11 @@ methods
                 potential_y = bb_y;
             end
         end
-        obj.rect = [potential_x potential_y mean_width*3 mean_height]; % Let's look at just three boxes for now
+        obj.rect = [potential_x potential_y mean_width*7 mean_height]; % Let's look at just three boxes for now
         temp = imcrop(first_frame, obj.rect);
-        imshow(temp);
         % TODO: Get the res of the video somehow. 
 
-        obj.template_matcher = TemplateMatcher(src, 1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
+        obj.template_matcher = TemplateMatcher(src,1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
         obj.rect = obj.template_matcher.rect;
     end
 
@@ -86,12 +85,13 @@ methods
         displacement_y = [-5000:-1]; % Assumes that the video is < 5000 frames
         index = 1;
         while ~obj.source.finished()
-            img = obj.source.extractFrame();
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement(img);
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement_fourier(img);
+            img = rgb2gray(obj.source.extractFrame());
+            % Pad zeros
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
             displacement_x(index) = disp_x_pixel * obj.res;
             displacement_y(index) = disp_y_pixel * obj.res;
             index = index + 1;
+            %[index, x_peak, y_peak]
         end
     end
 
