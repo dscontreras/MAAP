@@ -72,7 +72,7 @@ methods
                 potential_y = bb_y;
             end
         end
-        obj.rect = [potential_x potential_y mean_width*7 mean_height]; % Let's look at just three boxes for now
+        obj.rect = [potential_x potential_y mean_width*3 mean_height]; % Let's look at just three boxes for now
         temp = imcrop(first_frame, obj.rect);
         % TODO: Get the res of the video somehow. 
 
@@ -80,19 +80,46 @@ methods
         obj.rect = obj.template_matcher.rect;
     end
 
-    function [displacement_x, displacement_y] = execute(obj)
-        displacement_x = [-5000:-1]; % Assumes that the video is < 5000 frames
-        displacement_y = [-5000:-1]; % Assumes that the video is < 5000 frames
+    function [loc_x, loc_y, indices] = execute(obj)
+        loc_x = [-5000:-1]; % Assumes that the video is < 5000 frames
+        loc_y = [-5000:-1]; % Assumes that the video is < 5000 frames
+        indices_of_interest = [];
         index = 1;
+        
+        % First frame
+        [h, w] = size(obj.template_matcher.template);
+        img = rgb2gray(obj.source.extractFrame());
+        [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
+        loc_x(index) = x_peak;
+        loc_y(index) = y_peak;
+        new_temp = imcrop(img, [x_peak, y_peak, w, h]);
+        obj.template_matcher.change_template(new_temp, [x_peak, y_peak, w, h]);
+        prev_x = x_peak;
+        prev_y = y_peak;
+        
         while ~obj.source.finished()
-            img = rgb2gray(obj.source.extractFrame());
-            % Pad zeros
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
-            displacement_x(index) = disp_x_pixel * obj.res;
-            displacement_y(index) = disp_y_pixel * obj.res;
             index = index + 1;
-            %[index, x_peak, y_peak]
+            img = rgb2gray(obj.source.extractFrame());
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
+            
+            loc_x(index) = x_peak;
+            loc_y(index) = y_peak;
+            
+            if abs(prev_x - x_peak) > 2
+                indices_of_interest = [indices_of_interest index - 1];
+                indices_of_interest = [indices_of_interest index];
+            end
+            
+            new_temp = imcrop(img, [x_peak, y_peak, w, h]);
+            obj.template_matcher.change_template(new_temp, [x_peak, y_peak, w, h]);
+            prev_x = x_peak;
+            prev_y = y_peak;
         end
+        
+        k = find(loc_x < 0);
+        loc_x = loc_x(1:k-1);
+        loc_y = loc_y(1:k-1);
+        indices = indices_of_interest;
     end
 
     function startup(obj)
