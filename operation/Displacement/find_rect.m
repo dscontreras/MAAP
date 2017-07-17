@@ -3,7 +3,7 @@ function rect = find_rect(video, template)
     videoReader = VideoReader(video);
     firstFrame = rgb2gray(readFrame(videoReader));
     if length(size(template)) == 3
-        template = rgb2gray(template)
+        template = rgb2gray(template);
     end
     
     %-- Adapted from https://stackoverflow.com/a/32664730

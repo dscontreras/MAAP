@@ -7,11 +7,38 @@ properties
 end
 
 methods
-    function obj = RyanGCAOperation(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, resolution)
+    function obj = RyanGCAOperation(src, res)
         obj.source = src;
         first_frame = src.extractFrame();
-        obj.res = resolution;
-        obj.template_matcher = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template_file_path, min_d, smaller_search_area_length, first_frame)
+        obj.res = res;
+        % Find the template;
+        % Some assumptions that are made: 
+        % 1. It's somewhere in the middle 
+        %       - The median y value will give us which rectangles to look at
+        %       - The mean x value will tell us where the "middle" of the rectangles is
+        % 2. It looks like squares. 
+
+        rectangles = locate_rectangles(first_frame);
+        [h, w] = size(first_frame);
+
+        count = numel(rectangles);
+        y_values = [-count:-1];
+        x_values = [-count:-1];
+        for i = 1:count
+            bb = rectangles(i).BoundingBox;
+            if abs(bb(3) - bb(4)) > 3
+                continue
+            end
+            y_values(i) = bb(2);
+            x_values(i) = bb(1);
+        end
+
+        median_y = median(y_values);
+        median_x = mean(x_values); 
+
+        % TODO: Get the res of the video somehow. 
+
+        obj.template_matcher = TemplateMatcher(src, 1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
     end
 
     function [displacement_x, displacement_y] = execute(obj)
