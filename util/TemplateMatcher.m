@@ -2,21 +2,14 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
     % Given a template and a File Source, finds the location of the template in each frame of the video
 
     properties
-        source;
         pixel_precision;
-        max_displacement_x;
-        max_displacement_y;
-        rect;
-        template; template_height; template_width;
-        min_displacement;
+        max_displacement_x; max_displacement_y; min_displacement;
+        template; template_height; template_width; rect;
         interp_template;
-        
-        
     end
 
     methods
         function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
-            obj.source                      = src;
             obj.pixel_precision             = pixel_precision;
             obj.max_displacement_x          = m_d_x;
             obj.max_displacement_y          = m_d_y;
@@ -28,7 +21,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             if length(size(first_frame)) == 3
                 first_frame = rgb2gray(first_frame);
             end
-            obj.rect = find_rect(obj.source.get_filepath(), template);
+            obj.rect = find_rect(src.get_filepath(), template);
             obj.template = im2double(imcrop(first_frame, obj.rect));
             [obj.template_height, obj.template_width] = size(obj.template);
             obj.rect = [obj.rect(1) obj.rect(2) obj.template_width obj.template_height];
@@ -57,62 +50,14 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 zero_pad = false;
             end
 
-            %DEFINE SEARCH AREA - obtained from no interpolated image
-            width = obj.max_displacement_x; %search area width
-            height = obj.max_displacement_y; %search area height
+            % Get Pixel Accuracy
+            [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false, zero_pad);
+            new_xmin = xpeak+round(search_area_rect(1))-1;
+            new_ymin = ypeak+round(search_area_rect(2))-1;
 
-            search_area_xmin = obj.rect(1) - width; %xmin of search area
-            search_area_ymin = obj.rect(2)- height; %ymin of search area
-            search_area_width = 2*width+obj.rect(3); %Get total width of search area
-            search_area_height = 2*height+obj.rect(4); %Get total height of search area
-
-            if zero_pad
-                cropped = imcrop(img, obj.rect);
-                search_area = padarray(cropped, [height, width], 0);
-                search_area_rect = [search_area_xmin search_area_ymin search_area_width search_area_height];
-            else
-                [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
-            end
-
-            %"\tNormxCorr2"
-            c = normxcorr2(im2uint8(obj.template), search_area);
-
-            [ypeak, xpeak] = find(c==max(c(:)));
-            
-            xpeak = xpeak+round(search_area_rect(1))-1; %move xpeak to the other side of the template rect.
-            ypeak = ypeak+round(search_area_rect(2))-1; %move y peak down to the bottom of the template rect.
-            
-            % ************************** SUBPIXEL PRECISION COORDINATES *************************
-            %GENERATE MOVED TEMPLATE
-            %new_xmin = (xpeak-xtemp) + rect(1); 
-            new_xmin = (xpeak-obj.rect(3));
-            %new_ymin = (ypeak-ytemp) + rect(2); 
-            new_ymin = (ypeak-obj.rect(4));
-            [moved_template, displaced_rect] = imcrop(img,[new_xmin new_ymin obj.rect(3) obj.rect(4)]);
-
-            %GENERATE NEW SEARCH AREA (BASED IN MOVED TEMPLATE)
-            width1 = obj.min_displacement; %set the width margin between the displaced template, and the search area as width1
-            height1 = obj.min_displacement; %set the height margin between the displaced template, and the search area as height1
-            new_search_area_xmin = displaced_rect(1) - width1; 
-            new_search_area_ymin = displaced_rect(2)- height1;
-            new_search_area_width = 2*width1+displaced_rect(3);
-            new_search_area_height = 2*height1+displaced_rect(4);
-            [new_search_area, new_search_area_rect] = imcrop(img,[new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
-            interp_search_area = obj.interpolate(new_search_area, obj.pixel_precision, new_search_area_width+1, new_search_area_height+1);
-            
-             %PERFORM NORMALIZED CROSS-CORRELATION
-            c1 = normxcorr2(obj.interp_template,interp_search_area); %Now perform normalized cross correlation on the interpolated images
-
-            %FIND PEAK CROSS-CORRELATION
-            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
-
-            new_xpeak = new_xpeak/(1/obj.pixel_precision);
-            new_ypeak = new_ypeak/(1/obj.pixel_precision);
-            new_xpeak = new_xpeak+round(new_search_area_rect(1));
-            new_ypeak = new_ypeak+round(new_search_area_rect(2));
-            
-            y_peak = new_ypeak - obj.template_height;
-            x_peak = new_xpeak - obj.template_width;
+            % Subpixel Accuracy
+            new_rect = [new_xmin new_ymin obj.rect(3) obj.rect(4)];
+            [y_peak, x_peak, ~] = obj.normalized_cross_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true, zero_pad);
 
             %DISPLACEMENT IN PIXELS
             disp_y_pixel = y_peak - obj.rect(2);
@@ -120,13 +65,51 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         end
     end
 
-    methods (Access = private)
+    % Methods for testing; Not to be generally be used outside the class
+    methods (Access = public)
         function interpolated_image = interpolate(obj, img, pixel_precision, numCols, numRows)
             interpolated_image = im2double(img);
             [X,Y] = meshgrid(1:numCols,1:numRows);
             [Xq,Yq]= meshgrid(1:pixel_precision:numCols,1:pixel_precision:numRows);
             V=interpolated_image;
             interpolated_image = interp2(X,Y,V,Xq,Yq, 'cubic');
+        end
+
+        % if ZERO_PAD, the cropped image will be of RECT and padded with zeros everywhere else. 
+        % This is in the case in which there are similar objects just out of RECT that can be avoided in this way. 
+        % The math will work out the same due to the padding. 
+        function [y_peak, x_peak, search_area_rect] = normalized_cross_correlation(obj, img, displacement, rect, interpolate, zero_pad)
+            width = displacement(2);
+            height = displacement(1);
+
+            search_area_xmin    = rect(1) - width;
+            search_area_ymin    = rect(2) - height;
+            search_area_width   = 2*width + rect(3);
+            search_area_height  = 2*height + rect(4);
+
+            if zero_pad 
+                cropped = imcrop(img, rect);
+                search_area = padarray(cropped, [height, width], 0);
+                search_area_rect = [search_area_xmin search_area_ymin search_area_width search_area_height];
+            else
+                [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
+            end
+
+            if interpolate
+                interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width + 1, search_area_height + 1);
+                c = normxcorr2(obj.interp_template, interp_search_area);
+                [y_peak, x_peak] = find(c==max(c(:)));
+                x_peak = x_peak/(1/obj.pixel_precision);
+                y_peak = y_peak/(1/obj.pixel_precision);
+                x_peak = x_peak+round(search_area_rect(1));
+                y_peak = y_peak+round(search_area_rect(2));
+            else
+                c = normxcorr2(im2uint8(obj.template), search_area);
+
+                [y_peak, x_peak] = find(c==max(c(:)));
+            end
+            y_peak = y_peak - obj.template_height;
+            x_peak = x_peak - obj.template_width;
         end
     end
 
