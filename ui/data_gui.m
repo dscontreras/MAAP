@@ -498,12 +498,6 @@ function maximum_x_displacement_edit_displacement_CreateFcn(hObject, eventdata, 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-load('displacement_variables.mat');
-if ~strcmp(max_x_displacement, '')
-    set(hObject, 'String', max_x_displacement);
-end
-
-
 
 function pixel_precision_edit_displacement_Callback(hObject, eventdata, handles)
 % hObject    handle to pixel_precision_edit_displacement (see GCBO)

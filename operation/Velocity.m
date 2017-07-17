@@ -191,12 +191,12 @@ classdef Velocity < RepeatableOperation
             obj.numFrames = [obj.numFrames obj.index];
             instVelocity = x*obj.cameraFPS*obj.conversion;
             obj.velocityTrack = [obj.velocityTrack instVelocity];
-            xoff3 = obj.xoff;
-            yoff3 = obj.yoff;
+            xdisp = obj.xoff;
+            ydisp = obj.yoff;
             time = obj.numFrames;
             vel = obj.velocityTrack;
             obj.index = obj.index + 1;
-            save('velocity.mat', 'xoff3', 'yoff3', 'time', 'vel');
+            save('velocity.mat', 'xdisp', 'ydisp', 'time', 'vel');
             % To have GUI table update continuously, remove nocallbacks
             drawnow limitrate nocallbacks;
             if obj.draw & ~obj.check_stop()
@@ -205,10 +205,12 @@ classdef Velocity < RepeatableOperation
             if obj.check_stop() 
                 Data = load('velocity.mat');
                 figure('Name', 'X Displacement Over Time');
-                plot(Data.time, Data.xoff3);
+                plot(Data.time, Data.xdisp);
                 
                 figure('Name', 'Velocity over Time');
                 plot(Data.time, Data.vel);
+                
+                convertToCSV('velocity.mat');
             end
         end
 
