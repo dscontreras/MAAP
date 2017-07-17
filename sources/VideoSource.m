@@ -1,12 +1,17 @@
 classdef (Abstract) VideoSource < handle
     %VIDEOSOURCE Summary of this class goes here
     %   Detailed explanation goes here
-    
+
     properties (Abstract)
         gpu_supported;
     end
-    
-    methods (Static)
+
+    methods(Abstract)
+        frame = extractFrame(obj)
+        bool  = finished(obj)
+    end
+
+    methods(Static)
         function source = getSourceType(src)
             if(isa(src, 'vision.VideoFileReader'))
                 source = 'file';
@@ -19,8 +24,8 @@ classdef (Abstract) VideoSource < handle
             end
         end
     end
-    
-    methods 
+
+    methods
         function gpu_supported = determine_gpu_support(obj)
             if(strcmp(getenv('OS'), 'Windows'))
                 gpu_supported = true;
@@ -29,6 +34,5 @@ classdef (Abstract) VideoSource < handle
             end
         end
     end
-    
-end
 
+end
