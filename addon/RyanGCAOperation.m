@@ -78,6 +78,7 @@ methods
         % TODO: Get the res of the video somehow. 
 
         obj.template_matcher = TemplateMatcher(src, 1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
+        obj.rect = obj.template_matcher.rect;
     end
 
     function [displacement_x, displacement_y] = execute(obj)
