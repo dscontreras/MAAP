@@ -6,6 +6,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         max_displacement_x; max_displacement_y; min_displacement;
         template; template_height; template_width; rect;
         interp_template;
+        % In the case of changing templates, I'll need these values. 
+        orig_template_y; orig_template_x;
     end
 
     methods
@@ -25,6 +27,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             obj.template = im2double(imcrop(first_frame, obj.rect));
             [obj.template_height, obj.template_width] = size(obj.template);
             obj.rect = [obj.rect(1) obj.rect(2) obj.template_width obj.template_height];
+            obj.orig_template_y = obj.rect(2);
+            obj.orig_template_x = obj.rect(1);
 
             % Find the interpolated template
             obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
@@ -59,9 +63,9 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             new_rect = [new_xmin new_ymin obj.rect(3) obj.rect(4)];
             [y_peak, x_peak, ~] = obj.normalized_cross_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true, zero_pad);
 
-            %DISPLACEMENT IN PIXELS
-            disp_y_pixel = y_peak - obj.rect(2);
-            disp_x_pixel = x_peak - obj.rect(1);  
+            %DISPLACEMENT IN PIXELS from original position
+            disp_y_pixel = y_peak - obj.orig_template_y;
+            disp_x_pixel = x_peak - obj.orig_template_x;  
         end
         
         function change_template(obj, template, rect)
