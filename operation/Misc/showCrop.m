@@ -1,8 +1,8 @@
-function [template, rect] = showCrop(hAxis, frame)
+function [template, rect] = showCrop(hAxis, frame, height, width)
 global vid_height; 
 global vid_width;
-vid_height = 1024;
-vid_width = 1280;
+vid_height = height;
+vid_width = width;
 % This helper function is provided in support of the example 'Video Display
 % in a Custom User Interface'. It displays a frame of video on a
 % user-defined axis.
@@ -61,8 +61,9 @@ function [template, rect] = displayImage(hAxis, frame)
 global vid_height;
 global vid_width;
 % Display image in the specified axis
-frame = imresize(frame,  [vid_height, vid_width]);
+frame = imresize(frame,  [vid_height, vid_width]);  
 [template, rect] = imcrop(frame);
+
 %set(hAxis, ...
     %'YDir','reverse',...
     %'TickDir', 'out', ...
