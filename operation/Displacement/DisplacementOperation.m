@@ -105,10 +105,9 @@ classdef DisplacementOperation < Operation
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.source, obj));
             path = getappdata(0, 'img_path');
-
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
-                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
+                obj.rect = find_rect(obj.source.get_filepath(), path);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -129,9 +128,10 @@ classdef DisplacementOperation < Operation
             % We subtract from the mean as we know that darks are the
             % edges.
             obj.template_average    = mean(mean(obj.template));
-            obj.processed_template  = int8(obj.template) - obj.template_average;
+            obj.processed_template  = int16(obj.template) - obj.template_average;
             obj.fft_conj_processed_template = conj(fft2(obj.processed_template, obj.search_area_height*2, obj.search_area_width*2));
 
+            % Find the interpolated template
             obj.interp_template = im2double(obj.template);
             numRows 			= obj.rect(4);
             numCols 			= obj.rect(3);
@@ -150,12 +150,16 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
+            path = getappdata(0, 'img_path');
+            i = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                % TODO: Replace all the gpu stuff with
+                % obj.meas_displacement
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
                     if(obj.source.gpu_supported)
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
+                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
                     end
@@ -165,6 +169,7 @@ classdef DisplacementOperation < Operation
                 if obj.display
                     set(obj.im, 'CData', gather(obj.current_frame));
                 end
+                
                 if obj.draw
                     hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 end
@@ -185,13 +190,85 @@ classdef DisplacementOperation < Operation
                     delete(hrect);
                 end
             end
+            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
         end
-            
+
+        function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
+            % Whole Pixel Precision Coordinates
+            img = obj.current_frame;
+            [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
+
+            c = normxcorr2(obj.template, search_area);
+            [ypeak, xpeak] = find(c==max(c(:)));
+            ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
+            xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
+
+            % Subpixel Precision Coordinates
+
+            % put the new min values relative to img, not search_area
+            new_xmin = xpeak + round(search_area_rect(1)) - 1;
+            new_ymin = ypeak + round(search_area_rect(2)) - 1;
+            [moved_templated, displaced_rect] = imcrop(img, [new_xmin new_ymin, obj.rect(3) obj.rect(4)]);
+
+            new_search_area_xmin = new_xmin - obj.min_displacement;
+            new_search_area_ymin = new_ymin - obj.min_displacement;
+            new_search_area_width = 2*obj.min_displacement  + obj.rect(3);
+            new_search_area_height = 2*obj.min_displacement + obj.rect(4);
+
+
+
+            [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
+
+            % Interpolation
+            %Interpolate both the new object area and the old and then compare
+            %those that have subpixel precision in a normalized cross
+            %correlation
+            % BICUBIC INTERPOLATION - TEMPLATE
+            interp_template = im2double(obj.template);
+            [numRows,numCols,~] = size(interp_template); % Replace with rect?
+            [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes
+            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
+            V=interp_template; %copy interp_template into V
+            interp_template = interp2(X,Y,V,Xq,Yq, 'cubic');
+
+            % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
+            interp_search_area = im2double(new_search_area);
+            [numRows,numCols,~] = size(interp_search_area);
+            [X,Y] = meshgrid(1:numCols,1:numRows);
+            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
+            V=interp_search_area;
+            interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
+
+            c1 = normxcorr2(interp_template, interp_search_area);
+            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
+            new_xpeak = new_xpeak/(1/obj.pixel_precision);
+            new_ypeak = new_ypeak/(1/obj.pixel_precision);
+            new_xpeak = new_xpeak+round(new_search_area_rect(1));
+            new_ypeak = new_ypeak+round(new_search_area_rect(2));
+
+            % ERROR? It subtracts the size(template) not
+            % size(interp_template)
+            y_peak = new_ypeak-obj.rect(4);
+            x_peak = new_xpeak-obj.rect(3);
+            %yoffSet = new_ypeak - size(interp_template, 1);
+            %xoffSet = new_xpeak - size(interp_template, 2);
+
+            %DISPLACEMENT IN PIXELS
+            disp_x_pixel = new_xpeak-obj.ytemp;
+            disp_y_pixel = new_ypeak-obj.xtemp;
+
+            %DISPLACEMENT IN MICRONS
+            disp_x_micron = x * obj.res;
+            disp_y_micron disp_x_pixel ydisp_y_pixel* obj.res;
+
+        end
+
         function valid = validate(obj)
             valid = obj.valid_max_displacement();
             valid = valid & obj.valid_pixel_precision();
         end
 
+        % TODO: Fix the max_displacement test in order to also check obj.max_displacement_y
         function valid = valid_max_displacement(obj)
             valid = true;
             frame = obj.source.extractFrame();

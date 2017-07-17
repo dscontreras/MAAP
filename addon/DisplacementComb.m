@@ -24,13 +24,15 @@ classdef DisplacementComb < DisplacementOperation
         function initialize_algorithm(obj)
             initialize_algorithm@DisplacementOperation(obj)
 
+            obj.min_displacement = 13;
+
             % I add 1 as imcrop will add 1 to each dimension
             obj.interp_search_area_height = obj.smaller_search_area_length+1;
             obj.interp_search_area_width = obj.smaller_search_area_length+1;
 
-            obj.interp_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length obj.smaller_search_area_length]);
+            obj.interp_template = imcrop(obj.interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);
+            obj.processed_interp_template = imcrop(obj.processed_interp_template, [1 1 obj.smaller_search_area_length-1 obj.smaller_search_area_length-1]);
         end
-
 
         % TODO: remove the repetitive code
         function [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement_fourier(obj)
@@ -38,7 +40,7 @@ classdef DisplacementComb < DisplacementOperation
             img = obj.current_frame;
             [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
 
-            processed_search_area = int8(search_area) - obj.template_average;
+            processed_search_area = int16(search_area) - obj.template_average;
 
             [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
 
@@ -47,8 +49,6 @@ classdef DisplacementComb < DisplacementOperation
 
             new_width   = obj.smaller_search_area_length-1;
             new_height  = obj.smaller_search_area_length-1;
-            %new_width   = size(obj.template, 2) + obj.min_displacement*2;
-            %new_height  = size(obj.template, 1) + obj.min_displacement*2;
 
             [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
 
@@ -64,6 +64,8 @@ classdef DisplacementComb < DisplacementOperation
             % TODO: Subtract mean from interp_search_area?
 
             c1 = normxcorr2(obj.interp_template, interp_search_area);
+            processed_interp_search_area = interp_search_area - obj.interp_template_average;
+            c1 = normxcorr2(obj.processed_interp_template, processed_interp_search_area);
 
             [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
 
