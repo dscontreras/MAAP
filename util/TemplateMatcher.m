@@ -73,6 +73,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             obj.rect = rect;
             [obj.template_height, obj.template_width] = size(template);
             obj.rect = [rect(1) rect(2) obj.template_width obj.template_height];
+            obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
         end
     end
 
