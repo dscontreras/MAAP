@@ -107,7 +107,8 @@ classdef DisplacementOperation < Operation
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
-                obj.rect = find_rect(obj.source.get_filepath(), path);
+                temp = imread(path);
+                obj.rect = find_rect(obj.source.get_filepath(), temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -190,7 +191,7 @@ classdef DisplacementOperation < Operation
                     delete(hrect);
                 end
             end
-            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
+            hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3) obj.rect(4)]);            
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
@@ -258,8 +259,8 @@ classdef DisplacementOperation < Operation
             disp_y_pixel = new_ypeak-obj.xtemp;
 
             %DISPLACEMENT IN MICRONS
-            disp_x_micron = x * obj.res;
-            disp_y_micron disp_x_pixel ydisp_y_pixel* obj.res;
+            disp_x_micron = disp_x_pixel * obj.res;
+            disp_y_micron = disp_y_pixel * obj.res;
 
         end
 
