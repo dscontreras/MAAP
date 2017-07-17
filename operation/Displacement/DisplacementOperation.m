@@ -114,7 +114,6 @@ classdef DisplacementOperation < Operation
 
         function execute(obj)
             path = getappdata(0, 'img_path');
-            i = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 % TODO: Replace all the gpu stuff with
@@ -124,7 +123,8 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                       [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
+                        %[yoffSet, xoffSet, dispx,dispy] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                     end
                 else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
@@ -137,8 +137,8 @@ classdef DisplacementOperation < Operation
                     hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 end
                 updateTable(dispx, dispy, obj.table);
-                obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-                obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+                obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
+                obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
                 obj.outputs('done') = obj.check_stop();  
                 obj.xoff = [obj.xoff xoffSet];
                 obj.yoff = [obj.yoff yoffSet];
