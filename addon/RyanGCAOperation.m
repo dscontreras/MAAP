@@ -4,6 +4,7 @@ properties
     source
     template_matcher;
     res;
+    rect;
 end
 
 methods
@@ -22,20 +23,58 @@ methods
         [h, w] = size(first_frame);
 
         count = numel(rectangles);
-        y_values = [-count:-1];
-        x_values = [-count:-1];
+        y_values        = zeros(1, count);
+        x_values        = zeros(1, count);
+        width_values    = zeros(1, count);
+        height_values   = zeros(1, count);
+        index = 1;
         for i = 1:count
             bb = rectangles(i).BoundingBox;
+            % Filter out the non-squares
             if abs(bb(3) - bb(4)) > 3
                 continue
             end
-            y_values(i) = bb(2);
-            x_values(i) = bb(1);
+            x_values(index)         = bb(1);
+            y_values(index)         = bb(2);
+            width_values(index)     = bb(3);
+            height_values(index)    = bb(4);
+            index = index + 1;
         end
-
+        
+        % Filter out all values of y, x, width, height that is 0
+        k = find(y_values == 0, 1);
+        y_values = y_values(1:k-1);
+        k = find(x_values == 0, 1);
+        x_values = x_values(1:k-1);
+        k = find(height_values == 0, 1);
+        height_values = height_values(1:k-1);
+        k = find(width_values == 0, 1);
+        width_values = width_values(1:k-1);
+        
         median_y = median(y_values);
-        median_x = mean(x_values); 
+        mean_x = mean(x_values); 
+        mean_height = mean(height_values);
+        mean_width = mean(width_values);
 
+        % Now I get the rect I need. 
+        potential_x = w;
+        potential_y = h;
+        for i = 1:count
+            bb = rectangles(i).BoundingBox;
+            bb_x = bb(1);
+            bb_y = bb(2);
+            % Find the x closest to the mean
+            if abs(bb_x - mean_x) < abs(potential_x - mean_x)
+                potential_x = bb_x;
+            end
+            % Find the closest y to the median
+            if abs(bb_y - median_y) < abs(potential_y - median_y)
+                potential_y = bb_y;
+            end
+        end
+        obj.rect = [potential_x potential_y mean_width*3 mean_height]; % Let's look at just three boxes for now
+        temp = imcrop(first_frame, obj.rect);
+        imshow(temp);
         % TODO: Get the res of the video somehow. 
 
         obj.template_matcher = TemplateMatcher(src, 1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
