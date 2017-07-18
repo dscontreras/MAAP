@@ -76,7 +76,7 @@ methods
         temp = imcrop(first_frame, obj.rect);
         % TODO: Get the res of the video somehow. 
 
-        obj.template_matcher = TemplateMatcher(src,1, 20, 20, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
+        obj.template_matcher = TemplateMatcher(src,1, 0, 0, temp, 1, first_frame); % src, pixel_precision, m_d_x, m_d_y, template, min_d
         obj.rect = obj.template_matcher.rect;
     end
 
@@ -89,7 +89,7 @@ methods
         % First frame
         [h, w] = size(obj.template_matcher.template);
         img = rgb2gray(obj.source.extractFrame());
-        [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
+        [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img);
         loc_x(index) = x_peak;
         loc_y(index) = y_peak;
         new_temp = imcrop(img, [x_peak, y_peak, w, h]);
@@ -100,7 +100,7 @@ methods
         while ~obj.source.finished()
             index = index + 1;
             img = rgb2gray(obj.source.extractFrame());
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img, true);
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img);
             
             loc_x(index) = x_peak;
             loc_y(index) = y_peak;
