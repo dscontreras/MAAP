@@ -114,3 +114,21 @@ When scripting using MAAP, follow these steps
 3. Execute the Operation
 
 We suggest creating a new operation for each type of thing you want to do. This way, you can customize the operation to your needs and make assumptions about the image you're analyzing for ease of use. 
+
+## More Operations
+
+Suppose you want to add more operations. What are some of the relevant functions you should know about. 
+
+`locate_rectangles`
+
+This does exactly as it sounds like. It will give you a list of rectangles
+
+~~~MATLAB
+stat = locate_rectangles;
+bb = stat(1).BoundingBox; % [xmin ymin width height]
+~~~
+
+`find_rect`
+
+Give it an image and a template and it'll tell you the y, x location of that template in the image. 
+
