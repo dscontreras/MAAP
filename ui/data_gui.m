@@ -926,9 +926,9 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             src = FileSource(path, res);
         end
 
-        operation = Velocity(src, handles.img_viewer, handles.data_table, ...
+        operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
+            pixel_precision, res, draw, display);
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
