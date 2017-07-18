@@ -11,7 +11,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
     end
 
     methods
-        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
+        function obj = TemplateMatcher(pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
             obj.pixel_precision             = pixel_precision;
             obj.max_displacement_x          = m_d_x;
             obj.max_displacement_y          = m_d_y;
@@ -23,7 +23,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             if length(size(first_frame)) == 3
                 first_frame = rgb2gray(first_frame);
             end
-            obj.rect = find_rect(src.get_filepath(), template);
+            obj.rect = find_rect(first_frame, template);
             obj.template = im2double(imcrop(first_frame, obj.rect));
             [obj.template_height, obj.template_width] = size(obj.template);
             obj.rect = [obj.rect(1) obj.rect(2) obj.template_width obj.template_height];

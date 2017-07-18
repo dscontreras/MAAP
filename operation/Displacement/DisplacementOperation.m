@@ -98,7 +98,7 @@ classdef DisplacementOperation < Operation
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 temp = imread(path);
-                obj.rect = find_rect(obj.source.get_filepath(), temp);
+                obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -108,11 +108,8 @@ classdef DisplacementOperation < Operation
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.template_matcher = TemplateMatcher(obj.source, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
-<<<<<<< HEAD
+            obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
             obj.template_matcher.change_template(obj.template, obj.rect); % Make sure the template is what it should be. 
-=======
->>>>>>> 289c390222bf2c1ba9657a1fe99b0e5744f4718a
         end
 
         function execute(obj)
@@ -126,15 +123,9 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-<<<<<<< HEAD
                         [yoffSet, xoffSet, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                         dispx = disp_x_pixel*obj.res;
                         dispy = disp_y_pixel*obj.res;
-                        %[xoffSet1, yoffSet1, dispx,dispy, x,y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-=======
-                       [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                        %[yoffSet, xoffSet, dispx,dispy] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
->>>>>>> 289c390222bf2c1ba9657a1fe99b0e5744f4718a
                     end
                 else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
@@ -144,7 +135,7 @@ classdef DisplacementOperation < Operation
                 end
                 
                 if obj.draw
-                    hrect = imrect(obj.axes,[xoffSet1, yoffSet1, obj.rect(3), obj.rect(4)]);
+                    hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 end
                 updateTable(dispx, dispy, obj.table);
                 obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
