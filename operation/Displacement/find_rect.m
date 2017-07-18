@@ -1,7 +1,8 @@
 %% TODO: Subtract mean of template from template and firstFrame to account for light intensity %%
-function rect = find_rect(video, template)
-    videoReader = VideoReader(video);
-    firstFrame = rgb2gray(readFrame(videoReader));
+function rect = find_rect(frame, template)
+    if length(size(frame)) == 3
+        frame = rgb2gray(frame);
+    end
     if length(size(template)) == 3
         template = rgb2gray(template);
     end
@@ -10,7 +11,7 @@ function rect = find_rect(video, template)
     templateWidth = size(template, 2);
     templateHeight = size(template, 1);
 
-    c = normxcorr2(template, firstFrame);
+    c = normxcorr2(template, frame);
     [ypeak, xpeak] = find(c==max(c(:)));
     ypeak = ypeak - templateHeight;
     xpeak = xpeak - templateWidth;

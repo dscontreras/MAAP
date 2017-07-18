@@ -1,4 +1,4 @@
-classdef StreamSource < VideoSource
+ classdef StreamSource < VideoSource
     %STREAMSOURCE Summary of this class goes here
     %   Class for describing the various properties of an input source
     %   that resembles a stream, with input continuously coming in

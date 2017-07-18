@@ -11,7 +11,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
     end
 
     methods
-        function obj = TemplateMatcher(src, pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
+        function obj = TemplateMatcher(pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
             obj.pixel_precision             = pixel_precision;
             obj.max_displacement_x          = m_d_x;
             obj.max_displacement_y          = m_d_y;
@@ -23,7 +23,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             if length(size(first_frame)) == 3
                 first_frame = rgb2gray(first_frame);
             end
-            obj.rect = find_rect(src.get_filepath(), template);
+            obj.rect = find_rect(first_frame, template);
             obj.template = im2double(imcrop(first_frame, obj.rect));
             [obj.template_height, obj.template_width] = size(obj.template);
             obj.rect = [obj.rect(1) obj.rect(2) obj.template_width obj.template_height];
@@ -35,33 +35,29 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         end
 
         % Uses normxcorr2 to find the location of obj.template in IMG for both pixel precision and subpixel precision
-        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img, zero_pad)
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img)
             if nargin ~= 3
                 zero_pad = false;
             end
-            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.meas_displacement_norm_cross_correlation(img, zero_pad);
+            [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.meas_displacement_norm_cross_correlation(img);
         end
 
         % ZERO_PAD is an argument used to determine whether or not the search_area should be zero_padded. 
         % How much it should be zero_padded is determined by the max_displacement_x and max_displacement_y
         % The search_area will be a crop of the IMG determined by OBJ.RECT then zero_padded. 
-        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img, zero_pad)
+        function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement_norm_cross_correlation(obj, img)
             Xm = 40*10^(-6); %distance according to chip dimensions in microns
             Xp = 184.67662; %distance according image in pixels. Correspond to Xm
             %    ************************** WHOLE PIXEL PRECISION COORDINATES *************************
 
-            if nargin ~= 3
-                zero_pad = false;
-            end
-
             % Get Pixel Accuracy
-            [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false, zero_pad);
+            [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);
             new_xmin = xpeak+round(search_area_rect(1))-1;
             new_ymin = ypeak+round(search_area_rect(2))-1;
 
             % Subpixel Accuracy
             new_rect = [new_xmin new_ymin obj.rect(3) obj.rect(4)];
-            [y_peak, x_peak, ~] = obj.normalized_cross_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true, zero_pad);
+            [y_peak, x_peak, ~] = obj.normalized_cross_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true);
 
             %DISPLACEMENT IN PIXELS from original position
             disp_y_pixel = y_peak - obj.orig_template_y;
@@ -90,7 +86,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
         % if ZERO_PAD, the cropped image will be of RECT and padded with zeros everywhere else. 
         % This is in the case in which there are similar objects just out of RECT that can be avoided in this way. 
         % The math will work out the same due to the padding. 
-        function [y_peak, x_peak, search_area_rect] = normalized_cross_correlation(obj, img, displacement, rect, interpolate, zero_pad)
+        function [y_peak, x_peak, search_area_rect] = normalized_cross_correlation(obj, img, displacement, rect, interpolate)
             width = displacement(2);
             height = displacement(1);
 
@@ -99,13 +95,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             search_area_width   = 2*width + rect(3);
             search_area_height  = 2*height + rect(4);
 
-            if zero_pad 
-                cropped = imcrop(img, rect);
-                search_area = padarray(cropped, [height, width], 0);
-                search_area_rect = [search_area_xmin search_area_ymin search_area_width search_area_height];
-            else
-                [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
-            end
+            [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width search_area_height]); 
 
             if interpolate
                 interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width + 1, search_area_height + 1);

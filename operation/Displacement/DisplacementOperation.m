@@ -98,23 +98,22 @@ classdef DisplacementOperation < Operation
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 temp = imread(path);
-                obj.rect = find_rect(obj.source.get_filepath(), temp);
+                obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
-                imshow(obj.template);
             else
                 [vid_height, vid_width] = size(obj.current_frame);
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
                 obj.rect = ceil(obj.rect);
             end
 
-            obj.template_matcher = TemplateMatcher(obj.source, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
+            obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
+            obj.template_matcher.change_template(obj.template, obj.rect); % Make sure the template is what it should be. 
         end
 
         function execute(obj)
             path = getappdata(0, 'img_path');
-            i = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 % TODO: Replace all the gpu stuff with
@@ -124,7 +123,9 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                        [yoffSet, xoffSet, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                        dispx = disp_x_pixel*obj.res;
+                        dispy = disp_y_pixel*obj.res;
                     end
                 else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
@@ -137,8 +138,8 @@ classdef DisplacementOperation < Operation
                     hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
                 end
                 updateTable(dispx, dispy, obj.table);
-                obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-                obj.outputs('dispy') = [obj.outputs('dispy') dispy];
+                obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
+                obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
                 obj.outputs('done') = obj.check_stop();  
                 obj.xoff = [obj.xoff xoffSet];
                 obj.yoff = [obj.yoff yoffSet];
@@ -153,7 +154,7 @@ classdef DisplacementOperation < Operation
                     delete(hrect);
                 end
             end
-            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
+            hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3) obj.rect(4)]);            
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
@@ -177,8 +178,6 @@ classdef DisplacementOperation < Operation
             new_search_area_ymin = new_ymin - obj.min_displacement;
             new_search_area_width = 2*obj.min_displacement  + obj.rect(3);
             new_search_area_height = 2*obj.min_displacement + obj.rect(4);
-
-
 
             [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
 
