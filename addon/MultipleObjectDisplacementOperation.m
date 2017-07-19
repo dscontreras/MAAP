@@ -21,9 +21,9 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.res = resolution_meters;
         end
 
-        function add_template_matcher(obj, template_file_path, max_displacement_x, max_displacement_y)
+        function add_template_matcher(obj, template, max_displacement_x, max_displacement_y)
             obj.number_of_objects = obj.number_of_objects + 1;
-            obj.template_matchers{obj.number_of_objects} = TemplateMatcher(obj.pixel_precision, max_displacement_x, max_displacement_y, template_file_path, 2, 20, obj.first_frame);
+            obj.template_matchers{obj.number_of_objects} = TemplateMatcher(obj.pixel_precision, max_displacement_x, max_displacement_y, template, 2, 20, obj.first_frame);
         end
 
         function execute(obj)
