@@ -110,6 +110,9 @@ classdef DisplacementOperation < Operation
 
             obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
             obj.template_matcher.change_template(obj.template, obj.rect); % Make sure the template is what it should be. 
+            % Remember that `temp` and obj.template are not the same so the
+            % `find_rect` inside TemplateMatcher gives us a different
+            % result. 
         end
 
         function execute(obj)
