@@ -905,7 +905,6 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         operation = DisplacementOperation(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
             pixel_precision, max_x_displacement, max_y_displacement, res, draw, display);        
-        %displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res, draw);
     elseif get(handles.velocity_check, 'Value') == 1
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
@@ -925,10 +924,15 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
-
-        operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
+        if get(handles.toggle_corner_detection, 'Value') == 1
+            operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                pixel_precision, res, draw, display, conversion_rate);
+        else
+            operation = Velocity(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, res, draw, display);
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
+        end
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
@@ -1187,3 +1191,12 @@ function conversion_rate_velocity_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in toggle_corner_detection.
+function toggle_corner_detection_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_corner_detection (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_corner_detection
