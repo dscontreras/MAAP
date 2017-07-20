@@ -25,8 +25,10 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             end
             obj.rect = find_rect(first_frame, template);
             obj.template = im2double(imcrop(first_frame, [obj.rect(1) obj.rect(2) obj.rect(3) - 1 obj.rect(4) - 1]));
-            obj.orig_template_y = obj.rect(2);
             obj.orig_template_x = obj.rect(1);
+            obj.orig_template_y = obj.rect(2);
+            obj.template_width  = obj.rect(3);
+            obj.template_height = obj.rect(4);
 
             % Find the interpolated template
             obj.interp_template = obj.interpolate(obj.template, obj.pixel_precision, obj.rect(3), obj.rect(4));
@@ -34,10 +36,11 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
         % Uses normxcorr2 to find the location of obj.template in IMG for both pixel precision and subpixel precision
         function [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = meas_displacement(obj, img)
-            if nargin ~= 3
-                zero_pad = false;
+            if length(size(img)) == 3
+                img = rgb2gray(img);
             end
             [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.meas_displacement_norm_cross_correlation(img);
+
         end
 
         % ZERO_PAD is an argument used to determine whether or not the search_area should be zero_padded. 
@@ -50,8 +53,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
             % Get Pixel Accuracy
             [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);
-            new_xmin = xpeak+round(search_area_rect(1))-1;
-            new_ymin = ypeak+round(search_area_rect(2))-1;
+            new_xmin = xpeak;
+            new_ymin = ypeak;
 
             % Subpixel Accuracy
             new_rect = [new_xmin new_ymin obj.rect(3) obj.rect(4)];
@@ -94,7 +97,6 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             search_area_height  = 2*height + rect(4);
 
             [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width-1 search_area_height-1]); 
-
             if interpolate
                 interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width, search_area_height);
                 c = normxcorr2(obj.interp_template, interp_search_area);
@@ -103,8 +105,6 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 y_peak = y_peak - size(obj.interp_template, 1) + 1;
                 x_peak = x_peak/(1/obj.pixel_precision);
                 y_peak = y_peak/(1/obj.pixel_precision);
-                x_peak = x_peak+round(search_area_rect(1));
-                y_peak = y_peak+round(search_area_rect(2));
             else
                 c = normxcorr2(im2uint8(obj.template), search_area);
 
@@ -112,7 +112,35 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 y_peak = y_peak - obj.template_height + 1;
                 x_peak = x_peak - obj.template_width + 1;
             end
+            % Get the x, y values in terms of the img coordinates, 
+            % Not the cropped image coordinates
+            x_peak = x_peak+round(search_area_rect(1));
+            y_peak = y_peak+round(search_area_rect(2));
         end
+
+        function [y_peak, x_peak] = phase_correlation(obj, img, displacement, rect, interpolate)
+            width = displacement(2);
+            height = displacement(1);
+
+            search_area_xmin    = rect(1) - width;
+            search_area_ymin    = rect(2) - height;
+            search_area_width   = 2*width + rect(3);
+            search_area_height  = 2*height + rect(4);
+
+            [search_area, search_area_rect] = imcrop(img,[search_area_xmin search_area_ymin search_area_width-1 search_area_height-1]); 
+
+            if interpolate 
+                temp_conj_fft = conj(fft2(obj.interp_template, search_area_height, search_area_width));
+            else
+                temp_conj_fft = conj(fft2(obj.template, search_area_height, search_area_width));
+            end
+            search_fft = fft2(search_area);
+            R = temp_conj_fft .* search_fft;
+            R = R./abs(R);
+            r = real(ifft2(R));
+            [y_peak, x_peak] = find(r==max(r(:)));
+        end
+
     end
 
 end
