@@ -101,6 +101,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width + 1, search_area_height + 1);
                 c = normxcorr2(obj.interp_template, interp_search_area);
                 [y_peak, x_peak] = find(c==max(c(:)));
+                x_peak = x_peak - size(obj.interp_template, 2) + 1;
+                y_peak = y_peak - size(obj.interp_template, 1) + 1;
                 x_peak = x_peak/(1/obj.pixel_precision);
                 y_peak = y_peak/(1/obj.pixel_precision);
                 x_peak = x_peak+round(search_area_rect(1));
@@ -109,9 +111,9 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 c = normxcorr2(im2uint8(obj.template), search_area);
 
                 [y_peak, x_peak] = find(c==max(c(:)));
+                y_peak = y_peak - obj.template_height + 1;
+                x_peak = x_peak - obj.template_width + 1;
             end
-            y_peak = y_peak - obj.template_height;
-            x_peak = x_peak - obj.template_width;
         end
     end
 
