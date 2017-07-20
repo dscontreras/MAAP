@@ -53,16 +53,20 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
 
             % Get Pixel Accuracy
             [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);
+            [ypeak1, xpeak1] = obj.phase_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);
             new_xmin = xpeak;
             new_ymin = ypeak;
 
             % Subpixel Accuracy
             new_rect = [new_xmin new_ymin obj.rect(3) obj.rect(4)];
             [y_peak, x_peak, ~] = obj.normalized_cross_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true);
+            [y_peak1, x_peak1] = obj.phase_correlation(img, [obj.min_displacement, obj.min_displacement], new_rect, true);
 
             %DISPLACEMENT IN PIXELS from original position
             disp_y_pixel = y_peak - obj.orig_template_y;
             disp_x_pixel = x_peak - obj.orig_template_x;  
+
+            [ypeak-ypeak1, xpeak-xpeak1, y_peak-y_peak1, x_peak-x_peak1];
         end
         
         function change_template(obj, template, rect)
@@ -139,6 +143,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             R = R./abs(R);
             r = real(ifft2(R));
             [y_peak, x_peak] = find(r==max(r(:)));
+            y_peak = y_peak + search_area_rect(1);
+            x_peak = x_peak + search_area_rect(2);
         end
 
     end
