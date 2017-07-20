@@ -13,8 +13,8 @@ function rect = find_rect(frame, template)
 
     c = normxcorr2(template, frame);
     [ypeak, xpeak] = find(c==max(c(:)));
-    ypeak = ypeak - templateHeight;
-    xpeak = xpeak - templateWidth;
+    ypeak = ypeak - templateHeight + 1;
+    xpeak = xpeak - templateWidth  + 1;
 
     rect = [xpeak(1), ypeak(1), templateWidth, templateHeight];
 end
