@@ -23,7 +23,7 @@ classdef Velocity < Operation
         stop_check_callback = @check_stop;
         im;
         index; % current frame count
-        numFrames;
+        seconds;
         velocityTrack;
         conversion;
         res;
@@ -89,9 +89,9 @@ classdef Velocity < Operation
             obj.queue_index = -1;
             obj.xoff = [];
             obj.yoff = [];
-            obj.numFrames = [];
+            obj.seconds = [];
             obj.velocityTrack = [];
-            obj.conversion = conversion;
+            obj.conversion = str2double(conversion);
             obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             obj.display = display;
@@ -105,15 +105,15 @@ classdef Velocity < Operation
             obj.valid = obj.validate();
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
+            obj.initialize_algorithm();
             obj.im = zeros(obj.vid_src.get_num_pixels());
             obj.im = imshow(obj.im);
-            obj.initialize_algorithm();
+            colormap(gca, gray(256));
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
         end
 
         function initialize_algorithm(obj)
             obj.current_frame = gather(grab_frame(obj.vid_src, obj));
-            set(obj.im, 'CData', gather(obj.current_frame));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
@@ -121,10 +121,9 @@ classdef Velocity < Operation
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
-                imshow(obj.template);
             else
                 [vid_height, vid_width] = size(obj.current_frame);
-                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.im.CData, obj.axes, vid_height, vid_width);
+                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
                 obj.rect = ceil(obj.rect);
             end
             obj.search_area_height  = 2 * obj.max_y_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
@@ -134,6 +133,9 @@ classdef Velocity < Operation
         end
 
         function execute(obj)
+            prevX = 0;
+            prevSecondsElapsed = 0;
+            started = false;
             while ~obj.vid_src.finished()
                 obj.current_frame = gather(rgb2gray(obj.vid_src.extractFrame()));
                 frame = imgaussfilt(obj.current_frame, 2.5);
@@ -159,20 +161,34 @@ classdef Velocity < Operation
                 if obj.draw
                     hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
                 end
+                
+                if ~started
+                    started = true;
+                    prevX = x; % x is displacement in pixels
+                end
                 updateTable(dispx, dispy, obj.table);
                 obj.outputs('dispx') = [obj.outputs('dispx') dispx];
                 obj.outputs('dispy') = [obj.outputs('dispy') dispy];
                 obj.outputs('done') = obj.check_stop();  
-                obj.xoff = [obj.xoff x*obj.conversion];
-                obj.yoff = [obj.yoff y*obj.conversion];
-                obj.numFrames = [obj.numFrames obj.index];
-                instVelocity = x*obj.cameraFPS*obj.conversion;
+                xoff = x*obj.conversion;
+                yoff = y*obj.conversion;
+                obj.xoff = [obj.xoff xoff];
+                obj.yoff = [obj.yoff yoff];
+                secondsElapsed = obj.index/obj.cameraFPS;
+                obj.seconds = [obj.seconds secondsElapsed];
+                if obj.index ~= 1
+                    instVelocity = (x-prevX)*obj.conversion/(secondsElapsed - prevSecondsElapsed);
+                else
+                    instVelocity = 0;
+                end
                 obj.velocityTrack = [obj.velocityTrack instVelocity];
                 xdisp = obj.xoff;
                 ydisp = obj.yoff;
-                time = obj.numFrames;
+                time = obj.seconds;
                 vel = obj.velocityTrack;
                 obj.index = obj.index + 1;
+                prevX = x;
+                prevSecondsElapsed = secondsElapsed;
                 save('velocity.mat', 'xdisp', 'ydisp', 'time', 'vel');
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;

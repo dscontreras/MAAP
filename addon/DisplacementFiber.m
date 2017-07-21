@@ -31,13 +31,14 @@ classdef DisplacementFiber < DisplacementOperation
             prevSecondsElapsed = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(grab_frame(obj.source, obj));
+                frame = imgaussfilt(obj.current_frame, 0.5);
                 frameNum = frameNum + 1;
 
                 if obj.display
                     set(obj.im, 'CData', obj.current_frame);
                 end
 
-                cropped = imadjust(imcrop(obj.current_frame, obj.search_rect), [.4; .5], [0; 1]);
+                cropped = imadjust(imcrop(frame, obj.search_rect), [.4; .5], [0; 1]);
                 [~, xPixel] = find(max(cropped == 0), 1, 'last');
                 xPixel = xPixel + obj.search_rect(1);
                 if ~started
@@ -45,11 +46,15 @@ classdef DisplacementFiber < DisplacementOperation
                     startPos = xPixel;
                     prevXPos = xPixel*obj.microns_per_pixel;
                 end
-                
-                xPos = obj.microns_per_pixel * (xPixel - startPos); % total x displacement in microns
+                pxDisp = xPixel - startPos;
+                if abs(xPixel-startPos) <= 1
+                    xPos = 0;
+                else
+                    xPos = obj.microns_per_pixel * (xPixel - startPos); % total x displacement in microns
+                end
                 xDisp = xPos - prevXPos; % x displacement in microns (curr frame - prev frame)
                 yPos = obj.microns_per_pixel * obj.search_rect(2);
-                displacement = [displacement xPos];
+                displacement = [displacement pxDisp];
                 secondsElapsed = frameNum/obj.fps; % time elapsed from start
                 time = [time secondsElapsed];
                 if frameNum ~= 1
@@ -58,7 +63,7 @@ classdef DisplacementFiber < DisplacementOperation
                     instVelocity = 0;
                 end
                 velocity = [velocity instVelocity];
-                save('velocity.mat', 'displacement', 'time', 'velocity');
+                save('velocity2.mat', 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
                 prevSecondsElapsed = secondsElapsed;
                 hold on;
@@ -67,7 +72,7 @@ classdef DisplacementFiber < DisplacementOperation
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
             end
-            Data = load('velocity.mat');
+            Data = load('velocity2.mat');
             figure('Name', 'X displacement over time');
             plot(Data.time, Data.displacement);
             
