@@ -127,7 +127,8 @@ classdef DisplacementOperation < Operation
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [yoffSet, xoffSet, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                        %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
+                        [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                         dispx = disp_x_pixel*obj.res;
                         dispy = disp_y_pixel*obj.res;
                     end
@@ -139,18 +140,18 @@ classdef DisplacementOperation < Operation
                 end
                 
                 if obj.draw
-                    hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3), obj.rect(4)]);
+                    hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
                 end
                 updateTable(dispx, dispy, obj.table);
                 obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
                 obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
                 obj.outputs('done') = obj.check_stop();  
-                obj.xoff = [obj.xoff xoffSet];
-                obj.yoff = [obj.yoff yoffSet];
-                xoff3 = obj.xoff;
-                yoff3 = obj.yoff;
+%                 obj.xoff = [obj.xoff xoffSet];
+%                 obj.yoff = [obj.yoff yoffSet];
+%                 xoff3 = obj.xoff;
+%                 yoff3 = obj.yoff;
                 %TODO: save gpu_displacement.mat somewhere else.
-                save('gpu_displacement.mat', 'xoff3', 'yoff3');
+%                 save('gpu_displacement.mat', 'xoff3', 'yoff3');
 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
@@ -158,7 +159,7 @@ classdef DisplacementOperation < Operation
                     delete(hrect);
                 end
             end
-            hrect = imrect(obj.axes,[xoffSet, yoffSet, obj.rect(3) obj.rect(4)]);            
+            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
