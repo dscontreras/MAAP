@@ -102,9 +102,13 @@ The above code simply saves the product of the displacement in y and the displac
 ## Main Functions
 
 The two main operations supported by the GUI are `DisplacementOperation.m` and `Velocity.m`. 
+
 Displacement simply tracks the x and y displacement of a template. Velocity finds the instantaneous velocity of a template in microns per second and plots two graphs: X displacement over time and velocity over time.
+
 For both operations, you can select you want to track by passing in an image template in `settings_gui.m` or by manually drawing a rectangle over the region of interest. 
+
 Passing in a template image generally causes the main algorithm to run faster, but if you do decide to use to manually select the template, make sure to double click the region bounded by the blue rectangle to start the algorithm.
+
 Both `DisplacementOperation.m` and `Velocity.m` should reliably track most templates in a video. However, if the template blends into the background or isn't very distnct, you may get incorrect results. To test if the algorithm is working correctly, use the `Enable rectangle` option, which will show you at each frame where the program finds your template.
 
 If it turns out that the algorithm isn't correctly tracking your template, then the next section will explain how to remedy this problem.
