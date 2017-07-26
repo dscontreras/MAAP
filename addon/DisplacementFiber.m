@@ -63,8 +63,10 @@ classdef DisplacementFiber < DisplacementOperation
                     instVelocity = 0;
                 end
                 velocity = [velocity instVelocity];
-                settings_file_path = which('velocity2.mat');
-                save(settings_file_path, 'displacement', 'time', 'velocity');
+                full_path = which('saved_data_README.markdown'); 
+                [parentdir, ~, ~] = fileparts(full_path);
+                mat_file_path = [parentdir '/velocity2.mat']
+                save(mat_file_path, 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
                 prevSecondsElapsed = secondsElapsed;
                 hold on;
@@ -73,14 +75,13 @@ classdef DisplacementFiber < DisplacementOperation
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
             end
-            Data = load('velocity2.mat');
+            Data = load(save_path);
             figure('Name', 'X displacement over time');
             plot(Data.time, Data.displacement);
             
             figure('Name', 'Velocity over time');
             plot(Data.time, Data.velocity);
-            csvwrite('fiber_displacement_output.csv', Data.displacement);
-            csvwrite('fiber_velocity_output.csv', Data.velocity);
+            convertToCSV(mat_file_path, 'DisplacementFiber')
         end
         
         function valid = validate(obj)

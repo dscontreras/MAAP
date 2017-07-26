@@ -171,12 +171,7 @@ classdef DisplacementOperation < Operation
                     obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
                     obj.outputs('done') = obj.check_stop();  
                     obj.dispx = [obj.dispx dispx];
-                    obj.dispy = [obj.dispy dispy];
-    %                 xoff3 = obj.xoff;
-    %                 yoff3 = obj.yoff;
-                    %TODO: save gpu_displacement.mat somewhere else.
-%                     settings_file_path = which('gpu_displacement.mat')
-    %                 save(settings_file_path, 'xoff3', 'yoff3');
+                    obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
 
                     % To have GUI table update continuously, remove nocallbacks
                     drawnow limitrate nocallbacks;
@@ -196,7 +191,7 @@ classdef DisplacementOperation < Operation
             dispx = obj.dispx;
             dispy = obj.dispy;
             save(mat_filename, 'dispx', 'dispy')
-            convertToCSV(mat_filename)
+            convertToCSV(mat_filename, 'Displacement')
             delete(mat_filename)
             "Done"
         end

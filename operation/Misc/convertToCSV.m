@@ -1,10 +1,10 @@
 % Converts a .mat file to a .csv file
-function convertToCSV(filename) 
+function convertToCSV(filename, descriptor) 
     FileData = load(filename);
     fields = fieldnames(FileData);
     full_path = which('saved_data_README.markdown');
     [parentdir, ~, ~] = fileparts(full_path);
-    save_path = [parentdir '/' datestr(datetime('now')) '.csv'];
+    save_path = [parentdir '/' descriptor '.' datestr(datetime('now')) '.csv'];
 	matrix = [];
     for K = 1 : length(fields)
         thisvar = fields{K};

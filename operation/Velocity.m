@@ -189,8 +189,10 @@ classdef Velocity < Operation
                 obj.index = obj.index + 1;
                 prevX = x;
                 prevSecondsElapsed = secondsElapsed;
-                settings_file_path = which('velocity.mat'); % Modify this to be better. There is no check on this and we should be using the saved_data_README.markdown as the file to look for anyhow
-                save(settings_file_path, 'xdisp', 'ydisp', 'time', 'vel');
+                full_path = which('saved_data_README.markdown'); 
+                [parentdir, ~, ~] = fileparts(full_path);
+                mat_file_path = [parentdir '/velocity.mat'];
+                save(mat_file_path, 'displacement', 'time', 'velocity');
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
                 if obj.draw & ~obj.check_stop()
@@ -203,7 +205,7 @@ classdef Velocity < Operation
 
                     figure('Name', 'Velocity over Time');
                     plot(Data.time, Data.vel);
-                    convertToCSV('velocity.mat') ;                    
+                    convertToCSV(mat_file_path, 'Velocity');                    
                 end
             end
         end

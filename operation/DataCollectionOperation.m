@@ -77,7 +77,10 @@ classdef DataCollectionOperation < Operation
                             timestamp = DataCollector.construct_timestamp();
                             filename = [obj.output_folder_path obj.param_names{1, i} '_' timestamp '.mat'];
                             data_to_save = cat(1, obj.param_names(2, :), argsin);
-                            save(filename, 'data_to_save');
+%                             save(filename, 'data_to_save'); % Right now,
+%                             I just have all the operation save by
+%                             default. I'll have to change that in the
+%                             future but for now, this is fine TODO
                         end
                     end
                     if(strcmp(obj.format, 'txt'))
