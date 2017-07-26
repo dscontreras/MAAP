@@ -29,6 +29,8 @@ classdef DisplacementOperation < Operation
     properties
         % Inherited
         source;
+        dispx;
+        dispy;
     end
 
 
@@ -84,8 +86,8 @@ classdef DisplacementOperation < Operation
                 end
                 obj.using_gui = false;
             end
-            obj.xoff = [];
-            obj.yoff = [];
+            obj.dispx = [];
+            obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
@@ -168,8 +170,8 @@ classdef DisplacementOperation < Operation
                     obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
                     obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
                     obj.outputs('done') = obj.check_stop();  
-    %                 obj.xoff = [obj.xoff xoffSet];
-    %                 obj.yoff = [obj.yoff yoffSet];
+                    obj.dispx = [obj.dispx dispx];
+                    obj.dispy = [obj.dispy dispy];
     %                 xoff3 = obj.xoff;
     %                 yoff3 = obj.yoff;
                     %TODO: save gpu_displacement.mat somewhere else.
@@ -186,6 +188,16 @@ classdef DisplacementOperation < Operation
             if obj.using_gui
                 imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
             end
+            
+            % Save some files
+            full_path = which('saved_data_README.markdown'); 
+            [parentdir, ~, ~] = fileparts(full_path);
+            mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
+            dispx = obj.dispx;
+            dispy = obj.dispy;
+            save(mat_filename, 'dispx', 'dispy')
+            convertToCSV(mat_filename)
+            delete(mat_filename)
             "Done"
         end
 
