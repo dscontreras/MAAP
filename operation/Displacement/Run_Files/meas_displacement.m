@@ -36,6 +36,11 @@ new_search_area_ymin = displaced_rect(2) - height1;
 new_search_area_width = search_area_rect(3);
 new_search_area_height = search_area_rect(4);
 [new_search_area, new_search_area_rect] = imcrop(img,[new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
+%{
+if abs(new_search_area_rect(2) - search_area_rect(2)) > 2
+    new_search_area_rect
+end
+%}
 
 %Interpolate both the new object area and the old and then compare
 %those that have subpixel precision in a normalized cross
@@ -59,6 +64,7 @@ V=interp_search_area;
 
 interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic'); 
 %"\tInterpolation"
+%toc
 
 
  %PERFORM NORMxoffSet = new_xpeak-obj.rect(3);ALIZED CROSS-CORRELATION

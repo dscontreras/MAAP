@@ -22,16 +22,18 @@ function varargout = settings_gui(varargin)
 
 % Edit the above text to modify the response to help settings_gui
 
-% Last Modified by GUIDE v2.5 01-Feb-2017 16:29:57
+% Last Modified by GUIDE v2.5 14-Jul-2017 12:56:21
 
 % Begin initialization code - DO NOT EDIT
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
                    'gui_OpeningFcn', @settings_gui_OpeningFcn, ...
                    'gui_OutputFcn',  @settings_gui_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+                   'gui_Callback',   [] , ...
+                   'browse_button', @browse_button_Callback);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -52,11 +54,24 @@ function settings_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to settings_gui (see VARARGIN)
 
+% Checks if user chose a template previously
+img_path = getappdata(0, 'img_path');
+if ~strcmp(img_path, '')
+    set(handles.selected_file, 'String', img_path);
+end
+
+% Checks if user defined a default path previously
+folder_path = getappdata(0, 'sys_start_path');
+if ~strcmp('sys_start_path', '/Users/')
+    set(handles.path_folder, 'String', folder_path);
+end
+
 % Choose default command line output for settings_gui
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
+
 
 % UIWAIT makes settings_gui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -95,7 +110,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in start_path_submit.
 %Brief: Assign a new start path to application data to be used when
 %constructing file system parsers
@@ -108,3 +122,117 @@ function start_path_submit_Callback(btn, eventdata, handles)
 new_start_path = get(handles.start_path_edit, 'String');
 %Store the new start path value as sys_start_path in the application data
 setappdata(0, 'sys_start_path', new_start_path);
+
+% --- Executes on button press in browse_files.
+function browse_files_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_files (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+foldername = uigetdir;
+if foldername ~= 0
+    %Store the new start path value as sys_start_path in the application data
+    setappdata(0, 'sys_start_path', foldername);
+    set(handles.path_folder, 'String', foldername);
+    full_path = which('persistent_settings_README.markdown'); 
+    [parentdir, ~, ~] = fileparts(full_path);
+    mat_file_path = [parentdir '/video_path.mat'];
+    save(mat_file_path, 'foldername')
+else
+    setappdata(0, 'sys_start_path', FileSystemParser.get_file_system_start_path());
+    set(handles.path_folder, 'String', FileSystemParser.get_file_system_start_path());
+end
+
+% --- Executes on button press in browse_button.
+function browse_button_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
+if filename ~= 0
+    setappdata(0, 'img_path', filename);
+    set(handles.selected_file, 'String', filename);
+else
+    setappdata(0, 'img_path', '');
+    set(handles.selected_file, 'String', 'No file selected');
+end
+
+% --- Executes during object creation, after setting all properties.
+function selected_file_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to selected_file (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+function browse_button_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to browse_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+function browse_button_DeleteFcn(hObject, eventdata, handles)
+
+% --- Executes on button press in select_video_velocity.
+function select_video_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to select_video_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.mov', '*.avi'}, 'Select a video');
+if filename ~= 0
+    setappdata(0, 'video_conversion', filename);
+    set(handles.video_conversion_velocity, 'String', filename);
+else
+    setappdata(0, 'video_conversion', '');
+    set(handles.video_conversion_velocity, 'String', 'No file selected');
+end
+
+% --- Executes on button press in browse_ref_pic_velocity.
+function browse_ref_pic_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to browse_ref_pic_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+filename = uigetfile({'*.png'; '*.jpg'; '*.jpeg'; '*.gif'; '*.tiff'}, 'Select an image');
+if filename ~= 0
+    setappdata(0, 'conversion_img', filename);
+    set(handles.ref_pic_velocity, 'String', filename);
+else
+    setappdata(0, 'conversion_img', '');
+    set(handles.ref_pic_velocity, 'String', 'No file selected');
+end
+
+
+% --- Executes on button press in find_dist_button.
+function find_dist_button_Callback(hObject, eventdata, handles)
+% hObject    handle to find_dist_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+vidPath = getappdata(0, 'video_conversion');
+vid = VideoReader(vidPath);
+[vidHeight, vidWidth] = size(rgb2gray(readFrame(vid)));
+img = imread(getappdata(0, 'conversion_img'));
+img = imresize(img, [vidHeight, vidWidth]);
+imtool(img);
+
+
+% --- Executes on button press in find_ratio_button.
+function find_ratio_button_Callback(hObject, eventdata, handles)
+% hObject    handle to find_ratio_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function conversion_ratio_text_Callback(hObject, eventdata, handles)
+input = get(handles.conversion_ratio_text, 'String');
+input = eval(input);
+set(handles.conversion_ratio_text, 'String', input);
+
+
+% --- Executes during object creation, after setting all properties.
+function conversion_ratio_text_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to conversion_ratio_text (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

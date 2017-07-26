@@ -1,11 +1,11 @@
-classdef DataCollector < Operation
+classdef DataCollectionOperation < Operation
     %DATACOLLECTER Summary of this class goes here
     %   Detailed explanation goes here
     properties(SetAccess = private)
         output_folder_path;
         format;
     end
-    
+
     properties(SetAccess = public)
         outputs = containers.Map('KeyType','char','ValueType','int32');
         param_names;
@@ -16,20 +16,20 @@ classdef DataCollector < Operation
         start_check_callback;
         inputs = {};
     end
-    
+
     properties(SetAccess = public, Constant)
         rx_data = {'-1:all'};
         name = 'DataCollecter';
         insertion_type = 'end';
     end
-    
+
     methods(Static)
         function timestamp = construct_timestamp(obj)
             datestring = datestr(datetime('now'));
             datestring = strrep(datestring, ' ', '_');
             datestring = strrep(datestring, ':', '_');
             timestamp = datestring;
-        end  
+        end
     end
 
     methods
@@ -42,17 +42,17 @@ classdef DataCollector < Operation
             obj.queue_index = -1;
             if(nargin > 3)
                 obj.error_report_handle = error_report_handle;
-            end           
+            end
         end
-        
+
         function valid = validate(obj, error_tag)
             valid = true;
         end
-        
+
         function startup(obj)
-           obj.valid = obj.validate(); 
+           obj.valid = obj.validate();
         end
-        
+
         function execute(obj, argsin)
             if(nargin > 1)
                 cached_names = cell(0);
@@ -77,7 +77,10 @@ classdef DataCollector < Operation
                             timestamp = DataCollector.construct_timestamp();
                             filename = [obj.output_folder_path obj.param_names{1, i} '_' timestamp '.mat'];
                             data_to_save = cat(1, obj.param_names(2, :), argsin);
-                            save(filename, 'data_to_save');
+%                             save(filename, 'data_to_save'); % Right now,
+%                             I just have all the operation save by
+%                             default. I'll have to change that in the
+%                             future but for now, this is fine TODO
                         end
                     end
                     if(strcmp(obj.format, 'txt'))
@@ -86,6 +89,5 @@ classdef DataCollector < Operation
                 end
             end
         end
-    end   
+    end
 end
-

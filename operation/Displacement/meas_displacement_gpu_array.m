@@ -30,7 +30,7 @@ function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(temp
 
     yoffSet = new_ymin;
     xoffSet = new_xmin;
-    save('gpu_displacement.mat', 'yoffSet', 'xoffSet');
+%     save('gpu_displacement.mat', 'yoffSet', 'xoffSet');
     %DISPLACEMENT IN PIXELS
     y = ypeak - ytemp;
     x = xpeak - xtemp;

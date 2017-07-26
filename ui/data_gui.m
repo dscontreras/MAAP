@@ -73,10 +73,12 @@ setappdata(0, 'pixel_precision', -1);
 setappdata(0, 'wait_status', 0);
 setappdata(0, 'cam_name', '');
 setappdata(0, 'outputfolderpath', [pwd FileSystemParser.get_file_separator() 'outputs']);
+setappdata(0, 'draw_rect', 0);
 qpress = @q_press_handle;
 map_keypress('q', qpress);
 key_handle = @keypress_handle;
 set(hObject, 'KeyPressFcn', key_handle);
+set(handles.velocity_panel, 'Visible', 'off');
 % Update handles structure
 guidata(hObject, handles);
 
@@ -115,7 +117,7 @@ src_type = '-1';
 clear_error(handles.vid_error_tag);
 %top_level is a boolean that indicates whether the listbox is at the top
 %level of selections
-global top_level; 
+global top_level;
 %parser is the FileSystemParser object, responsible for navigating the file
 %system
 global parser;
@@ -124,7 +126,7 @@ global parser;
 global vid_width;
 global vid_height;
 
-%If at the top level of the parsing system 
+%If at the top level of the parsing system
 if(top_level)
     %Make the text to the side of the listbox about directly entering a
     %video source path visible, and also make visible the direct path entry
@@ -160,7 +162,7 @@ if(top_level)
         ListboxOperations.change_options(img_options, get_sys_cams());
     end
 %Must be selecting an element in the filesystem or a camera
-else 
+else
     if(is_cam_name(value))
         src_type = 'stream';
         setappdata(0, 'cam_name', value);
@@ -192,7 +194,7 @@ else
             %Iterate through the supported extensions
             for i = 1:length(supported_extensions)
                 %if the extension is an accepted extension
-                if(strcmp(extension, supported_extensions(i))) 
+                if(strcmp(extension, supported_extensions(i)))
                     supported = true;
                 end
             end
@@ -270,7 +272,7 @@ function displacement_check_Callback(displacement_switch, eventdata, handles)
 
 toggle_visibility(displacement_switch, handles.displacement_panel);
 %if we are measuring displacement
-check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles);
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
 guidata(displacement_switch, handles);
 % Hint: get(hObject,'Value') returns toggle state of displacement_check
 
@@ -346,9 +348,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-
-
 function frames_on_trigger_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to frames_on_trigger_edit_trigger (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -370,9 +369,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
-
 function file_destination_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to file_destination_edit_trigger (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -393,9 +389,6 @@ function file_destination_edit_trigger_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-
 
 function time_between_frames_edit_trigger_Callback(hObject, eventdata, handles)
 % hObject    handle to time_between_frames_edit_trigger (see GCBO)
@@ -441,8 +434,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 % --- Executes on button press in capture_check.
 %Brief: This function executes when the checkbox under Still Selection is
 %toggled
@@ -454,7 +445,7 @@ function capture_check_Callback(capture_check, eventdata, handles)
 %The still selection panel is a panel used for specifying settings for
 %taking photos of a stream or a video
 toggle_visibility(capture_check, handles.still_selection_panel);
-check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles);
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
 %Now save changes to the GUI
 guidata(capture_check, handles);
 % Hint: get(hObject,'Value') returns toggle state of capture_check
@@ -465,9 +456,19 @@ function voltage_check_Callback(hObject, eventdata, handles)
 % hObject    handle to voltage_check (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
+guidata(handles.velocity_check, handles);
 % Hint: get(hObject,'Value') returns toggle state of voltage_check
 
+% --- Executes on button press in velocity_check.
+function velocity_check_Callback(hObject, eventdata, handles)
+% hObject    handle to velocity_check (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+toggle_visibility(handles.velocity_check, handles.velocity_panel);
+% Hint: get(hObject,'Value') returns toggle state of velocity_check
+check_operations(handles.displacement_check, handles.capture_check, handles.voltage_check, handles.velocity_check, handles);
+guidata(handles.velocity_check, handles);
 
 % --- Executes during object creation, after setting all properties.
 function img_viewer_CreateFcn(hObject, eventdata, handles)
@@ -478,17 +479,17 @@ function img_viewer_CreateFcn(hObject, eventdata, handles)
 % Hint: place code in OpeningFcn to populate img_viewer
 
 
-function maximum_displacement_edit_displacement_Callback(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_edit_displacement (see GCBO)
+function maximum_x_displacement_edit_displacement_Callback(hObject, eventdata, handles)
+% hObject    handle to maximum_x_displacement_edit_displacement (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% Hints: get(hObject,'String') returns contents of maximum_displacement_edit_displacement as text
-%        str2double(get(hObject,'String')) returns contents of maximum_displacement_edit_displacement as a double
+% Hints: get(hObject,'String') returns contents of maximum_x_displacement_edit_displacement as text
+%        str2double(get(hObject,'String')) returns contents of maximum_x_displacement_edit_displacement as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function maximum_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maximum_displacement_edit_displacement (see GCBO)
+function maximum_x_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maximum_x_displacement_edit_displacement (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -497,8 +498,10 @@ function maximum_displacement_edit_displacement_CreateFcn(hObject, eventdata, ha
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
+load('displacement_variables.mat');
+if ~strcmp(max_x_displacement, '')
+    set(hObject, 'String', max_x_displacement);
+end
 
 function pixel_precision_edit_displacement_Callback(hObject, eventdata, handles)
 % hObject    handle to pixel_precision_edit_displacement (see GCBO)
@@ -519,6 +522,10 @@ function pixel_precision_edit_displacement_CreateFcn(hObject, eventdata, handles
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+load('displacement_variables.mat');
+if ~strcmp(pixel_precision, '')
+    set(hObject, 'String', pixel_precision);
 end
 
 
@@ -824,14 +831,14 @@ function settings_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%Brief: Used for displaying error tags on a MATLAB GUI. 
+%Brief: Used for displaying error tags on a MATLAB GUI.
 %Params:
 %error_tag: is the GUI error's object tag
 %msg: The error message to be displayed on the GUI
 function disp_error(msg, error_tag)
     set(error_tag, 'Visible', 'On');
     set(error_tag, 'String', msg);
- 
+
 %Brief: Used for clearing error tags on a MATLAB GUI. Error tag is the GUI
 %error's object tag
 %Params:
@@ -855,12 +862,12 @@ function preview_start_Callback(btn, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %TODO: Let user select which camera feed they want to use for live preview
-if(isempty(videoinput('macvideo')))
+if(isempty(videoinput('winvideo')))
     error('Video input: macvideo does not exist!');
 else
     setappdata(0, 'preview_done', false);
     set(handles.image_cover, 'Visible', 'Off');
-    stream = videoinput('macvideo');
+    stream = videoinput('winvideo');
     set(stream, 'FramesPerTrigger', Inf);
     triggerconfig(stream, 'manual');
     start(stream);
@@ -875,6 +882,8 @@ end
 % --- Executes on button press in begin_operation_btn.
 function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
+    draw = getappdata(0, 'draw_rect');
+    display = get(handles.toggle_video_on, 'Value');
     if(get(handles.displacement_check, 'Value') == 1)
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
@@ -887,8 +896,31 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         end
         %Reset the video error tag
         set(handles.vid_error_tag, 'String', '');
-        pixel_precision = getappdata(0, 'pixel_precision');
-        max_displacement = getappdata(0, 'maximum_displacement');  
+        load('displacement_variables.mat');
+        img_options = findobj('Tag', 'img_options');
+        src_type = img_options.UserData;
+        if(strcmp(src_type, 'stream'))
+            cam_name = getappdata(0, 'cam_name');
+            src = StreamSource(cam_name);
+        else
+            path = getappdata(0, 'vid_path');
+            src = FileSource(path, res);
+        end 
+        operation = DisplacementOperation(src, ...
+            pixel_precision, max_x_displacement, max_y_displacement, res, ...
+            handles.img_viewer, handles.data_table, ...
+            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+            draw, display);        
+    elseif get(handles.velocity_check, 'Value') == 1
+        res_entry_obj = findobj('Tag', 'source_resolution_entry');
+        resolution = res_entry_obj.UserData;
+        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
+            res = resolution;
+        else
+            res = 5.86E-6;
+        end
+        set(handles.vid_error_tag, 'String', '');
+        load('velocity_variables.mat');
         img_options = findobj('Tag', 'img_options');
         src_type = img_options.UserData;
         if(strcmp(src_type, 'stream'))
@@ -898,13 +930,21 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end
-        displacement = Displacement(src, handles.img_viewer, handles.data_table, handles.vid_error_tag, handles.image_cover, handles.pause_operation, pixel_precision, max_displacement, res);
-        q.add_to_queue(displacement);
-        output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-        if(get(handles.data_collect_check, 'Value'))
-            d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-            q.add_to_queue(d);
+        if get(handles.toggle_corner_detection, 'Value') == 1
+            operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                pixel_precision, res, draw, display, conversion_rate);
+        else
+            operation = Velocity(src, handles.img_viewer, handles.data_table, ...
+            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
         end
+    end
+    q.add_to_queue(operation);
+    output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
+    if(get(handles.data_collect_check, 'Value'))
+        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
+        q.add_to_queue(d);
     end
     tic;
     q.run_to_finish();
@@ -933,12 +973,17 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 % hObject    handle to save_displacement_options (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-setappdata(0, 'pixel_precision', get(handles.pixel_precision_edit_displacement, 'String'));
-setappdata(0, 'maximum_displacement', get(handles.maximum_displacement_edit_displacement, 'String'));
+pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
+max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
+max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
+full_path = which('persistent_settings_README.markdown'); 
+[parentdir, ~, ~] = fileparts(full_path);
+mat_file_path = [parentdir '/displacement_variables.mat'];
+save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
-    
+
 
 % --- Executes on button press in save_video_options.
 function save_video_options_Callback(hObject, eventdata, handles)
@@ -962,11 +1007,12 @@ setappdata(0, 'file_destination', get(handles.file_destination_edit_trigger));
 setappdata(0, 'time_between_frames', get(handles.time_between_frames_edit_trigger));
 setappdata(0, 'file_type', get(handles.file_type_edit_trigger));
 
-function check_operations(displacement_check, capture_check, voltage_check, handles)
+function check_operations(displacement_check, capture_check, voltage_check, velocity_check, handles)
 measuring_displacement = get(displacement_check, 'Value');
 capturing_stills = get(capture_check, 'Value');
 measuring_voltage = get(voltage_check, 'Value');
-if(~measuring_displacement && ~measuring_voltage && ~capturing_stills)
+measuring_velocity = get(velocity_check, 'Value');
+if(~measuring_displacement && ~measuring_voltage && ~capturing_stills && ~measuring_velocity)
     set(handles.begin_operation_btn, 'Visible', 'Off');
 else
     set(handles.begin_operation_btn, 'Visible', 'On');
@@ -992,20 +1038,17 @@ if(length(operation_queue) > 0)
     current_operation = item_up;
     item_up.execute(handles);
 end
-    
+
 function add_to_queue(operation)
 global operation_queue;
 operation_queue{length(operation_queue) + 1} = operation;
 
 
 
-function src_path_edit_Callback(hObject, eventdata, handles)
-% hObject    handle to src_path_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of src_path_edit as text
-%        str2double(get(hObject,'String')) returns contents of src_path_edit as a double
+%%%%%%% MISCELLANIOUS GUI FUNCTIONS %%%%%%%%
+
+function src_path_edit_Callback(hObject, eventdata, handles)
 img_options = findobj('Tag', 'img_options');
 if(FileSystemParser.is_file(get(hObject, 'String')))
     setappdata(0, 'vid_path', get(hObject, 'String'));
@@ -1017,9 +1060,6 @@ end
 
 % --- Executes on button press in pause_operation.
 function pause_operation_Callback(hObject, eventdata, handles)
-% hObject    handle to pause_operation (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global q;
 if(~q.is_paused())
     set(hObject, 'String', 'Unpause Operation');
@@ -1052,36 +1092,17 @@ error_gui;
 uiwait;
 
 
-
 function source_resolution_entry_Callback(hObject, eventdata, handles)
-% hObject    handle to source_resolution_entry (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of source_resolution_entry as text
-%        str2double(get(hObject,'String')) returns contents of source_resolution_entry as a double
 hObject.UserData = str2double(get(hObject, 'String'));
 
 % --- Executes during object creation, after setting all properties.
 function source_resolution_entry_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to source_resolution_entry (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
 
 % --- Executes during object creation, after setting all properties.
 function src_path_edit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to src_path_edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -1089,52 +1110,109 @@ end
 
 % --- Executes on button press in stream_type.
 function stream_type_Callback(hObject, eventdata, handles)
-% hObject    handle to stream_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 img_options = findobj('Tag', 'img_options');
 if(get(hObject, 'Value') == 1)
     img_options.UserData = 'stream';
 else
     img_options.UserData = '-1';
 end
-% Hint: get(hObject,'Value') returns toggle state of stream_type
 
 
 % --- Executes on button press in file_type.
 function file_type_Callback(hObject, eventdata, handles)
-% hObject    handle to file_type (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 img_options = findobj('Tag', 'img_options');
 if(get(hObject, 'Value') == 1)
     img_options.UserData = 'file';
 else
     img_options.UserData = '-1';
 end
-% Hint: get(hObject,'Value') returns toggle state of file_type
 
 % --- Executes on button press in end_operation.
 function end_operation_Callback(hObject, eventdata, handles)
-% hObject    handle to end_operation (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 global q;
 q.stop_execution();
 
 function data_collect_check_Callback(hObject, eventdata, handles)
-<<<<<<< HEAD
-% hObject    handle to data_collect_check (see GCBO)
+
+% --- Resets GUI to initial state. Does not clear settings
+function reset_button_Callback(hObject, eventdata, handles)
+close(gcbf);
+data_gui;
+
+
+% --- Executes on button press in imrect_button.
+function imrect_button_Callback(hObject, eventdata, handles)
+% determines whether button is toggled or not
+draw = get(hObject, 'Value');
+setappdata(0, 'draw_rect', draw);
+
+% --- Executes during object creation, after setting all properties.
+function maximum_x_displacement_velocity_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function pixel_precision_text_velocity_Callback(hObject, eventdata, handles)
+
+% --- Executes during object creation, after setting all properties.
+function pixel_precision_text_velocity_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes on button press in save_velocity_options.
+function save_velocity_options_Callback(hObject, eventdata, handles)
+pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
+max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
+max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
+conversion_rate = get(handles.conversion_rate_velocity, 'String');
+full_path = which('persistent_settings_README.markdown'); 
+[parentdir, ~, ~] = fileparts(full_path);
+mat_file_path = [parentdir '/velocity_variables.mat'];
+save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
+if(getappdata(0, 'wait_status'))
+    uiresume;
+end
+
+function maximum_y_displacement_edit_displacement_Callback(hObject, eventdata, handles)
+
+% --- Executes during object creation, after setting all properties.
+function maximum_y_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+load('displacement_variables.mat');
+if ~strcmp(max_y_displacement, '')
+    set(hObject, 'String', max_y_displacement);
+end
+
+function maximum_y_displacement_velocity_Callback(hObject, eventdata, handles)
+
+% --- Executes during object creation, after setting all properties.
+function maximum_y_displacement_velocity_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+function maximum_x_displacement_velocity_Callback(hObject, eventdata, handles)
+
+% --- Executes on button press in goto_settings. Opens settings_gui
+function goto_settings_Callback(hObject, eventdata, handles)
+settings_gui;
+
+function conversion_rate_velocity_Callback(hObject, eventdata, handles)
+
+% --- Executes during object creation, after setting all properties.
+function conversion_rate_velocity_CreateFcn(hObject, eventdata, handles)
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in toggle_corner_detection.
+function toggle_corner_detection_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_corner_detection (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of data_collect_check
-
-
-% --- Executes on button press in pushbutton32.
-function pushbutton32_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton32 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-=======
->>>>>>> c63f005bb3fb8cf50f46825012cc74399c784294
+% Hint: get(hObject,'Value') returns toggle state of toggle_corner_detection
