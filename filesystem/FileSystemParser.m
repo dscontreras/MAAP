@@ -101,7 +101,12 @@ classdef FileSystemParser
         %path: the path to the filesystem parser, a character vector
         function obj = FileSystemParser(path)
             obj.path = '';
+            if exist('video_path.mat', 'file') == 2 
+                load('video_path.mat', 'foldername'); % load foldername
+                setappdata(0, 'sys_start_path', foldername);                
+            end
             start_path = getappdata(0, 'sys_start_path');
+            
             if(obj.is_valid_path(start_path))
                 obj.path = strcat(start_path, path);
             else
