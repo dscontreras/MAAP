@@ -173,7 +173,8 @@ classdef DisplacementOperation < Operation
     %                 xoff3 = obj.xoff;
     %                 yoff3 = obj.yoff;
                     %TODO: save gpu_displacement.mat somewhere else.
-    %                 save('gpu_displacement.mat', 'xoff3', 'yoff3');
+%                     settings_file_path = which('gpu_displacement.mat')
+    %                 save(settings_file_path, 'xoff3', 'yoff3');
 
                     % To have GUI table update continuously, remove nocallbacks
                     drawnow limitrate nocallbacks;

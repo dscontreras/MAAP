@@ -972,7 +972,8 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
-save('displacement_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
+settings_file_path = which('displacement_variables.mat');
+save(settings_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1159,7 +1160,8 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
 conversion_rate = get(handles.conversion_rate_velocity, 'String');
-save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
+settings_file_path = which('velocity_variables.mat');
+save(settings_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end

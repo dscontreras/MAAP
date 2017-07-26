@@ -63,7 +63,8 @@ classdef DisplacementFiber < DisplacementOperation
                     instVelocity = 0;
                 end
                 velocity = [velocity instVelocity];
-                save('velocity2.mat', 'displacement', 'time', 'velocity');
+                settings_file_path = which('velocity2.mat');
+                save(settings_file_path, 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
                 prevSecondsElapsed = secondsElapsed;
                 hold on;

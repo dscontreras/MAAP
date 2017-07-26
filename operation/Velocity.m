@@ -189,7 +189,8 @@ classdef Velocity < Operation
                 obj.index = obj.index + 1;
                 prevX = x;
                 prevSecondsElapsed = secondsElapsed;
-                save('velocity.mat', 'xdisp', 'ydisp', 'time', 'vel');
+                settings_file_path = which('velocity.mat');
+                save(settings_file_path, 'xdisp', 'ydisp', 'time', 'vel');
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
                 if obj.draw & ~obj.check_stop()

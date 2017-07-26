@@ -133,7 +133,8 @@ if foldername ~= 0
     %Store the new start path value as sys_start_path in the application data
     setappdata(0, 'sys_start_path', foldername);
     set(handles.path_folder, 'String', foldername);
-    save('video_path.mat', 'foldername')
+    file_to_settings_file = which('video_path.mat');
+    save(file_to_settings_file, 'foldername')
 else
     setappdata(0, 'sys_start_path', FileSystemParser.get_file_system_start_path());
     set(handles.path_folder, 'String', FileSystemParser.get_file_system_start_path());
