@@ -91,8 +91,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             width = displacement(2);
             height = displacement(1);
 
-            search_area_xmin    = rect(1) - width;
-            search_area_ymin    = rect(2) - height;
+            search_area_xmin    = max(rect(1) - width, 1);
+            search_area_ymin    = max(rect(2) - height, 1);
             search_area_width   = 2*width + rect(3);
             search_area_height  = 2*height + rect(4);
 
