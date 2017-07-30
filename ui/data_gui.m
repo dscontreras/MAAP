@@ -931,14 +931,14 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         else
             operation = Velocity(src, handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
         end
     end
     q.add_to_queue(operation);
     output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-    if(get(handles.data_collect_check, 'Value'))
-        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-        q.add_to_queue(d);
+    if(get(handles.track_n, 'Value'))
+        %d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
+        %q.add_to_queue(d);
     end
     tic;
     q.run_to_finish();
@@ -1123,7 +1123,7 @@ function end_operation_Callback(hObject, eventdata, handles)
 global q;
 q.stop_execution();
 
-function data_collect_check_Callback(hObject, eventdata, handles)
+function track_n_Callback(hObject, eventdata, handles)
 
 % --- Resets GUI to initial state. Does not clear settings
 function reset_button_Callback(hObject, eventdata, handles)
@@ -1157,7 +1157,9 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
 conversion_rate = get(handles.conversion_rate_velocity, 'String');
-save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
+enable_rectangles = get(handles.toggle_rectangles_velocity, 'String');
+save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', ...
+    'max_y_displacement', 'conversion_rate', 'enable_rectangles');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1200,3 +1202,12 @@ function toggle_corner_detection_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of toggle_corner_detection
+
+
+% --- Executes on button press in toggle_rectangles_velocity.
+function toggle_rectangles_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_rectangles_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_rectangles_velocity

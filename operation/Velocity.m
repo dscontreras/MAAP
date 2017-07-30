@@ -68,7 +68,7 @@ classdef Velocity < Operation
     end
 
     methods
-        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, conversion, display, error_report_handle)
+        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, conversion, display, rect, error_report_handle)
             obj.vid_src = src;
             obj.axes = axes;
             obj.table = table;
@@ -95,7 +95,8 @@ classdef Velocity < Operation
             obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             obj.display = display;
-            if(nargin > 12) % 12 is the number of params for displacement
+            obj.rect = str2double(rect);
+            if(nargin > 13) % 13 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
@@ -158,7 +159,7 @@ classdef Velocity < Operation
                 if obj.display
                     set(obj.im, 'CData', obj.current_frame);
                 end
-                if obj.draw
+                if obj.rect
                     hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
                 end
                 
@@ -192,7 +193,7 @@ classdef Velocity < Operation
                 save('velocity.mat', 'xdisp', 'ydisp', 'time', 'vel');
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
-                if obj.draw & ~obj.check_stop()
+                if obj.rect & ~obj.check_stop()
                     delete(hrect);
                 end
                 if obj.check_stop() 

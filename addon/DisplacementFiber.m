@@ -29,9 +29,10 @@ classdef DisplacementFiber < DisplacementOperation
             frameNum = 0;
             prevXPos = 0;
             prevSecondsElapsed = 0;
+            prevXPixel = 0;
             while ~obj.source.finished()
                 obj.current_frame = gather(grab_frame(obj.source, obj));
-                frame = imgaussfilt(obj.current_frame, 0.5);
+                frame = imgaussfilt(obj.current_frame, 2);
                 frameNum = frameNum + 1;
 
                 if obj.display
@@ -44,17 +45,15 @@ classdef DisplacementFiber < DisplacementOperation
                 if ~started
                     started = true;
                     startPos = xPixel;
-                    prevXPos = xPixel*obj.microns_per_pixel;
+                    prevXPos = (xPixel-startPos)*obj.microns_per_pixel;
+                    prevXPixel = xPixel;
                 end
-                pxDisp = xPixel - startPos;
-                if abs(xPixel-startPos) <= 1
-                    xPos = 0;
-                else
-                    xPos = obj.microns_per_pixel * (xPixel - startPos); % total x displacement in microns
-                end
+              
+                xPos = obj.microns_per_pixel * (xPixel - startPos); % total x displacement in microns
                 xDisp = xPos - prevXPos; % x displacement in microns (curr frame - prev frame)
+                
                 yPos = obj.microns_per_pixel * obj.search_rect(2);
-                displacement = [displacement pxDisp];
+                displacement = [displacement xPos];
                 secondsElapsed = frameNum/obj.fps; % time elapsed from start
                 time = [time secondsElapsed];
                 if frameNum ~= 1
@@ -65,9 +64,10 @@ classdef DisplacementFiber < DisplacementOperation
                 velocity = [velocity instVelocity];
                 save('velocity2.mat', 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
+                prevXPixel = xPixel;
                 prevSecondsElapsed = secondsElapsed;
                 hold on;
-                plot(xPixel, obj.search_rect(2), 'r*');
+                %plot(xPixel, obj.search_rect(2), 'r*');
                 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
