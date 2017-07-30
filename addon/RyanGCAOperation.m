@@ -120,6 +120,16 @@ methods
         loc_x = loc_x(1:k-1);
         loc_y = loc_y(1:k-1);
         indices = indices_of_interest;
+        
+        full_path = which('saved_data_README.markdown'); 
+        [parentdir, ~, ~] = fileparts(full_path);
+        mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
+        dispx = obj.dispx;
+        dispy = obj.dispy;
+        save(mat_filename, 'dispx', 'dispy')
+        convertToCSV(mat_filename, 'GCA')
+        delete(mat_filename)
+        "Done"        
     end
 
     function startup(obj)

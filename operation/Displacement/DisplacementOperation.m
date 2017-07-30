@@ -29,6 +29,8 @@ classdef DisplacementOperation < Operation
     properties
         % Inherited
         source;
+        dispx;
+        dispy;
     end
 
 
@@ -50,28 +52,42 @@ classdef DisplacementOperation < Operation
     end
 
     methods
-        function obj = DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, draw, display, error_report_handle)
-            obj.source = src;
-            obj.axes = axes;
-            obj.table = table;
-            obj.error_tag = error;
-            obj.img_cover = img_cover;
-            obj.pause_button = pause_button;
-            obj.pause_bool = false;
-            obj.pixel_precision = str2double(pixel_precision);
-            obj.max_x_displacement = str2double(max_x_displacement);
-            obj.max_y_displacement = str2double(max_y_displacement);
-            obj.res = resolution;
-            obj.new = true;
-            obj.valid = true;
-            obj.outputs('dispx') = 0;
-            obj.outputs('dispy') = 0;
-            obj.outputs('done') = false;
-            obj.queue_index = -1;
-            obj.xoff = [];
-            obj.yoff = [];
-            obj.draw = draw;
-            obj.display = display;
+        function obj = DisplacementOperation(src, pixel_precision, max_x_displacement, ...
+                max_y_displacement, resolution, ...
+                axes, table, error, img_cover, pause_button, ...
+                draw, display, error_report_handle)
+            if nargin == 12
+                obj.source = src;
+                obj.axes = axes;
+                obj.table = table;
+                obj.error_tag = error;
+                obj.img_cover = img_cover;
+                obj.pause_button = pause_button;
+                obj.pause_bool = false;
+                obj.pixel_precision = str2double(pixel_precision);
+                obj.max_x_displacement = str2double(max_x_displacement);
+                obj.max_y_displacement = str2double(max_y_displacement);
+                obj.res = resolution;
+                obj.new = true;
+                obj.valid = true;
+                obj.outputs('dispx') = 0;
+                obj.outputs('dispy') = 0;
+                obj.outputs('done') = false;
+                obj.queue_index = -1;
+                obj.draw = draw;
+                obj.display = display;
+            else
+                obj.source = src;
+                obj.pixel_precision = pixel_precision;
+                obj.max_x_displacement = max_x_displacement;
+                obj.max_y_displacement = max_y_displacement;
+                if nargin == 4 % No resolution input
+                    obj.res = 5.85E-6; % This is just the default swarm Lab
+                end
+                obj.using_gui = false;
+            end
+            obj.dispx = [];
+            obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
@@ -81,21 +97,29 @@ classdef DisplacementOperation < Operation
 
         %For carrying out one time method calls that should be done before
         %calling of execute
-        function startup(obj)
+        function startup(obj, path)
             %obj.valid = obj.validate(obj.error_tag);
+            % Hack to get the scripting side a little easier
             obj.valid = obj.validate();
-            set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
-            obj.initialize_algorithm();
-            obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
-            obj.im = zeros(obj.source.get_num_pixels());
-            obj.im = imshow(obj.im);
-            colormap(gca, gray(256));
+            if obj.using_gui
+                set(obj.img_cover, 'Visible', 'Off');
+                set(obj.pause_button, 'Visible', 'On');
+                % initialize algorithm must go these two set functions
+                obj.initialize_algorithm('');
+                obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
+                obj.im = zeros(obj.source.get_num_pixels());
+                obj.im = imshow(obj.im);
+                colormap(gca, gray(256));
+            else
+                obj.initialize_algorithm(path);
+            end
         end
 
-        function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.source, obj));
-            path = getappdata(0, 'img_path');
+        function initialize_algorithm(obj, path)
+            obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+            if obj.using_gui
+                path = getappdata(0, 'img_path');
+            end
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 temp = imread(path);
@@ -117,7 +141,6 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
-            path = getappdata(0, 'img_path');
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 % TODO: Replace all the gpu stuff with
@@ -135,31 +158,42 @@ classdef DisplacementOperation < Operation
                 else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
                 end
-                if obj.display
-                    set(obj.im, 'CData', gather(obj.current_frame));
-                end
+                if obj.using_gui
+                    if obj.display
+                        set(obj.im, 'CData', gather(obj.current_frame));
+                    end
                 
-                if obj.draw
-                    hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
-                end
-                updateTable(dispx, dispy, obj.table);
-                obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
-                obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
-                obj.outputs('done') = obj.check_stop();  
-%                 obj.xoff = [obj.xoff xoffSet];
-%                 obj.yoff = [obj.yoff yoffSet];
-%                 xoff3 = obj.xoff;
-%                 yoff3 = obj.yoff;
-                %TODO: save gpu_displacement.mat somewhere else.
-%                 save('gpu_displacement.mat', 'xoff3', 'yoff3');
+                    if obj.draw
+                        hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
+                    end
+                    updateTable(dispx, dispy, obj.table);
+                    obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
+                    obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
+                    obj.outputs('done') = obj.check_stop();  
+                    obj.dispx = [obj.dispx dispx];
+                    obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
 
-                % To have GUI table update continuously, remove nocallbacks
-                drawnow limitrate nocallbacks;
-                if obj.draw == 1 & ~obj.check_stop()
-                    delete(hrect);
+                    % To have GUI table update continuously, remove nocallbacks
+                    drawnow limitrate nocallbacks;
+                    if obj.draw == 1 & ~obj.check_stop()
+                        delete(hrect);
+                    end
                 end
             end
-            hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
+            if obj.using_gui
+                imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
+            end
+            
+            % Save some files
+            full_path = which('saved_data_README.markdown'); 
+            [parentdir, ~, ~] = fileparts(full_path);
+            mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
+            dispx = obj.dispx;
+            dispy = obj.dispy;
+            save(mat_filename, 'dispx', 'dispy')
+            convertToCSV(mat_filename, 'Displacement')
+            delete(mat_filename)
+            "Done"
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)

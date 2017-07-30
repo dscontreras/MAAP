@@ -10,6 +10,10 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
         % TODO: In the future, force this to be of a certain SourceType.
         source;
     end
+    
+    properties
+        using_gui = true;
+    end
 
     methods(Abstract)
         %METHOD: execute

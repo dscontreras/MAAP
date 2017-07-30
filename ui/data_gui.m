@@ -498,6 +498,10 @@ function maximum_x_displacement_edit_displacement_CreateFcn(hObject, eventdata, 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+load('displacement_variables.mat');
+if ~strcmp(max_x_displacement, '')
+    set(hObject, 'String', max_x_displacement);
+end
 
 function pixel_precision_edit_displacement_Callback(hObject, eventdata, handles)
 % hObject    handle to pixel_precision_edit_displacement (see GCBO)
@@ -902,9 +906,11 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
         end 
-        operation = DisplacementOperation(src, handles.img_viewer, handles.data_table, ...
+        operation = DisplacementOperation(src, ...
+            pixel_precision, max_x_displacement, max_y_displacement, res, ...
+            handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, draw, display);        
+            draw, display);        
     elseif get(handles.velocity_check, 'Value') == 1
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
@@ -970,7 +976,10 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
-save('displacement_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
+full_path = which('persistent_settings_README.markdown'); 
+[parentdir, ~, ~] = fileparts(full_path);
+mat_file_path = [parentdir '/displacement_variables.mat'];
+save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1157,9 +1166,10 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
 conversion_rate = get(handles.conversion_rate_velocity, 'String');
-enable_rectangles = get(handles.toggle_rectangles_velocity, 'String');
-save('velocity_variables.mat', 'pixel_precision', 'max_x_displacement', ...
-    'max_y_displacement', 'conversion_rate', 'enable_rectangles');
+full_path = which('persistent_settings_README.markdown'); 
+[parentdir, ~, ~] = fileparts(full_path);
+mat_file_path = [parentdir '/velocity_variables.mat'];
+save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1170,6 +1180,10 @@ function maximum_y_displacement_edit_displacement_Callback(hObject, eventdata, h
 function maximum_y_displacement_edit_displacement_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+load('displacement_variables.mat');
+if ~strcmp(max_y_displacement, '')
+    set(hObject, 'String', max_y_displacement);
 end
 
 function maximum_y_displacement_velocity_Callback(hObject, eventdata, handles)
