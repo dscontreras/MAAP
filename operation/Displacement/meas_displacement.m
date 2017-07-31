@@ -1,4 +1,4 @@
-function [xoffSet, yoffSet, dispx,dispy,x, y, c1] = meas_displacement(template,rect, img, xtemp, ytemp, precision, x_displacement, y_displacement, res)
+function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(template,rect, img, xtemp, ytemp, precision, x_displacement, y_displacement, res)
 min_x_displacement = min(x_displacement, 2); %pixel unit
 min_y_displacement = min(y_displacement, 2);
 Xm =40*10^(-6); %distance according to chip dimensions in microns

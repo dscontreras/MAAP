@@ -976,10 +976,7 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
-full_path = which('persistent_settings_README.markdown'); 
-[parentdir, ~, ~] = fileparts(full_path);
-mat_file_path = [parentdir '/displacement_variables.mat'];
-save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
+save('displacement_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end

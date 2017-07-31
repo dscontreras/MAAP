@@ -174,7 +174,7 @@ classdef DisplacementOperation < Operation
                     obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
 
                     % To have GUI table update continuously, remove nocallbacks
-                    drawnow limitrate nocallbacks;
+                    drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement
                     if obj.draw == 1 & ~obj.check_stop()
                         delete(hrect);
                     end
@@ -185,6 +185,7 @@ classdef DisplacementOperation < Operation
             end
             
             % Save some files
+            %{
             full_path = which('saved_data_README.markdown'); 
             [parentdir, ~, ~] = fileparts(full_path);
             mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
@@ -194,6 +195,7 @@ classdef DisplacementOperation < Operation
             convertToCSV(mat_filename, 'Displacement')
             delete(mat_filename)
             "Done"
+            %}
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
