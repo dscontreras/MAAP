@@ -884,7 +884,13 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
     draw = getappdata(0, 'draw_rect');
     display = get(handles.toggle_video_on, 'Value');
-    if(get(handles.displacement_check, 'Value') == 1)
+    
+    % Currently, we only support the Velocity/Displacement 
+    is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
+    is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
+
+    if (is_displacement_operation || is_velocity_operation)
+        % Get resolution
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
         if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
@@ -894,9 +900,8 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             %Default resolution for pister lab
             res = 5.86E-6;
         end
-        %Reset the video error tag
-        set(handles.vid_error_tag, 'String', '');
-        load('displacement_variables.mat');
+
+        % Get source type
         img_options = findobj('Tag', 'img_options');
         src_type = img_options.UserData;
         if(strcmp(src_type, 'stream'))
@@ -905,32 +910,28 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         else
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
-        end 
+        end
+    end
+
+    % Reset video error tag
+    set(handles.vid_error_tag, 'String', '');
+
+    % Load specific variables and create the appropriate operation
+    if is_displacement_operation
+        load('displacement_variables.mat');
+
         operation = DisplacementOperation(src, ...
             pixel_precision, max_x_displacement, max_y_displacement, res, ...
             handles.img_viewer, handles.data_table, ...
             handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
             draw, display);        
-    elseif get(handles.velocity_check, 'Value') == 1
-        res_entry_obj = findobj('Tag', 'source_resolution_entry');
-        resolution = res_entry_obj.UserData;
-        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
-            res = resolution;
-        else
-            res = 5.86E-6;
-        end
-        set(handles.vid_error_tag, 'String', '');
+    elseif is_velocity_operation
         load('velocity_variables.mat');
-        img_options = findobj('Tag', 'img_options');
-        src_type = img_options.UserData;
-        if(strcmp(src_type, 'stream'))
-            cam_name = getappdata(0, 'cam_name');
-            src = StreamSource(cam_name);    
-        else
-            path = getappdata(0, 'vid_path');
-            src = FileSource(path, res);
-        end
-        if get(handles.toggle_corner_detection, 'Value') == 1
+
+        % Corner detection vs regular displacement
+        corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
+        enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
+        if corner_detection
             operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
                 handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
                 pixel_precision, res, draw, display, conversion_rate);
