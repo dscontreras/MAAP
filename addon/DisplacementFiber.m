@@ -7,12 +7,14 @@ classdef DisplacementFiber < DisplacementOperation
 
     methods
         function obj = DisplacementFiber(src, axes, table, error, img_cover, pause_button, pixel_precision, resolution, draw, conversion_rate, error_report_handle)
-            obj = obj@DisplacementOperation(src, axes, table, error, img_cover, pause_button, pixel_precision, 0, 0, resolution, draw, error_report_handle);
+            obj = obj@DisplacementOperation(src, pixel_precision, 0, 0, resolution, ...
+                axes, table, error, img_cover, pause_button, draw, true, error_report_handle);
+            % TODO: Change assumption that display = true
             %obj.microns_per_pixel = conversion_rate;
+            obj.valid = true; % TODO: better valid. For now, however, we'll leave that to the user
         end
         
         function startup(obj)
-            obj.valid = true;
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.im = zeros(obj.source.get_num_pixels());
@@ -31,7 +33,7 @@ classdef DisplacementFiber < DisplacementOperation
             prevSecondsElapsed = 0;
             prevXPixel = 0;
             while ~obj.source.finished()
-                obj.current_frame = gather(grab_frame(obj.source, obj));
+                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 frame = imgaussfilt(obj.current_frame, 2);
                 frameNum = frameNum + 1;
 
@@ -64,7 +66,7 @@ classdef DisplacementFiber < DisplacementOperation
                 velocity = [velocity instVelocity];
                 full_path = which('saved_data_README.markdown'); 
                 [parentdir, ~, ~] = fileparts(full_path);
-                mat_file_path = [parentdir '/velocity2.mat']
+                mat_file_path = [parentdir '/velocity2.mat'];
                 save(mat_file_path, 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
                 prevXPixel = xPixel;
@@ -75,7 +77,7 @@ classdef DisplacementFiber < DisplacementOperation
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
             end
-            Data = load(save_path);
+            Data = load(mat_file_path);
             figure('Name', 'X displacement over time');
             plot(Data.time, Data.displacement);
             
