@@ -59,6 +59,7 @@ classdef Velocity < Operation
         queue_index;
         start_check_callback = @RepeatableOperation.check_start;
         inputs = {};
+        template_matcher;
     end
 
     properties (Constant)
@@ -68,8 +69,12 @@ classdef Velocity < Operation
     end
 
     methods
-        function obj = Velocity(src, axes, table, error, img_cover, pause_button, pixel_precision, max_x_displacement, max_y_displacement, resolution, conversion, display, rect, error_report_handle)
-            obj.vid_src = src;
+        function obj = Velocity(src, axes, table, error, ...
+            img_cover, pause_button, pixel_precision, max_x_displacement, ...
+             max_y_displacement, resolution, conversion, display, ...
+             enable_rectangles)
+
+            obj.source = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
@@ -95,11 +100,6 @@ classdef Velocity < Operation
             obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             obj.display = display;
-            obj.rect = str2double(rect);
-            if(nargin > 13) % 13 is the number of params for displacement
-            % TODO: Better Error Handling
-                obj.error_report_handle = error_report_handle;
-            end
         end
 
         function startup(obj)
@@ -107,18 +107,19 @@ classdef Velocity < Operation
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
-            obj.im = zeros(obj.vid_src.get_num_pixels());
+            obj.im = zeros(obj.source.get_num_pixels());
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
         end
 
         function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.vid_src, obj));
+            obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
-                obj.rect = find_rect(obj.vid_src.get_filepath(), path);
+                temp = imread(path);
+                obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
                 [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
@@ -127,234 +128,100 @@ classdef Velocity < Operation
                 [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
                 obj.rect = ceil(obj.rect);
             end
-            obj.search_area_height  = 2 * obj.max_y_displacement + obj.rect(4) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_width   = 2 * obj.max_x_displacement + obj.rect(3) + 1; % imcrop will add 1 to the dimension
-            obj.search_area_xmin    = obj.rect(1) - obj.max_x_displacement;
-            obj.search_area_ymin    = obj.rect(2) - obj.max_y_displacement;
+            obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
+            obj.template_matcher.change_template(obj.template, obj.rect);
         end
 
         function execute(obj)
             prevX = 0;
             prevSecondsElapsed = 0;
             started = false;
-            while ~obj.vid_src.finished()
-                obj.current_frame = gather(rgb2gray(obj.vid_src.extractFrame()));
+
+            while ~obj.source.finished()
+                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
                 frame = imgaussfilt(obj.current_frame, 2.5);
-                if(strcmp(VideoSource.getSourceType(obj.vid_src), 'file'))
-                    if(obj.vid_src.gpu_supported)
+                
+                if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
+                    if(obj.source.gpu_supported)
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
                         % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                        %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                        %[x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = obj.meas_displacement_fourier();
+                        [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                        dispx = disp_x_pixel*obj.res;
+                        dispy = disp_y_pixel*obj.res;
                     end
                 else
-                    if(obj.vid_src.gpu_supported)
+                    if(obj.source.gpu_supported)
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_x_displacement, obj.max_y_displacement, obj.res);
                     else
                         [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
                     end
                 end
+
                 if obj.display
                     set(obj.im, 'CData', obj.current_frame);
                 end
+
                 if obj.rect
-                    hrect = imrect(obj.axes, [obj.rect(1)+x, obj.rect(2)+y, obj.rect(3), obj.rect(4)]);
+                    hrect = imrect(obj.axes, [obj.rect(1)+disp_x_pixel, obj.rect(2)+disp_y_pixel, obj.rect(3), obj.rect(4)]);
                 end
                 
                 if ~started
                     started = true;
-                    prevX = x; % x is displacement in pixels
+                    prevX = disp_x_pixel; % x is displacement in pixels
                 end
+
+                % Some additional gui 
                 updateTable(dispx, dispy, obj.table);
                 obj.outputs('dispx') = [obj.outputs('dispx') dispx];
                 obj.outputs('dispy') = [obj.outputs('dispy') dispy];
                 obj.outputs('done') = obj.check_stop();  
-                xoff = x*obj.conversion;
-                yoff = y*obj.conversion;
+
+                % Conversion from displacement in pixel to meters
+                xoff = disp_x_pixel*obj.conversion;
+                yoff = disp_y_pixel*obj.conversion;
                 obj.xoff = [obj.xoff xoff];
                 obj.yoff = [obj.yoff yoff];
                 secondsElapsed = obj.index/obj.cameraFPS;
                 obj.seconds = [obj.seconds secondsElapsed];
+                
+                % Estimate velocity
                 if obj.index ~= 1
-                    instVelocity = (x-prevX)*obj.conversion/(secondsElapsed - prevSecondsElapsed);
+                    instVelocity = (disp_x_pixel-prevX)*obj.conversion/(secondsElapsed - prevSecondsElapsed);
                 else
                     instVelocity = 0;
                 end
                 obj.velocityTrack = [obj.velocityTrack instVelocity];
-                xdisp = obj.xoff;
-                ydisp = obj.yoff;
+
+                % Save values
+                x_disp = obj.xoff;
+                y_disp = obj.yoff;
                 time = obj.seconds;
                 vel = obj.velocityTrack;
-                obj.index = obj.index + 1;
-                prevX = x;
-                prevSecondsElapsed = secondsElapsed;
+
                 full_path = which('saved_data_README.markdown'); 
                 [parentdir, ~, ~] = fileparts(full_path);
                 mat_file_path = [parentdir '/velocity.mat'];
-                save(mat_file_path, 'displacement', 'time', 'velocity');
+                save(mat_file_path, 'x_disp', 'time', 'vel');
+                
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
-                if obj.rect & ~obj.check_stop()
+                if obj.rect
                     delete(hrect);
                 end
-                if obj.check_stop() 
-                    Data = load('velocity.mat');
-                    figure('Name', 'X Displacement Over Time');
-                    plot(Data.time, Data.xdisp);
 
-                    figure('Name', 'Velocity over Time');
-                    plot(Data.time, Data.vel);
-                    convertToCSV(mat_file_path, 'Velocity');                    
-                end
+                % Update for next iteration
+                obj.index = obj.index + 1;
+                prevX = disp_x_pixel;
+                prevSecondsElapsed = secondsElapsed;
             end
-        end
-
-        function [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj)
-            %% Whole Pixel Precision Coordinates
-            img = obj.current_frame;
-            [search_area, search_area_rect] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
-            c = normxcorr2(temp, search_area);
-            [ypeak, xpeak] = find(c==max(c(:)));
-            ypeak = ypeak - obj.rect(4); % account for the padding from normxcorr2
-            xpeak = xpeak - obj.rect(3); % account for the padding from normxcorr2
-
-            %% Subpixel Precision Coordinates
-
-            % put the new min values relative to img, not search_area
-            new_xmin = xpeak + round(search_area_rect(1)) - 1;
-            new_ymin = ypeak + round(search_area_rect(2)) - 1;
-            [moved_templated, displaced_rect] = imcrop(img, [new_xmin new_ymin, obj.rect(3) obj.rect(4)]);
-
-            new_search_area_xmin = new_xmin - obj.min_displacement;
-            new_search_area_ymin = new_ymin - obj.min_displacement;
-            new_search_area_width = 2*obj.min_displacement  + obj.rect(3);
-            new_search_area_height = 2*obj.min_displacement + obj.rect(4);
-
-            [new_search_area, new_search_area_rect] = imcrop(img, [new_search_area_xmin new_search_area_ymin new_search_area_width new_search_area_height]);
-
-            %% Interpolation
-            %Interpolate both the new object area and the old and then compare
-            %those that have subpixel precision in a normalized cross
-            %correlation
-            % BICUBIC INTERPOLATION - TEMPLATE
-            interp_template = im2double(obj.template);
-            [numRows,numCols,~] = size(interp_template); % Replace with rect?
-            [X,Y] = meshgrid(1:numCols,1:numRows); %Generate a pair of coordinate axes
-            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows); %generate a pair of coordinate axes, but this time, increment the matrix by 0
-            V=interp_template; %copy interp_template into V
-            interp_template = interp2(X,Y,V,Xq,Yq, 'cubic');
-
-            % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
-            interp_search_area = im2double(new_search_area);
-            [numRows,numCols,~] = size(interp_search_area);
-            [X,Y] = meshgrid(1:numCols,1:numRows);
-            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
-            V=interp_search_area;
-            interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
-
-            c1 = normxcorr2(interp_template, interp_search_area);
-            [new_ypeak, new_xpeak] = find(c1==max(c1(:)));
-            new_xpeak = new_xpeak/(1/obj.pixel_precision);
-            new_ypeak = new_ypeak/(1/obj.pixel_precision);
-            new_xpeak = new_xpeak+round(new_search_area_rect(1));
-            new_ypeak = new_ypeak+round(new_search_area_rect(2));
-
-            yoffSet = new_ypeak-obj.rect(4);
-            xoffSet = new_xpeak-obj.rect(3);
-
-            %DISPLACEMENT IN PIXELS
-            disp_y_pixel = new_ypeak-obj.ytemp;
-            disp_x_pixel = new_xpeak-obj.xtemp;
-
-            %DISPLACEMENT IN MICRONS
-            dispx = disp_x_pixel * obj.res;
-            dispy = disp_y_pixel * obj.res;
-
-        end
-
-        function [x_peak, y_peak, disp_x_pixel, disp_y_pixel, disp_x_micron, disp_y_micron] = meas_displacement_fourier(obj)
-            %% Whole Pixel Precision Coordinates
-            img = obj.current_frame;
-            [search_area, ~] = imcrop(img,[obj.search_area_xmin, obj.search_area_ymin, obj.search_area_width, obj.search_area_height]);
-
-            processed_search_area = obj.template_average - search_area;
-
-            [ypeak, xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_template, processed_search_area, obj.search_area_height, obj.search_area_width);
-
-            new_xmin = xpeak - obj.min_displacement;
-            new_ymin = ypeak - obj.min_displacement;
-
-            %% Subpixel Precision Coordinates TODO: Refractor? This looks like a repetitive calculation
-
-            new_width   = obj.rect(3)+2*obj.min_displacement;
-            new_height  = obj.rect(4)+2*obj.min_displacement;
-            [new_search_area, new_search_area_rect] = imcrop(search_area, [new_xmin new_ymin new_width new_height]);
-
-            %% Interpolation
-            %Interpolate both the new object area and the old and then compare
-            %those that have subpixel precision in a normalized cross
-            %correlation
-
-            % BICUBIC INTERPOLATION - SEARCH AREA (FROM MOVED TEMPLATE
-            interp_search_area = im2double(new_search_area);
-            [numRows,numCols,~] = size(interp_search_area);
-            [X,Y] = meshgrid(1:numCols,1:numRows);
-            [Xq,Yq]= meshgrid(1:obj.pixel_precision:numCols,1:obj.pixel_precision:numRows);
-            V=interp_search_area;
-            interp_search_area = interp2(X,Y,V,Xq,Yq, 'cubic');
-
-            processed_interp_search_area = obj.interp_template_average - interp_search_area;
-
-            [new_ypeak, new_xpeak] = obj.fourier_cross_correlation(obj.fft_conj_processed_interp_template, processed_interp_search_area, obj.interp_search_area_height, obj.interp_search_area_width);
-
-            new_ypeak = new_ypeak/(1/obj.pixel_precision);
-            new_xpeak = new_xpeak/(1/obj.pixel_precision);
-
-            y_peak = new_ypeak + obj.search_area_ymin + new_ymin;
-            x_peak = new_xpeak + obj.search_area_xmin + new_xmin;
-
-            %DISPLACEMENT IN PIXELS
-            disp_y_pixel = new_ypeak-obj.ytemp;
-            disp_x_pixel = new_xpeak-obj.xtemp;
-
-            %DISPLACEMENT IN MICRONS
-            disp_x_micron = disp_x_pixel * obj.res;
-            disp_y_micron = disp_y_pixel * obj.res;
-            
-            if (y_peak > obj.rect(2)+10)
-                "Hello"
-            end
-            
-
-        end
-
-        % Finds the cross correlation using fourier transforms
-        % TODO: implement ability to be used for interpolated images
-        function [ypeak, xpeak] = fourier_cross_correlation(obj, fft_conj_template, search_area, height, width)
-
-                % TEMPLATE and SEARCH_AERA should be grayscaled images
-                % Performs cross correlation of SEARCH_AREA and TEMPLATE
-                % is not normalized and differs from normxcorr2
-                % GRAYSCALE_INVERSION is the value used to invert the image
-                % if it's a 255 bit image, it should be 120
-                % if it's not (an the values range from 0...1, it should be 0.5
-                % Or at least, I've had the most luck with these values
-                % These values were gotten experimentally, they may need to be tweaked
-
-                % Find the DTFT
-                dtft_of_frame = fft2(search_area, height*2, width*2);
-
-                % Take advantage of the correlation theorem
-                % Corr(f, g) <=> element multiplication of F and conj(G) where F, G are
-                % fourier transforms of the signals f, g
-                R = dtft_of_frame.*fft_conj_template;
-                R = R./abs(R); % normalize to get rid of values related to intensity of light
-                r = real(ifft2(R));%, height, width));
-                r = r(1:height, 1:width); % limit the location of where I look for the max
-
-                [ypeak, xpeak] = find(r==max(r(:))); % the origin of where the template is
+            Data = load('velocity.mat');
+            figure('Name', 'X Displacement Over Time');
+            plot(Data.time, Data.x_disp);
+            figure('Name', 'Velocity over Time');
+            plot(Data.time, Data.vel);
+            convertToCSV(mat_file_path, 'Velocity');
+            delete(mat_file_path)                    
         end
 
         %error_tag is now deprecated     
@@ -393,7 +260,7 @@ classdef Velocity < Operation
         end
 
         function frame = get_frame(obj)
-            frame = obj.vid_src.extractFrame();
+            frame = obj.source.extractFrame();
         end
 
 
@@ -410,11 +277,11 @@ classdef Velocity < Operation
         end
 
         function bool = check_stop(obj)
-            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.vid_src.finished();
+            bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.source.finished();
         end
 
-        function vid_source = get.vid_src(obj)
-            vid_source = obj.vid_src;
+        function vid_source = get.source(obj)
+            vid_source = obj.source;
         end
         
         function valid = validate(obj)

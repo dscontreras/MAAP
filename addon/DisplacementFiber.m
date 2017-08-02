@@ -6,7 +6,7 @@ classdef DisplacementFiber < DisplacementOperation
     end
 
     methods
-        function obj = DisplacementFiber(src, axes, table, error, img_cover, pause_button, pixel_precision, resolution, draw, conversion_rate, error_report_handle)
+        function obj = DisplacementFiber(src, pixel_precision, resolution, axes, table, error, img_cover, pause_button, draw, conversion_rate, error_report_handle)
             obj = obj@DisplacementOperation(src, pixel_precision, 0, 0, resolution, ...
                 axes, table, error, img_cover, pause_button, draw, true, error_report_handle);
             % TODO: Change assumption that display = true
