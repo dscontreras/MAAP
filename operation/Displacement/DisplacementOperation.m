@@ -126,11 +126,9 @@ classdef DisplacementOperation < Operation
                 obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
-                [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
             else
                 [vid_height, vid_width] = size(obj.current_frame);
-                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
-                obj.rect = ceil(obj.rect);
+                [obj.template, obj.rect] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
             end
 
             obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);

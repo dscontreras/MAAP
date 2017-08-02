@@ -17,14 +17,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%
-function [template, rect, xtemp, ytemp] = get_template(gray, displayObj, vid_height, vid_width)
+function [template, rect] = get_template(gray, displayObj, vid_height, vid_width)
 
     %DEFINE TEMPLATE - Obtained from interpolated image
-    [template, rect] = showCrop(displayObj, gray, vid_height, vid_width);
-
-    %PERFORM NORMALIZED CROSS-CORRELATION
-    c = normxcorr2(template,gray);
-    
-    %FIND PEAK CROSS-CORRELATION
-    [ytemp, xtemp] = find(c==max(c(:)));    
+    [template, rect] = showCrop(displayObj, gray, vid_height, vid_width); 
+    rect = ceil(rect); % Convert to integer values
+    template = imcrop(gray, [rect(1) rect(2) rect(3)-1 rect(4)-1]);
 end
