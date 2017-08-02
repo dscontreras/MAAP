@@ -185,7 +185,7 @@ classdef DisplacementOperation < Operation
             end
             
             % Save some files
-            %{
+            
             full_path = which('saved_data_README.markdown'); 
             [parentdir, ~, ~] = fileparts(full_path);
             mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
@@ -193,9 +193,7 @@ classdef DisplacementOperation < Operation
             dispy = obj.dispy;
             save(mat_filename, 'dispx', 'dispy')
             convertToCSV(mat_filename, 'Displacement')
-            delete(mat_filename)
-            "Done"
-            %}
+            delete(mat_filename)            
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
