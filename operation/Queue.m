@@ -185,5 +185,9 @@ classdef Queue < handle
            obj.done = true;
         end
 
+        function length = get_length(obj)
+            length = obj.length;
+        end
+
     end
 end

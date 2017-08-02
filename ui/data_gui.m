@@ -884,72 +884,69 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
     draw = getappdata(0, 'draw_rect');
     display = get(handles.toggle_video_on, 'Value');
-    
-    % Currently, we only support the Velocity/Displacement 
-    is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
-    is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
 
-    if (is_displacement_operation || is_velocity_operation)
-        % Get resolution
-        res_entry_obj = findobj('Tag', 'source_resolution_entry');
-        resolution = res_entry_obj.UserData;
-        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
-            %if the resolution is a number greater than zero then use it
-            res = resolution;
-        else
-            %Default resolution for pister lab
-            res = 5.86E-6;
+    % Check if this is the first time the button has been pressed
+    if q.get_length() == 0
+        % Currently, we only support the Velocity/Displacement 
+        is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
+        is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
+
+        if (is_displacement_operation || is_velocity_operation)
+            % Get resolution
+            res_entry_obj = findobj('Tag', 'source_resolution_entry');
+            resolution = res_entry_obj.UserData;
+            if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
+                %if the resolution is a number greater than zero then use it
+                res = resolution;
+            else
+                %Default resolution for pister lab
+                res = 5.86E-6;
+            end
+
+            % Get source type
+            img_options = findobj('Tag', 'img_options');
+            src_type = img_options.UserData;
+            if(strcmp(src_type, 'stream'))
+                cam_name = getappdata(0, 'cam_name');
+                src = StreamSource(cam_name);
+            else
+                path = getappdata(0, 'vid_path');
+                src = FileSource(path, res);
+            end
         end
 
-        % Get source type
-        img_options = findobj('Tag', 'img_options');
-        src_type = img_options.UserData;
-        if(strcmp(src_type, 'stream'))
-            cam_name = getappdata(0, 'cam_name');
-            src = StreamSource(cam_name);
-        else
-            path = getappdata(0, 'vid_path');
-            src = FileSource(path, res);
-        end
-    end
+        % Reset video error tag
+        set(handles.vid_error_tag, 'String', '');
+        % track_n_toggled = get(handles.track_n, 'Value') == 1;
+        % Load specific variables and create the appropriate operation
+        if is_displacement_operation
+            load('displacement_variables.mat');
+            operation = DisplacementOperation(src, ...
+                    pixel_precision, max_x_displacement, max_y_displacement, res, ...
+                    handles.img_viewer, handles.data_table, ...
+                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                    draw, display);        
+        elseif is_velocity_operation
+            load('velocity_variables.mat');
 
-    % Reset video error tag
-    set(handles.vid_error_tag, 'String', '');
-
-    % Load specific variables and create the appropriate operation
-    if is_displacement_operation
-        load('displacement_variables.mat');
-
-        operation = DisplacementOperation(src, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, ...
-            handles.img_viewer, handles.data_table, ...
-            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            draw, display);        
-    elseif is_velocity_operation
-        load('velocity_variables.mat');
-
-        % Corner detection vs regular displacement
-        corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
-        enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
-        if corner_detection
-            operation = DisplacementFiber(src, pixel_precision, res, ...
-                handles.img_viewer, handles.data_table, ...
+            % Corner detection vs regular displacement
+            corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
+            enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
+            if corner_detection
+                operation = DisplacementFiber(src, pixel_precision, res, ...
+                    handles.img_viewer, handles.data_table, ...
+                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                    draw, display, conversion_rate);
+            else
+                operation = Velocity(src, handles.img_viewer, handles.data_table, ...
                 handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                draw, display, conversion_rate);
-        else
-            operation = Velocity(src, 
-
-                handles.img_viewer, handles.data_table, ...
-            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
+                pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
+            end
         end
+        % Add to Queue, Run queue to completetion
+        q.add_to_queue(operation);
     end
-    q.add_to_queue(operation);
-    output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-    if(get(handles.track_n, 'Value'))
-        %d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-        %q.add_to_queue(d);
-    end
+    % If the second time, simply run to finish
     tic;
     q.run_to_finish();
     toc

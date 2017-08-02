@@ -64,6 +64,8 @@ classdef DisplacementFiber < DisplacementOperation
                     instVelocity = 0;
                 end
                 velocity = [velocity instVelocity];
+
+                % Save data
                 full_path = which('saved_data_README.markdown'); 
                 [parentdir, ~, ~] = fileparts(full_path);
                 mat_file_path = [parentdir '/velocity2.mat'];
