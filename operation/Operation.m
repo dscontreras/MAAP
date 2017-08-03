@@ -13,6 +13,7 @@ classdef (Abstract) Operation < handle & matlab.mixin.Heterogeneous
     
     properties
         using_gui = true;
+        data_save_path; % The location in which the data is saved
     end
 
     methods(Abstract)

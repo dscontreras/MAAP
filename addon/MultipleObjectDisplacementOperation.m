@@ -43,6 +43,7 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.first_frame = rgb2gray(obj.source.extractFrame());
             obj.template_matchers = {};
             obj.number_of_objects = 0;
+            obj.data_save_path = create_csv_for_data('Displacement')
         end
 
         function add_template_matcher(obj, template, max_displacement_x, max_displacement_y)
@@ -63,13 +64,17 @@ classdef MultipleObjectDisplacementOperation < Operation
             img = obj.first_frame;
             frame_num = 1;
             hrects = cell(1, obj.number_of_objects);
-            while ~obj.source.finished()
+
+            % This is the data I'll be writing to the CSV
+            data_to_save = zeros(1, obj.number_of_objects*2 + 1);
+            while ~obj.source.finished() & frame_num < 100
                 % TODO: remove assumption that the source is of type VideoSource
+                data_to_save(1) = frame_num;
                 for idx = 1:obj.number_of_objects
                     tm = obj.template_matchers{idx};
                     [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement(img);
-                    obj.xdiffs(idx, frame_num) = x_peak;
-                    obj.ydiffs(idx, frame_num) = y_peak;
+                    obj.ydiffs(idx, frame_num) = disp_y_pixel*obj.res;
+                    obj.xdiffs(idx, frame_num) = disp_x_pixel*obj.res;
                     
                     % Update the GUI
                     if obj.display % Show the video
@@ -80,6 +85,8 @@ classdef MultipleObjectDisplacementOperation < Operation
                         hrects{idx} = hrect; % Add to the list of rects
                     end
                     drawnow limitrate
+                    data_to_save(2*idx) = disp_x_pixel*obj.res;
+                    data_to_save(2*idx + 1) = disp_y_pixel*obj.res;
                 end
                 
                 % Prepare for the next iteration
@@ -92,6 +99,9 @@ classdef MultipleObjectDisplacementOperation < Operation
                         delete(hrects{idx});
                     end
                 end
+
+                % Update my data_csv
+                add_to_csv(obj.data_save_path, data_to_save)
             end
         end
 
@@ -101,6 +111,14 @@ classdef MultipleObjectDisplacementOperation < Operation
             % xdiffs, ydiffs has to be initialzed after obj.number_of_objects is set
             obj.xdiffs = zeros(obj.number_of_objects);
             obj.ydiffs = zeros(obj.number_of_objects);
+
+            header_str = 'frame_num';
+            for idx = 1:obj.number_of_objects
+                idx = int2str(idx);
+                header_str = [header_str ',' 'dispx' idx ',' 'dispy' idx];
+            end
+
+            add_headers(obj.data_save_path, header_str);
 
             % Show on the image viewer in the GUI
             obj.im = zeros(obj.source.get_num_pixels());

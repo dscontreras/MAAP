@@ -24,8 +24,6 @@ classdef DisplacementOperation < Operation
         draw; % toggles imrect
         min_displacement;
         template_matcher;
-
-        data_save_path;
     end
 
     properties
@@ -81,7 +79,7 @@ classdef DisplacementOperation < Operation
             obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
 
-            obj.data_save_path = create_csv_for_data('Descriptor')
+            obj.data_save_path = create_csv_for_data('Displacement')
             add_headers(obj.data_save_path, 'frame_num', 'dispx', 'dispy');
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
@@ -143,6 +141,7 @@ classdef DisplacementOperation < Operation
                 if obj.draw
                     hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
                 end
+
                 % Update the table
                 updateTable(dispx, dispy, obj.table);
                 obj.dispx = [obj.dispx dispx];
