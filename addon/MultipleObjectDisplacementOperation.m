@@ -26,28 +26,19 @@ classdef MultipleObjectDisplacementOperation < Operation
         function obj = MultipleObjectDisplacementOperation(src, pixel_precision, resolution, ...
             axes, table, error, img_cover, pause_button, ...
                 draw, display)
-            if nargin == 10
-                obj.source = src;
-                obj.axes = axes;
-                obj.table = table;
-                obj.error_tag = error;
-                obj.img_cover = img_cover;
-                set(obj.img_cover, 'Visible', 'off')
-                obj.pause_button = pause_button;
-                obj.pixel_precision = str2double(pixel_precision);
-                obj.res = resolution;
-                obj.new = true;
-                obj.valid = true;
-                obj.draw = draw;
-                obj.display = display;
-            else
-                obj.source = src;
-                obj.pixel_precision = pixel_precision;
-                if nargin == 4 % No resolution input
-                    obj.res = 5.85E-6; % This is just the default swarm Lab
-                end
-                obj.using_gui = false;
-            end
+            obj.source = src;
+            obj.axes = axes;
+            obj.table = table;
+            obj.error_tag = error;
+            obj.img_cover = img_cover;
+            set(obj.img_cover, 'Visible', 'off')
+            obj.pause_button = pause_button;
+            obj.pixel_precision = str2double(pixel_precision);
+            obj.res = resolution;
+            obj.new = true;
+            obj.valid = true;
+            obj.draw = draw;
+            obj.display = display;
             obj.first_frame = rgb2gray(obj.source.extractFrame());
             obj.template_matchers = {};
             obj.number_of_objects = 0;
@@ -83,8 +74,13 @@ classdef MultipleObjectDisplacementOperation < Operation
         end
 
         function startup(obj)
+            obj.valid = obj.validate();
+            
+
             obj.xdiffs = zeros(obj.number_of_objects);
             obj.ydiffs = zeros(obj.number_of_objects);
+
+
         end
 
         function valid = validate(obj)

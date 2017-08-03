@@ -56,36 +56,25 @@ classdef DisplacementOperation < Operation
                 max_y_displacement, resolution, ...
                 axes, table, error, img_cover, pause_button, ...
                 draw, display, error_report_handle)
-            if nargin == 12
-                obj.source = src;
-                obj.axes = axes;
-                obj.table = table;
-                obj.error_tag = error;
-                obj.img_cover = img_cover;
-                obj.pause_button = pause_button;
-                obj.pause_bool = false;
-                obj.pixel_precision = str2double(pixel_precision);
-                obj.max_x_displacement = str2double(max_x_displacement);
-                obj.max_y_displacement = str2double(max_y_displacement);
-                obj.res = resolution;
-                obj.new = true;
-                obj.valid = true;
-                obj.outputs('dispx') = 0;
-                obj.outputs('dispy') = 0;
-                obj.outputs('done') = false;
-                obj.queue_index = -1;
-                obj.draw = draw;
-                obj.display = display;
-            else
-                obj.source = src;
-                obj.pixel_precision = pixel_precision;
-                obj.max_x_displacement = max_x_displacement;
-                obj.max_y_displacement = max_y_displacement;
-                if nargin == 4 % No resolution input
-                    obj.res = 5.85E-6; % This is just the default swarm Lab
-                end
-                obj.using_gui = false;
-            end
+            obj.source = src;
+            obj.axes = axes;
+            obj.table = table;
+            obj.error_tag = error;
+            obj.img_cover = img_cover;
+            obj.pause_button = pause_button;
+            obj.pause_bool = false;
+            obj.pixel_precision = str2double(pixel_precision);
+            obj.max_x_displacement = str2double(max_x_displacement);
+            obj.max_y_displacement = str2double(max_y_displacement);
+            obj.res = resolution;
+            obj.new = true;
+            obj.valid = true;
+            obj.outputs('dispx') = 0;
+            obj.outputs('dispy') = 0;
+            obj.outputs('done') = false;
+            obj.queue_index = -1;
+            obj.draw = draw;
+            obj.display = display;
             obj.dispx = [];
             obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
@@ -97,29 +86,23 @@ classdef DisplacementOperation < Operation
 
         %For carrying out one time method calls that should be done before
         %calling of execute
-        function startup(obj, path)
+        function startup(obj)
             %obj.valid = obj.validate(obj.error_tag);
             % Hack to get the scripting side a little easier
             obj.valid = obj.validate();
-            if obj.using_gui
-                set(obj.img_cover, 'Visible', 'Off');
-                set(obj.pause_button, 'Visible', 'On');
-                % initialize algorithm must go these two set functions
-                obj.initialize_algorithm('');
-                obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
-                obj.im = zeros(obj.source.get_num_pixels());
-                obj.im = imshow(obj.im);
-                colormap(gca, gray(256));
-            else
-                obj.initialize_algorithm(path);
-            end
+            set(obj.img_cover, 'Visible', 'Off');
+            set(obj.pause_button, 'Visible', 'On');
+            % initialize algorithm must go these two set functions
+            obj.initialize_algorithm();
+            obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
+            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = imshow(obj.im);
+            colormap(gca, gray(256));
         end
 
-        function initialize_algorithm(obj, path)
+        function initialize_algorithm(obj)
             obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
-            if obj.using_gui
-                path = getappdata(0, 'img_path');
-            end
+            path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
                 temp = imread(path);
@@ -145,31 +128,27 @@ classdef DisplacementOperation < Operation
                 [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                 dispx = disp_x_pixel*obj.res;
                 dispy = disp_y_pixel*obj.res;
-                if obj.using_gui
-                    if obj.display
-                        set(obj.im, 'CData', gather(obj.current_frame));
-                    end
-                
-                    if obj.draw
-                        hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
-                    end
-                    updateTable(dispx, dispy, obj.table);
-                    obj.outputs('dispx') = [obj.outputs('dispx') dispx*obj.res];
-                    obj.outputs('dispy') = [obj.outputs('dispy') dispy*obj.res];
-                    obj.outputs('done') = obj.check_stop();  
-                    obj.dispx = [obj.dispx dispx];
-                    obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
 
-                    % To have GUI table update continuously, remove nocallbacks
-                    drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement
-                    if obj.draw == 1 & ~obj.check_stop()
-                        delete(hrect);
-                    end
+                % Update what's displayed on the GUI
+                if obj.display
+                    set(obj.im, 'CData', gather(obj.current_frame));
+                end
+            
+                if obj.draw
+                    hrect = imrect(obj.axes,[x_peak, y_peak, obj.rect(3), obj.rect(4)]);
+                end
+                % Update the table
+                updateTable(dispx, dispy, obj.table);
+                obj.dispx = [obj.dispx dispx];
+                obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
+
+                % To have GUI table update continuously, remove nocallbacks
+                drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement
+                if obj.draw == 1 & ~obj.check_stop()
+                    delete(hrect);
                 end
             end
-            if obj.using_gui
-                imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
-            end
+            imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
             
             % Save some files
             
