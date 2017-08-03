@@ -131,7 +131,7 @@ classdef DisplacementOperation < Operation
                 % TODO: Add ability to use GPU
                 [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                 dispx = disp_x_pixel*obj.res;
-                dispy = disp_y_pixel*obj.res;
+                dispy = -disp_y_pixel*obj.res; % Invert y to make it clear that up is positive and down is negative
 
                 % Update what's displayed on the GUI
                 if obj.display
@@ -143,9 +143,9 @@ classdef DisplacementOperation < Operation
                 end
 
                 % Update the table
-                updateTable(dispx, dispy, obj.table);
+                updateTable(obj.table, dispx, dispy);
                 obj.dispx = [obj.dispx dispx];
-                obj.dispy = [obj.dispy -dispy]; % Invert y to make it clear that up is positive and down is negative
+                obj.dispy = [obj.dispy dispy];
 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement

@@ -172,7 +172,7 @@ classdef Velocity < Operation
                 end
 
                 % Some additional gui 
-                updateTable(dispx, dispy, obj.table);
+                updateTable(obj.table, dispx, dispy);
                 obj.outputs('dispx') = [obj.outputs('dispx') dispx];
                 obj.outputs('dispy') = [obj.outputs('dispy') dispy];
                 obj.outputs('done') = obj.check_stop();  
