@@ -917,15 +917,40 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
 
         % Reset video error tag
         set(handles.vid_error_tag, 'String', '');
-        % track_n_toggled = get(handles.track_n, 'Value') == 1;
+        track_n_toggled = get(handles.track_n, 'Value') == 1;
         % Load specific variables and create the appropriate operation
         if is_displacement_operation
             load('displacement_variables.mat');
-            operation = DisplacementOperation(src, ...
+            if track_n_toggled
+                operation = MultipleObjectDisplacementOperation(src, ...
+                    pixel_precision, res, ...
+                    handles.img_viewer, handles.data_table, ...
+                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                    draw, display);
+
+                % Get the max_x and max_y values that should be separated by commas
+                max_x_disps = textscan(max_x_displacement, '%f', 'Delimiter', ',');
+                max_y_disps = textscan(max_y_displacement, '%f', 'Delimiter', ',');
+                
+                max_x_disps = max_x_disps{1};
+                max_y_disps = max_y_disps{1};
+
+                % TODO: Assert that len(max_x_disps) == len(max_y_disps)
+                
+                n = length(max_x_disps) % Assumes that max_x and max_y have the same number of values
+
+                for idx = 1:n 
+                    max_x = max_x_disps(idx);
+                    max_y = max_y_disps(idx);
+                    operation.crop_template(max_x, max_y)
+                end
+            else 
+                operation = DisplacementOperation(src, ...
                     pixel_precision, max_x_displacement, max_y_displacement, res, ...
                     handles.img_viewer, handles.data_table, ...
                     handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                    draw, display);        
+                    draw, display);       
+            end
         elseif is_velocity_operation
             load('velocity_variables.mat');
 

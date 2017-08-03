@@ -55,27 +55,31 @@ classdef Queue < handle
         function add_to_queue(obj, operation)
             %TODO assert operation is of type operation
             obj.length = obj.length + 1;
-            %set the object in the queue's callback for error handling to
-            %this Queue's error handling function, so that the error can
-            %correctly propagate up the object hierarchy, from operation to
-            %queue to the data_gui itself
-            %If the object should be inserted at the start of the list
-            if(strcmp(operation.insertion_type, 'start'))
-                for i = obj.length:1
-                    obj.list{i + 1} = obj.list{i};
-                    obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
-                end
-                obj.list{1} = operation;
-                operation.queue_index = 1;
-                obj.add_to_map(operation, 1);
-            %Otherwise, insert it at the end
-            else
-                obj.list{obj.length} = operation;
-                operation.queue_index = obj.length;
-                obj.extend_map(operation);
-            end
+
+            % Much of this is unnecessary and ridiculous. Just add to the end
+            % %set the object in the queue's callback for error handling to
+            % %this Queue's error handling function, so that the error can
+            % %correctly propagate up the object hierarchy, from operation to
+            % %queue to the data_gui itself
+            % %If the object should be inserted at the start of the list
+            % if(strcmp(operation.insertion_type, 'start'))
+            %     for i = obj.length:1
+            %         obj.list{i + 1} = obj.list{i};
+            %         obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
+            %     end
+            %     obj.list{1} = operation;
+            %     operation.queue_index = 1;
+            %     obj.add_to_map(operation, 1);
+            % %Otherwise, insert it at the end
+            % else
+            %     obj.list{obj.length} = operation;
+            %     operation.queue_index = obj.length;
+            %     obj.extend_map(operation);
+            % end
+            obj.list{obj.length} = operation;
         end
 
+        % TODO: Deprecate these functions. These should not be used. 
         function add_to_map(obj, operation, address_inserted)
             obj.data_transfer_map{address_inserted} = operation.outputs;
         end
