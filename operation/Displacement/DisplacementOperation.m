@@ -24,6 +24,8 @@ classdef DisplacementOperation < Operation
         draw; % toggles imrect
         min_displacement;
         template_matcher;
+
+        data_save_path;
     end
 
     properties
@@ -78,6 +80,9 @@ classdef DisplacementOperation < Operation
             obj.dispx = [];
             obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
+
+            obj.data_save_path = create_csv_for_data('Descriptor')
+            add_headers(obj.data_save_path, 'frame_num', 'dispx', 'dispy');
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
@@ -122,8 +127,9 @@ classdef DisplacementOperation < Operation
         end
 
         function execute(obj)
+            frame_num = 1;
             while ~obj.source.finished()
-                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                % obj.current_frame should already be set from initialize_algorithm
                 % TODO: Add ability to use GPU
                 [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
                 dispx = disp_x_pixel*obj.res;
@@ -147,19 +153,15 @@ classdef DisplacementOperation < Operation
                 if obj.draw == 1 & ~obj.check_stop()
                     delete(hrect);
                 end
+
+                % Update csv file
+                add_to_csv(obj.data_save_path, [frame_num, dispx, dispy])
+
+                % Prepare for the next iteration
+                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                frame_num = frame_num + 1;
             end
             imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
-            
-            % Save some files
-            
-            full_path = which('saved_data_README.markdown'); 
-            [parentdir, ~, ~] = fileparts(full_path);
-            mat_filename = [parentdir '/temp' datestr(datetime('now')) '.mat'];
-            dispx = obj.dispx;
-            dispy = obj.dispy;
-            save(mat_filename, 'dispx', 'dispy')
-            convertToCSV(mat_filename, 'Displacement')
-            delete(mat_filename)            
         end
 
         function [x_peak, y_peak, disp_x_micron,disp_y_micron,disp_x_pixel, disp_y_pixel] = meas_displacement(obj)
