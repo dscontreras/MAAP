@@ -141,21 +141,10 @@ classdef DisplacementOperation < Operation
         function execute(obj)
             while ~obj.source.finished()
                 obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
-                % TODO: Replace all the gpu stuff with
-                % obj.meas_displacement
-                if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
-                    if(obj.source.gpu_supported)
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    else
-                        %[xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                        [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
-                        dispx = disp_x_pixel*obj.res;
-                        dispy = disp_y_pixel*obj.res;
-                    end
-                else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template, obj.rect, obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                end
+                % TODO: Add ability to use GPU
+                [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                dispx = disp_x_pixel*obj.res;
+                dispy = disp_y_pixel*obj.res;
                 if obj.using_gui
                     if obj.display
                         set(obj.im, 'CData', gather(obj.current_frame));
