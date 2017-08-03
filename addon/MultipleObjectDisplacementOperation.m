@@ -20,6 +20,7 @@ classdef MultipleObjectDisplacementOperation < Operation
         draw;
         display;
         name = 'MultipleObjectDisplacementOperation'
+        im;
     end
 
     methods
@@ -61,26 +62,50 @@ classdef MultipleObjectDisplacementOperation < Operation
         function execute(obj)
             img = obj.first_frame;
             frame_num = 1;
+            hrects = cell(1, obj.number_of_objects);
             while ~obj.source.finished()
                 % TODO: remove assumption that the source is of type VideoSource
-                for idx = 1:numel(obj.template_matchers)
-                    [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matchers{idx}.meas_displacement(img);
+                for idx = 1:obj.number_of_objects
+                    tm = obj.template_matchers{idx};
+                    [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement(img);
                     obj.xdiffs(idx, frame_num) = x_peak;
                     obj.ydiffs(idx, frame_num) = y_peak;
+                    
+                    % Update the GUI
+                    if obj.display % Show the video
+                        set(obj.im, 'CData', gather(img))
+                    end
+                    if obj.draw % Show the box
+                        hrect = imrect(obj.axes, [x_peak, y_peak, tm.rect(3), tm.rect(4)]);
+                        hrects{idx} = hrect; % Add to the list of rects
+                    end
+                    drawnow limitrate
                 end
+                
+                % Prepare for the next iteration
                 img = rgb2gray(obj.source.extractFrame());
                 frame_num = frame_num + 1;
+
+                % Remove all the hrect values
+                if obj.draw
+                    for idx = 1:numel(hrects)
+                        delete(hrects{idx});
+                    end
+                end
             end
         end
 
         function startup(obj)
             obj.valid = obj.validate();
             
-
+            % xdiffs, ydiffs has to be initialzed after obj.number_of_objects is set
             obj.xdiffs = zeros(obj.number_of_objects);
             obj.ydiffs = zeros(obj.number_of_objects);
 
-
+            % Show on the image viewer in the GUI
+            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = imshow(obj.im);
+            colormap(gca, gray(256));
         end
 
         function valid = validate(obj)
