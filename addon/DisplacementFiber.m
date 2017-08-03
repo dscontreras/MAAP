@@ -33,7 +33,7 @@ classdef DisplacementFiber < DisplacementOperation
             prevSecondsElapsed = 0;
             prevXPixel = 0;
             while ~obj.source.finished()
-                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                obj.current_frame = gather(grab_frame(obj.source));
                 frame = imgaussfilt(obj.current_frame, 2);
                 frameNum = frameNum + 1;
 

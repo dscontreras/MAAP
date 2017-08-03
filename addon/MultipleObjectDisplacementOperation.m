@@ -40,7 +40,7 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.valid = true;
             obj.draw = draw;
             obj.display = display;
-            obj.first_frame = rgb2gray(obj.source.extractFrame());
+            obj.first_frame = grab_frame(obj.source);
             obj.template_matchers = {};
             obj.number_of_objects = 0;
             obj.data_save_path = create_csv_for_data('Displacement')
@@ -90,7 +90,7 @@ classdef MultipleObjectDisplacementOperation < Operation
                 end
                 
                 % Prepare for the next iteration
-                img = rgb2gray(obj.source.extractFrame());
+                img = grab_frame(obj.source);
                 frame_num = frame_num + 1;
 
                 % Remove all the hrect values

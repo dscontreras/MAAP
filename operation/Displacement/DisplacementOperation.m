@@ -104,7 +104,7 @@ classdef DisplacementOperation < Operation
         end
 
         function initialize_algorithm(obj)
-            obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+            obj.current_frame = gather(grab_frame(obj.source));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
@@ -157,7 +157,7 @@ classdef DisplacementOperation < Operation
                 add_to_csv(obj.data_save_path, [frame_num, dispx, dispy])
 
                 % Prepare for the next iteration
-                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                obj.current_frame = gather(grab_frame(obj.source));
                 frame_num = frame_num + 1;
             end
             imrect(obj.axes,[x_peak, y_peak, obj.rect(3) obj.rect(4)]);            
@@ -239,7 +239,7 @@ classdef DisplacementOperation < Operation
         % TODO: Fix the max_displacement test in order to also check obj.max_displacement_y
         function valid = valid_max_displacement(obj)
             valid = true;
-            frame = obj.source.extractFrame();
+            frame = grab_frame(obj.source);
             if(size(frame, 2) <= obj.max_x_displacement || isnan(obj.max_x_displacement) || size(frame, 1) <= obj.max_x_displacement)
                 valid = false;
             end

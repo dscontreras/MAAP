@@ -10,7 +10,7 @@ end
 methods
     function obj = RyanGCAOperation(src, res)
         obj.source = src;
-        first_frame = src.extractFrame();
+        first_frame = grab_frame(obj.source)
         obj.res = res;
         % Find the template;
         % Some assumptions that are made: 
@@ -88,7 +88,7 @@ methods
         
         % First frame
         [h, w] = size(obj.template_matcher.template);
-        img = rgb2gray(obj.source.extractFrame());
+        img = grab_frame(obj.source);
         [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img);
         loc_x(index) = x_peak;
         loc_y(index) = y_peak;
@@ -99,7 +99,7 @@ methods
         
         while ~obj.source.finished()
             index = index + 1;
-            img = rgb2gray(obj.source.extractFrame());
+            img = grab_frame(obj.source);
             [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.template_matcher.meas_displacement(img);
             
             loc_x(index) = x_peak;

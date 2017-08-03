@@ -114,7 +114,7 @@ classdef Velocity < Operation
         end
 
         function initialize_algorithm(obj)
-            obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+            obj.current_frame = gather(grab_frame(obj.source));
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
@@ -138,7 +138,7 @@ classdef Velocity < Operation
             started = false;
 
             while ~obj.source.finished()
-                obj.current_frame = gather(rgb2gray(obj.source.extractFrame()));
+                obj.current_frame = gather(grab_frame(obj.source));
                 frame = imgaussfilt(obj.current_frame, 2.5);
                 
                 if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
@@ -258,12 +258,7 @@ classdef Velocity < Operation
             obj.pause_bool = false;
             set(handles.pause_vid, 'String', 'Pause Video');
         end
-
-        function frame = get_frame(obj)
-            frame = obj.source.extractFrame();
-        end
-
-
+        
         function path = get_vid_path(obj)
             path = obj.vid_path;
         end
