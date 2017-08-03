@@ -52,7 +52,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             %    ************************** WHOLE PIXEL PRECISION COORDINATES *************************
 
             % Get Pixel Accuracy
-            [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);
+            [ypeak, xpeak, search_area_rect] = obj.normalized_cross_correlation(img, [obj.max_displacement_y, obj.max_displacement_x], obj.rect, false);            
             new_xmin = xpeak;
             new_ymin = ypeak;
 
@@ -100,22 +100,22 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
             if interpolate
                 interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width, search_area_height);
                 c = normxcorr2(obj.interp_template, interp_search_area);
-                [y_peak, x_peak] = find(c==max(c(:)));
-                x_peak = x_peak - size(obj.interp_template, 2) + 1;
-                y_peak = y_peak - size(obj.interp_template, 1) + 1;
-                x_peak = x_peak/(1/obj.pixel_precision);
-                y_peak = y_peak/(1/obj.pixel_precision);
+                [y, x] = find(c==max(c(:)));
+                xOffset = x - size(obj.interp_template, 2);
+                yOffset = y - size(obj.interp_template, 1);
+                xOffset = xOffset/(1/obj.pixel_precision);
+                yOffset = yOffset/(1/obj.pixel_precision);
             else
                 c = normxcorr2(im2uint8(obj.template), search_area);
 
-                [y_peak, x_peak] = find(c==max(c(:)));
-                y_peak = y_peak - obj.template_height + 1;
-                x_peak = x_peak - obj.template_width + 1;
+                [y, x] = find(c==max(c(:)));
+                yOffset = y - obj.template_height;
+                xOffset = x - obj.template_width;
             end
             % Get the x, y values in terms of the img coordinates, 
             % Not the cropped image coordinates
-            x_peak = x_peak+round(search_area_rect(1));
-            y_peak = y_peak+round(search_area_rect(2));
+            x_peak = xOffset + round(search_area_rect(1));
+            y_peak = yOffset + round(search_area_rect(2));
         end
 
         function [y_peak, x_peak] = phase_correlation(obj, img, displacement, rect, interpolate)
