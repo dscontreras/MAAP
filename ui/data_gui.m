@@ -997,7 +997,8 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
-save('displacement_variables.mat', 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
+mat_file_path = create_mat_for_ui_settings('displacement_variables');
+save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
 end
@@ -1185,9 +1186,7 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
 conversion_rate = get(handles.conversion_rate_velocity, 'String');
-full_path = which('persistent_settings_README.markdown'); 
-[parentdir, ~, ~] = fileparts(full_path);
-mat_file_path = [parentdir '/velocity_variables.mat'];
+mat_file_path = create_mat_for_ui_settings('velocity_variables');
 save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
 if(getappdata(0, 'wait_status'))
     uiresume;
