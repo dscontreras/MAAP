@@ -1,0 +1,52 @@
+<h1 id="readme">README</h1>
+<p>MAAP is a set of tools used for tracking the movement of objects.</p>
+<h2 id="getting-started">Getting Started</h2>
+<p>Download the source files.</p>
+<pre><code>git clone https://github.com/wfehrnstrom/MAAP</code></pre>
+<p>Add the directory to your Matlab Path. Make sure to <code>Add with Subfolders…</code> when you do so.<br />
+Click on the <code>Home</code> tab, and the <code>Set Path</code> button will be in the <code>Environment</code> section.</p>
+<p>Note: It is suggested that you do not add the entire directory in order to avoid the .git directory that would be added.</p>
+<h2 id="usage">Usage</h2>
+<p>In order to start the gui,</p>
+<p>There are currently two operations that are currently supported</p>
+<ul>
+<li>Displacement</li>
+<li>Velocity</li>
+</ul>
+<p>In both cases, you first need to pick the video file you want to act one.</p>
+<p><em>While it is possible to use a streaming video, this feature is not very well tested. As such this documentation will go assume that a file as been picked</em></p>
+<div class="figure">
+<img src="documentation/img/data_gui.png" style="width:50.0%" />
+
+</div>
+<p>Click on the <code>Pre-Recorded Video</code> option in the list shown in the image above to get begin browsing your files.</p>
+<p>Once you choose a file, simply click it. When it is highlighted blue, it is selected.</p>
+<p>Choose the <code>Operation</code> you would like. Although there are four options, only Displacement and Velocity is supported.</p>
+<p><em>Notice that although the buttons are not radio buttons (and it is possible to select more than one) the application will only do one of them. Currently, the operations are listed in the order of precedence (If you pressed Displacement then Velocity, it would do the Displacement Operation; If you picked Velocity then Displacement, it would still do the Displacement Operation).</em></p>
+<p><img src="documentation/img/data_gui_displacement_selected.png" style="width:48.0%" /> <img src="documentation/img/data_gui_velocity_selected.png" style="width:48.0%" /></p>
+<h3 id="displacement">Displacement</h3>
+<p>We'll first go through how to use the displacement operation</p>
+<p>If you're only trying to track 1 item, fill in the fields appropriately.</p>
+<ul>
+<li><strong>Pixel Precision</strong>: For subpixel precision, write what percentage of a pixel you would like to find. For example, to get accuracy up to1/2 a pixel precision, write <code>0.5</code>. However, the smaller the number, the longer the operation will take</li>
+<li><strong>Maximum _ Displacement</strong>: This is a guess on your part of how many pixels you expect the object you're tracking to move laterally or vertically. Put <code>0</code> if you don't care about one direction of movement.</li>
+</ul>
+<div class="figure">
+<img src="documentation/img/data_gui_displacement_begin.png" style="width:50.0%" />
+
+</div>
+<p>Once you put the values in, if you would like to save those values, simply press the <code>Save Displacement Variables</code> button. The next time you open the gui, those fields will be filled in automatically.</p>
+<p>Once these fields are inputted, press <code>Begin Operation</code> on the right hand side. You'll be prompted to give an input of what you want to track. Simply click and drag to create a blue box around the object you would like to track and double click inside that box. The operation will commence!</p>
+<p>There are several options now at your disposal. - <code>Enable rectangles</code> button: This will show the blue box around the object you're tracking as the video plays - Track N button: This will allow you to track more than one object at a time</p>
+<div class="figure">
+<img src="documentation/img/data_gui_track_n_selected.png" style="width:50.0%" />
+
+</div>
+<p>As you can see, to track multiple object, you need to input different <strong>Maximum _ Displacement</strong> values for each object. Separate them with commas. In the above example, you would be trying to track 3 objects.</p>
+<h3 id="velocity">Velocity</h3>
+<p>Velocity is similiar to Displacement.</p>
+<div class="figure">
+<img src="documentation/img/data_gui_velocity_selected.png" style="width:50.0%" />
+
+</div>
+<h3 id="seeing-the-video">Seeing the video</h3>

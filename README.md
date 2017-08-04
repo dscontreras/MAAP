@@ -6,143 +6,84 @@ MAAP is a set of tools used for tracking the movement of objects.
 
 Download the source files. 
 
-~~~
+
+```
 git clone https://github.com/wfehrnstrom/MAAP
-~~~
+```
 
 Add the directory to your Matlab Path. Make sure to `Add with Subfolders…` when you do so.  
 Click on the `Home` tab, and the `Set Path` button will be in the `Environment` section. 
 
-## Sources
+Note: It is suggested that you do not add the entire directory in order to avoid the .git directory that would be added. 
 
-Sources is how MAAP interacts with videos. There are currently 2 types of sources: `FileSource`, `StreamSource`
+## Usage
 
-To use the StreamSource will require the installation of an addon. 
+In order to start the gui, 
 
-1. Image Acquisition Toolbox Support Package for OS Generic Video Interface
-2. MATLAB Support Package for USB Webcams
+There are currently two operations that are currently supported
 
-~~~MATLAB
-% Initialize Source
-stream  = StreamSource(camname);
-video   = FileSource(file_path, resolution);
+- Displacement
+- Velocity
 
-% Is it done? 
-stream.finished();
-video.finished();
+In both cases, you first need to pick the video file you want to act one. 
 
-% Get a frame
-stream.extractFrame();
-video.extractFrame();
-~~~
+*While it is possible to use a streaming video, this feature is not very well tested. As such this documentation will go assume that a file as been picked*
 
-* Notes
-    * The resolution in FileSource doesn't really matter. 
-    * Streams will stop if an image isn't captured by the user in some set amount of time. 
-    * To end a stream without ending, `delete(stream.inputcam)`
+![](documentation/img/data_gui.png){width=50%}
 
-## Template Matching
+Click on the `Pre-Recorded Video` option in the list shown in the image above to get begin browsing your files. 
 
-To track movement, MAAP uses a template matching algorithm. The `TemplateMatcher` does the work for you.
+Once you choose a file, simply click it. When it is highlighted blue, it is selected. 
 
-1. Take a frame
-2. Crop a part of the image. 
-3. Perform normalized cross correlation
-4. Crop a smaller part of the image using the result of step 3
-5. Interpolate the crop to the desired pixel_precision (bicubic)
-6. Perform normalized cross correlation
+Choose the `Operation` you would like. Although there are four options, only Displacement and Velocity is supported.
 
-A quick example using TemplateMatcher
+*Notice that although the buttons are not radio buttons (and it is possible to select more than one) the application will only do one of them. Currently, the operations are listed in the order of precedence (If you pressed Displacement then Velocity, it would do the Displacement Operation; If you picked Velocity then Displacement, it would still do the Displacement Operation).*
 
-~~~
-video   = FileSource('videos/30V_1.avi', resolution); 
-temp    = imread('images/template.png');
-tm      = TemplateMatcher(video, pixel_precision, m_d_x, m_d_y, temp, min_d, video.extractFrame());
-while ~video.finished()
-    [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = tm.meas_displacement(video.extractFrame()); 
-end
-~~~
+![](documentation/img/data_gui_displacement_selected.png){width=48%} ![](documentation/img/data_gui_velocity_selected.png){width=48%}
 
-`m_d_x` and `m_d_y` are the "maximum\_displacement" properties. They determine the size of the first crop. If you believe the object will move in the y direction but not the x, set `m_d_x = 0` and `m_d_y = k` where `k` is some non-zero value. 
+### Displacement
 
-`min_d` determines the size of the second crop. It should be a small value. We recommend using `2`. 
+We'll first go through how to use the displacement operation
 
-Note that TemplateMatcher does not know the resolution of the image. You have to take that into account when looking at the final output. 
+If you're only trying to track 1 item, fill in the fields appropriately. 
 
-`y_peak`: The y value of the template  
-`x_peak`: The x value of the template  
-`disp_y_pixel`: the displacement in the y direction in terms of pixels from the original location  
-`disp_x_pixel`: the displacement in the x direction in terms of pixels from the original location  
+- **Pixel Precision**: For subpixel precision, write what percentage of a pixel you would like to find. For example, to get accuracy up to1/2 a pixel precision, write `0.5`. However, the smaller the number, the longer the operation will take
+- **Maximum _ Displacement**: This is a guess on your part of how many pixels you expect the object you're tracking to move laterally or vertically. Put `0` if you don't care about one direction of movement.
 
-## Operations
+![](documentation/img/data_gui_displacement_begin.png){width=50%}
 
-Operations is what the GUI does. When adding to or using the code, we suggest wrapping what you're doing as an Operation type. 
+Once you put the values in, if you would like to save those values, simply press the `Save Displacement Variables` button. The next time you open the gui, those fields will be filled in automatically. 
 
-Operations have 3 functions that must be filled (`execute(obj)`, `startup(obj)`, `valid(obj)`) and must have a `source`. 
+Once these fields are inputted, press `Begin Operation` on the right hand side. You'll be prompted to give an input of what you want to track. Simply click and drag to create a blue box around the object you would like to track and double click inside that box. The operation will commence!
 
-In general, the `valid` checks the validity of the operation. Here is where you should check if all the properties passed in makes sense. The `startup` is generally not needed as much of it can be done in the constructor. However, if a variable needs to be lazily instantiated, here is where to do that. 
+There are several options now at your disposal. 
+- `Enable rectangles` button: This will show the blue box around the object you're tracking as the video plays
+- Track N button: This will allow you to track more than one object at a time
 
-`execute` is where the bulk of the work will go. You should continue the execution until the source runs out. 
+![](documentation/img/data_gui_track_n_selected.png){width=50%}
 
-~~~MATLAB
-function [output] = execute(obj)
-    output = [-5000:-1];
-    i = 1;
-    while ~obj.source.finished()
-        img = obj.source.extractFrame();
-        [y_peak, x_peak, disp_y_pixel, disp_x_pixel] = obj.tm.meas_displacement(img); 
-        output(i) = disp_y_pixel * disp_x_pixel;
-        i = i + 1;
-    end 
-end
-~~~
+As you can see, to track multiple object, you need to input different **Maximum _ Displacement** values for each object. Separate them with commas. In the above example, you would be trying to track 3 objects. 
 
-The above code simply saves the product of the displacement in y and the displacement in x across all the frames. Do what you want after getting the output of displacement.  
+### Velocity
 
-## Main Functions
+Velocity is similiar to Displacement. 
 
-The two main operations supported by the GUI are `DisplacementOperation.m` and `Velocity.m`. 
+![](documentation/img/data_gui_velocity_selected.png){width=50%}
 
-Displacement simply tracks the x and y displacement of a template. Velocity finds the instantaneous velocity of a template in microns per second and plots two graphs: X displacement over time and velocity over time.
+The only difference is the **um/Pixel** rate. 
+- **um/Pixel**: The conversin rate from pixel to micrometers. If this isn't of concern and you would only like to know the movement in relation to pixel, simply put in `1`. While the velocity values will be wholly incorrect (as it'll treat 1pixel=1um), you can simply do multiply by a conversion rate later. 
 
-For both operations, you can select you want to track by passing in an image template in `settings_gui.m` or by manually drawing a rectangle over the region of interest. 
+There are several options at your disposal
+- `Enable rectangles` is the same as before
+- `Corner dtection?` is a specific implementation for use in the Swarm Lab. In general, don't use it. 
 
-Passing in a template image generally causes the main algorithm to run faster, but if you do decide to use to manually select the template, make sure to double click the region bounded by the blue rectangle to start the algorithm.
+### Seeing the video
 
-Both `DisplacementOperation.m` and `Velocity.m` should reliably track most templates in a video. However, if the template blends into the background or isn't very distnct, you may get incorrect results. To test if the algorithm is working correctly, use the `Enable rectangle` option, which will show you at each frame where the program finds your template.
+By default, the application won't show you the video as it records data. In order to see it, simply toggle the `Display video` button. 
 
-If it turns out that the algorithm isn't correctly tracking your template, then the next section will explain how to remedy this problem.
+## The Data
 
-## The GUI vs Scripting
+After the application is complete, the data is saved in the `saved_data` directory with the following format:
 
-A lot of work went into making this scriptable. Mostly because the GUI is cumbersome to work with and isn't very scalable. 
-
-To start the gui, run the `data_gui.m` file. Make sure to run `settings_gui.m` to set some necessary values. 
-
-### Scripting
-
-When scripting using MAAP, follow these steps
-
-1. Create a Source
-2. Create an Operation
-3. Execute the Operation
-
-We suggest creating a new operation for each type of thing you want to do. This way, you can customize the operation to your needs and make assumptions about the image you're analyzing for ease of use. 
-
-## More Operations
-
-Suppose you want to add more operations. What are some of the relevant functions you should know about. 
-
-`locate_rectangles`
-
-This does exactly as it sounds like. It will give you a list of rectangles
-
-~~~MATLAB
-stat = locate_rectangles;
-bb = stat(1).BoundingBox; % [xmin ymin width height]
-~~~
-
-`find_rect`
-
-Give it an image and a template and it'll tell you the y, x location of that template in the image. 
+`OperationName.DD-Mon-YYYY HH:MM:SS.csv`
 
