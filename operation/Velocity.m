@@ -122,13 +122,13 @@ classdef Velocity < Operation
                 obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
                 obj.rect = [obj.rect(1) obj.rect(2) obj.rect(3)+1 obj.rect(4)+1];
-                [obj.xtemp, obj.ytemp] = get_template_coords(obj.current_frame, obj.template);
             else
                 [vid_height, vid_width] = size(obj.current_frame);
-                [obj.template, obj.rect, obj.xtemp, obj.ytemp] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
-                obj.rect = ceil(obj.rect);
+                [obj.template, obj.rect] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
             end
-            obj.template_matcher = TemplateMatcher(obj.pixel_precision, obj.max_x_displacement, obj.max_y_displacement, obj.template, obj.min_displacement, obj.current_frame);
+            obj.template_matcher = TemplateMatcher(obj.pixel_precision,...
+             obj.max_x_displacement, obj.max_y_displacement, obj.template, ...
+             obj.min_displacement, obj.current_frame);
             obj.template_matcher.change_template(obj.template, obj.rect);
         end
 
@@ -141,22 +141,9 @@ classdef Velocity < Operation
                 obj.current_frame = gather(grab_frame(obj.source));
                 frame = imgaussfilt(obj.current_frame, 2.5);
                 
-                if(strcmp(VideoSource.getSourceType(obj.source), 'file'))
-                    if(obj.source.gpu_supported)
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_displacement, obj.res);
-                        % [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_subpixel_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    else
-                        [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
-                        dispx = disp_x_pixel*obj.res;
-                        dispy = disp_y_pixel*obj.res;
-                    end
-                else
-                    if(obj.source.gpu_supported)
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement_gpu_array(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.max_x_displacement, obj.max_y_displacement, obj.res);
-                    else
-                        [xoffSet, yoffSet, dispx,dispy,x, y] = meas_displacement(obj.template,obj.rect,obj.current_frame, obj.xtemp, obj.ytemp, obj.pixel_precision, obj.max_displacement, obj.res);
-                    end
-                end
+                [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
+                dispx = disp_x_pixel*obj.res;
+                dispy = disp_y_pixel*obj.res;
 
                 if obj.display
                     set(obj.im, 'CData', obj.current_frame);
@@ -258,7 +245,7 @@ classdef Velocity < Operation
             obj.pause_bool = false;
             set(handles.pause_vid, 'String', 'Pause Video');
         end
-        
+
         function path = get_vid_path(obj)
             path = obj.vid_path;
         end
