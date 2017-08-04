@@ -14,26 +14,22 @@ classdef MultipleObjectDisplacementOperation < Operation
         table;
         error_tag;
         img_cover;
-        pause_button;
         new;
         valid;
         draw;
         display;
-        name = 'MultipleObjectDisplacementOperation'
         im;
     end
 
     methods
         function obj = MultipleObjectDisplacementOperation(src, pixel_precision, resolution, ...
-            axes, table, error, img_cover, pause_button, ...
+            axes, table, error, img_cover, ...
                 draw, display)
             obj.source = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
             obj.img_cover = img_cover;
-            set(obj.img_cover, 'Visible', 'off')
-            obj.pause_button = pause_button;
             obj.pixel_precision = str2double(pixel_precision);
             obj.res = resolution;
             obj.new = true;
@@ -44,8 +40,10 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.template_matchers = {};
             obj.number_of_objects = 0;
 
+            set(obj.img_cover, 'Visible', 'off')
+
             % Set up csv to save data
-            obj.data_save_path = create_csv_for_data('Displacement')
+            obj.data_save_path = create_csv_for_data('Displacement');
         end
 
         function add_template_matcher(obj, template, max_displacement_x, max_displacement_y)
@@ -122,10 +120,9 @@ classdef MultipleObjectDisplacementOperation < Operation
             add_headers(obj.data_save_path, header_str);
 
             % Show on the image viewer in the GUI
-            obj.im = zeros(size(obj.current_frame));
+            obj.im = zeros([size(obj.current_frame) 3]);
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
-            obj.current_frame = gather(rgb2gray(obj.current_frame))
 
             obj.valid = obj.validate();
         end

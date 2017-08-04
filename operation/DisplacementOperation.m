@@ -14,12 +14,9 @@ classdef DisplacementOperation < Operation
         current_frame;
         table;
         img_cover;
-        pause_button;
         table_data;
-        stop_check_callback = @check_stop;
         im;
         res;
-        xoff; yoff;
         display
         draw; % toggles imrect
         min_displacement;
@@ -29,50 +26,32 @@ classdef DisplacementOperation < Operation
     properties
         % Inherited
         source;
+        
         dispx;
         dispy;
     end
 
 
     properties (SetAccess = public)
-        pause_bool;
-        param_names;
-        outputs = containers.Map('KeyType','char','ValueType','any');
         valid;
-        new;
         error_report_handle;
-        queue_index;
-        start_check_callback = @RepeatableOperation.check_start;
-        inputs = {};
-    end
-
-    properties (Constant)
-        name = 'Displacement';
-        insertion_type = 'end';
     end
 
     methods
         function obj = DisplacementOperation(src, pixel_precision, max_x_displacement, ...
                 max_y_displacement, resolution, ...
-                axes, table, error, img_cover, pause_button, ...
+                axes, table, error, img_cover, ...
                 draw, display, error_report_handle)
             obj.source = src;
             obj.axes = axes;
             obj.table = table;
             obj.error_tag = error;
             obj.img_cover = img_cover;
-            obj.pause_button = pause_button;
-            obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_x_displacement = str2double(max_x_displacement);
             obj.max_y_displacement = str2double(max_y_displacement);
             obj.res = resolution;
-            obj.new = true;
             obj.valid = true;
-            obj.outputs('dispx') = 0;
-            obj.outputs('dispy') = 0;
-            obj.outputs('done') = false;
-            obj.queue_index = -1;
             obj.draw = draw;
             obj.display = display;
             obj.dispx = [];
@@ -81,7 +60,7 @@ classdef DisplacementOperation < Operation
             obj.valid = obj.validate();
 
             % Set up the csv to save the data to
-            obj.data_save_path = create_csv_for_data('Displacement')
+            obj.data_save_path = create_csv_for_data('Displacement');
             add_headers(obj.data_save_path, 'frame_num', 'dispx', 'dispy');
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
@@ -90,7 +69,6 @@ classdef DisplacementOperation < Operation
 
             % Graphical Setup
             set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
             obj.current_frame = obj.source.extractFrame(); % Get an rgb2gray value
             obj.im = zeros(size(obj.current_frame));
             colormap(gca, gray(256));
@@ -155,7 +133,7 @@ classdef DisplacementOperation < Operation
 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement
-                if obj.draw == 1 & ~obj.check_stop()
+                if obj.draw
                     delete(hrect);
                 end
 
@@ -191,20 +169,6 @@ classdef DisplacementOperation < Operation
             if(isnan(obj.pixel_precision))
                 valid = false;
             end
-        end
-
-        function boolean = paused(obj)
-            boolean = obj.pause_bool;
-        end
-
-        function pause(obj, handles)
-            obj.pause_bool = true;
-            set(handles.pause_vid, 'String', 'Resume Video');
-        end
-
-        function unpause(obj, handles)
-            obj.pause_bool = false;
-            set(handles.pause_vid, 'String', 'Pause Video');
         end
 
         function pixel_precision = get_pixel_precision(obj)

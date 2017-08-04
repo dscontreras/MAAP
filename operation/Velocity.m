@@ -4,45 +4,26 @@ classdef Velocity < Operation
     % within the video 
     
     properties (SetAccess = protected)
-        vid_src;
-        rect;
-        axes;
-        error_tag;
+        axes; error_tag;
+        
         pixel_precision;
-        max_x_displacement;
-        max_y_displacement;
+        max_x_displacement; max_y_displacement; min_displacement;
         template;
-        xtemp; 
-        ytemp;
         current_frame;
         cameraFPS;
         table;
         img_cover;
-        pause_button;
         table_data;
-        stop_check_callback = @check_stop;
         im;
         index; % current frame count
         seconds;
         velocityTrack;
         conversion;
         res;
-        xoff; yoff;
+        dispx; dispy;
+        rect;
         display;
         draw; % toggles imrect
-
-        % Properties needed for fourier analysis
-        search_area_width; search_area_height;
-        search_area_xmin;  search_area_ymin;
-        min_displacement;
-
-        template_average;
-        processed_template; fft_conj_processed_template;
-
-        interp_search_area_width; interp_search_area_height;
-        interp_template; interp_template_average;
-        processed_interp_template; fft_conj_processed_interp_template;
-
     end
     properties
         % Inherited
@@ -50,27 +31,14 @@ classdef Velocity < Operation
     end
     
     properties (SetAccess = public)
-        pause_bool;
-        param_names;
-        outputs = containers.Map('KeyType','char','ValueType','any');
         valid;
-        new;
         error_report_handle;
-        queue_index;
-        start_check_callback = @RepeatableOperation.check_start;
-        inputs = {};
         template_matcher;
-    end
-
-    properties (Constant)
-        rx_data = {};
-        name = 'Displacement';
-        insertion_type = 'end';
     end
 
     methods
         function obj = Velocity(src, axes, table, error, ...
-            img_cover, pause_button, pixel_precision, max_x_displacement, ...
+            img_cover, pixel_precision, max_x_displacement, ...
              max_y_displacement, resolution, conversion, display, ...
              enable_rectangles)
 
@@ -80,39 +48,35 @@ classdef Velocity < Operation
             obj.error_tag = error;
             obj.cameraFPS = 15; % speed of Swarm lab camera
             obj.img_cover = img_cover;
-            obj.pause_button = pause_button;
-            obj.pause_bool = false;
             obj.pixel_precision = str2double(pixel_precision);
             obj.max_x_displacement = str2double(max_x_displacement);
             obj.max_y_displacement = str2double(max_y_displacement);
             obj.res = resolution;
-            obj.new = true;
             obj.valid = true;
-            obj.outputs('dispx') = 0;
-            obj.outputs('dispy') = 0;
-            obj.outputs('done') = false;
-            obj.queue_index = -1;
-            obj.xoff = [];
-            obj.yoff = [];
+            obj.dispx = [];
+            obj.dispy = [];
             obj.seconds = [];
             obj.velocityTrack = [];
             obj.conversion = str2double(conversion);
             obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             obj.display = display;
-
+            obj.current_frame = grab_frame(obj.source);
+            
             obj.valid = obj.validate();
             set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
-            obj.im = zeros(size(obj.current_frame));
+            obj.im = zeros([size(obj.current_frame), 3]);
             colormap(gca, gray(256));
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
 
             % Create template matcher
-            obj.current_frame = gather(rgb2gray(obj.current_frame));
             obj.create_template_matcher();
 
             obj.im = imshow(obj.im);
+            
+            % CSV to save to
+            obj.data_save_path = create_csv_for_data('Velocity');
+            add_headers(obj.data_save_path, 'time', 'dispx', 'velocity');
         end
 
         function startup(obj)
@@ -121,7 +85,7 @@ classdef Velocity < Operation
         function create_template_matcher(obj)
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
-            if ~strcmp(path,'') & ~isequal(path, [])
+            if ~strcmp(path,'') && ~isequal(path, [])
                 temp = imread(path);
                 obj.rect = find_rect(obj.current_frame, temp);
                 obj.template = imcrop(obj.current_frame, obj.rect);
@@ -142,7 +106,6 @@ classdef Velocity < Operation
             started = false;
 
             while ~obj.source.finished()
-                obj.current_frame = gather(grab_frame(obj.source));
                 frame = imgaussfilt(obj.current_frame, 2.5);
                 
                 [y_peak, x_peak, disp_y_pixel,disp_x_pixel] = obj.template_matcher.meas_displacement_norm_cross_correlation(obj.current_frame);
@@ -164,15 +127,12 @@ classdef Velocity < Operation
 
                 % Some additional gui 
                 updateTable(obj.table, dispx, dispy);
-                obj.outputs('dispx') = [obj.outputs('dispx') dispx];
-                obj.outputs('dispy') = [obj.outputs('dispy') dispy];
-                obj.outputs('done') = obj.check_stop();  
 
                 % Conversion from displacement in pixel to meters
-                xoff = disp_x_pixel*obj.conversion;
-                yoff = disp_y_pixel*obj.conversion;
-                obj.xoff = [obj.xoff xoff];
-                obj.yoff = [obj.yoff yoff];
+                dispx = disp_x_pixel*obj.conversion;
+                dispy = disp_y_pixel*obj.conversion;
+                obj.dispx = [obj.dispx dispx];
+                obj.dispy = [obj.dispy dispy];
                 secondsElapsed = obj.index/obj.cameraFPS;
                 obj.seconds = [obj.seconds secondsElapsed];
                 
@@ -183,17 +143,11 @@ classdef Velocity < Operation
                     instVelocity = 0;
                 end
                 obj.velocityTrack = [obj.velocityTrack instVelocity];
-
-                % Save values
-                x_disp = obj.xoff;
-                y_disp = obj.yoff;
+                
+                % Save values Let's fix that
                 time = obj.seconds;
                 vel = obj.velocityTrack;
-
-                full_path = which('saved_data_README.markdown'); 
-                [parentdir, ~, ~] = fileparts(full_path);
-                mat_file_path = [parentdir '/velocity.mat'];
-                save(mat_file_path, 'x_disp', 'time', 'vel');
+                add_to_csv(obj.data_save_path, [secondsElapsed, dispx, instVelocity]);
                 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;
@@ -205,21 +159,21 @@ classdef Velocity < Operation
                 obj.index = obj.index + 1;
                 prevX = disp_x_pixel;
                 prevSecondsElapsed = secondsElapsed;
+                obj.current_frame = gather(grab_frame(obj.source));
+                
             end
-            Data = load('velocity.mat');
+            
             figure('Name', 'X Displacement Over Time');
-            plot(Data.time, Data.x_disp);
+            plot(obj.seconds, obj.dispx);
             figure('Name', 'Velocity over Time');
-            plot(Data.time, Data.vel);
-            convertToCSV(mat_file_path, 'Velocity');
-            delete(mat_file_path)                    
+            plot(obj.seconds, vel);            
         end
 
         %error_tag is now deprecated     
 
         function valid = valid_max_displacement(obj)
             valid = true;
-            frame = obj.get_frame();
+            frame = obj.current_frame;
             if(size(frame, 2) <= obj.max_x_displacement || isnan(obj.max_x_displacement) || size(frame, 1) <= obj.max_x_displacement)
                 valid = false;
             end
@@ -236,20 +190,6 @@ classdef Velocity < Operation
             end
         end
 
-        function boolean = paused(obj)
-            boolean = obj.pause_bool;
-        end
-
-        function pause(obj, handles)
-            obj.pause_bool = true;
-            set(handles.pause_vid, 'String', 'Resume Video');
-        end
-
-        function unpause(obj, handles)
-            obj.pause_bool = false;
-            set(handles.pause_vid, 'String', 'Pause Video');
-        end
-
         function path = get_vid_path(obj)
             path = obj.vid_path;
         end
@@ -264,10 +204,6 @@ classdef Velocity < Operation
 
         function bool = check_stop(obj)
             bool = (~obj.valid && ~obj.validate(obj.error_tag)) | obj.source.finished();
-        end
-
-        function vid_source = get.source(obj)
-            vid_source = obj.source;
         end
         
         function valid = validate(obj)
