@@ -885,99 +885,94 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     draw = getappdata(0, 'draw_rect');
     display = get(handles.toggle_video_on, 'Value');
 
-    % Check if this is the first time the button has been pressed
-    if q.get_length() == 0
-        % Currently, we only support the Velocity/Displacement 
-        is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
-        is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
+    % Currently, we only support the Velocity/Displacement 
+    is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
+    is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
 
-        if (is_displacement_operation || is_velocity_operation)
-            % Get resolution
-            res_entry_obj = findobj('Tag', 'source_resolution_entry');
-            resolution = res_entry_obj.UserData;
-            if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
-                %if the resolution is a number greater than zero then use it
-                res = resolution;
-            else
-                %Default resolution for pister lab
-                res = 5.86E-6;
-            end
-
-            % Get source type
-            img_options = findobj('Tag', 'img_options');
-            src_type = img_options.UserData;
-            if(strcmp(src_type, 'stream'))
-                cam_name = getappdata(0, 'cam_name');
-                src = StreamSource(cam_name);
-            else
-                path = getappdata(0, 'vid_path');
-                src = FileSource(path, res);
-            end
+    if (is_displacement_operation || is_velocity_operation)
+        % Get resolution
+        res_entry_obj = findobj('Tag', 'source_resolution_entry');
+        resolution = res_entry_obj.UserData;
+        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
+            %if the resolution is a number greater than zero then use it
+            res = resolution;
+        else
+            %Default resolution for pister lab
+            res = 5.86E-6;
         end
 
-        % Reset video error tag
-        set(handles.vid_error_tag, 'String', '');
-        track_n_toggled = get(handles.track_n, 'Value') == 1;
-        % Load specific variables and create the appropriate operation
-        if is_displacement_operation
-            load('displacement_variables.mat');
-            if track_n_toggled
-                operation = MultipleObjectDisplacementOperation(src, ...
-                    pixel_precision, res, ...
-                    handles.img_viewer, handles.data_table, ...
-                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                    draw, display);
-
-                % Get the max_x and max_y values that should be separated by commas
-                max_x_disps = textscan(max_x_displacement, '%f', 'Delimiter', ',');
-                max_y_disps = textscan(max_y_displacement, '%f', 'Delimiter', ',');
-                
-                max_x_disps = max_x_disps{1};
-                max_y_disps = max_y_disps{1};
-
-                % TODO: Assert that len(max_x_disps) == len(max_y_disps)
-                
-                n = length(max_x_disps) % Assumes that max_x and max_y have the same number of values
-
-                for idx = 1:n 
-                    max_x = max_x_disps(idx);
-                    max_y = max_y_disps(idx);
-                    operation.crop_template(max_x, max_y)
-                end
-            else 
-                operation = DisplacementOperation(src, ...
-                    pixel_precision, max_x_displacement, max_y_displacement, res, ...
-                    handles.img_viewer, handles.data_table, ...
-                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                    draw, display);       
-            end
-        elseif is_velocity_operation
-            load('velocity_variables.mat');
-
-            % Corner detection vs regular displacement
-            corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
-            enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
-            if corner_detection
-                operation = DisplacementFiber(src, pixel_precision, res, ...
-                    handles.img_viewer, handles.data_table, ...
-                    handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                    draw, display, conversion_rate);
-            else
-                operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
-            end
+        % Get source type
+        img_options = findobj('Tag', 'img_options');
+        src_type = img_options.UserData;
+        if(strcmp(src_type, 'stream'))
+            cam_name = getappdata(0, 'cam_name');
+            src = StreamSource(cam_name);
+        else
+            path = getappdata(0, 'vid_path');
+            src = FileSource(path, res);
         end
-        % Add to Queue, Run queue to completetion
-        q.add_to_queue(operation);
     end
+
+    % Reset video error tag
+    set(handles.vid_error_tag, 'String', '');
+    track_n_toggled = get(handles.track_n, 'Value') == 1;
+    % Load specific variables and create the appropriate operation
+    if is_displacement_operation
+        load('displacement_variables.mat');
+        if track_n_toggled
+            operation = MultipleObjectDisplacementOperation(src, ...
+                pixel_precision, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                draw, display);
+
+            % Get the max_x and max_y values that should be separated by commas
+            max_x_disps = textscan(max_x_displacement, '%f', 'Delimiter', ',');
+            max_y_disps = textscan(max_y_displacement, '%f', 'Delimiter', ',');
+            
+            max_x_disps = max_x_disps{1};
+            max_y_disps = max_y_disps{1};
+
+            % TODO: Assert that len(max_x_disps) == len(max_y_disps)
+            
+            n = length(max_x_disps) % Assumes that max_x and max_y have the same number of values
+
+            for idx = 1:n 
+                max_x = max_x_disps(idx);
+                max_y = max_y_disps(idx);
+                operation.crop_template(max_x, max_y)
+            end
+        else 
+            operation = DisplacementOperation(src, ...
+                pixel_precision, max_x_displacement, max_y_displacement, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                draw, display);       
+        end
+    elseif is_velocity_operation
+        load('velocity_variables.mat');
+
+        % Corner detection vs regular displacement
+        corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
+        enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
+        if corner_detection
+            operation = DisplacementFiber(src, pixel_precision, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+                draw, display, conversion_rate);
+        else
+            operation = Velocity(src, handles.img_viewer, handles.data_table, ...
+            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
+        end
+    end
+    % Add to Queue, Run queue to completetion
+    q.add_to_queue(operation);
     % If the second time, simply run to finish
     tic;
     q.run_to_finish();
     toc
-    if(q.finished())
-        q.delete();
-    end
+    q.delete();
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
