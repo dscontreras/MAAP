@@ -27,19 +27,6 @@ classdef FileSystemParser
             end
         end
         
-        %Brief: Retrieve which picture formats this OS supports
-        function pic_formats = get_supported_pic_formats()
-            %If the OS is Windows
-            if(ispc)
-                pic_formats = ['.bmp', '.cur', '.gif', '.hdf4', '.ico', '.jpeg', '.pbm', '.pcx',
-                    '.pgm', '.png', '.ppm', '.ras', '.tiff','.xwd']; 
-            %If the OS is non-Windows(Unix or what have you)
-            else
-                pic_formats = ['.cur', '.gif', '.hdf4', '.ico', '.jpeg', '.pbm',
-                    '.pgm', '.png', '.ppm', '.ras', '.tiff']; 
-            end
-        end
-        
         %Brief: Retrieve which separator this OS uses
         function separator = get_file_separator()
             %Use the Windows file separator if the OS is Windows.
