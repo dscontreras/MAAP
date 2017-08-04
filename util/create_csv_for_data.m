@@ -1,5 +1,11 @@
 function [save_path] = create_csv_for_data(descriptor)
-    full_path = which('saved_data_README.markdown');
-    [parentdir, ~, ~] = fileparts(full_path);
-    save_path = [parentdir '/' descriptor '.' datestr(datetime('now')) '.csv'];
+    saved_data_folders = what('saved_data');
+    for idx = 1:length(saved_data_folders)
+        [parentdir, ~, ~] = fileparts(saved_data_folders(idx).path);
+        [~, parentdir_name, ~] = fileparts(parentdir);
+        if strcmp(parentdir_name, 'MAAP')
+            break;
+        end
+    end
+    save_path = [parentdir '/saved_data/' descriptor '.' datestr(datetime('now')) '.csv'];
 end
