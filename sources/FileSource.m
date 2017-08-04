@@ -37,15 +37,6 @@ classdef FileSource < VideoSource
             bool = ~hasFrame(obj.videoReader);
         end
         
-        function resolution = get_num_pixels(obj)
-               if(hasFrame(obj.videoReader))
-                   frame = readFrame(obj.videoReader);
-                   resolution = size(frame);
-               else
-                   error('obj.videoReader has no frames to read.');
-               end
-        end
-        
         function filepath = get_filepath(obj)
             filepath = obj.filepath; 
         end

@@ -884,7 +884,13 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
     global q;
     draw = getappdata(0, 'draw_rect');
     display = get(handles.toggle_video_on, 'Value');
-    if(get(handles.displacement_check, 'Value') == 1)
+
+    % Currently, we only support the Velocity/Displacement 
+    is_displacement_operation = get(handles.displacement_check, 'Value') == 1;
+    is_velocity_operation     = get(handles.velocity_check, 'Value')     == 1;
+
+    if (is_displacement_operation || is_velocity_operation)
+        % Get resolution
         res_entry_obj = findobj('Tag', 'source_resolution_entry');
         resolution = res_entry_obj.UserData;
         if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
@@ -894,9 +900,8 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
             %Default resolution for pister lab
             res = 5.86E-6;
         end
-        %Reset the video error tag
-        set(handles.vid_error_tag, 'String', '');
-        load('displacement_variables.mat');
+
+        % Get source type
         img_options = findobj('Tag', 'img_options');
         src_type = img_options.UserData;
         if(strcmp(src_type, 'stream'))
@@ -905,53 +910,69 @@ function begin_operation_btn_Callback(begin_measurement_btn, eventdata, handles)
         else
             path = getappdata(0, 'vid_path');
             src = FileSource(path, res);
-        end 
-        operation = DisplacementOperation(src, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, ...
-            handles.img_viewer, handles.data_table, ...
-            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            draw, display);        
-    elseif get(handles.velocity_check, 'Value') == 1
-        res_entry_obj = findobj('Tag', 'source_resolution_entry');
-        resolution = res_entry_obj.UserData;
-        if(isnumeric(resolution) && ~isempty(resolution) && resolution > 0)
-            res = resolution;
-        else
-            res = 5.86E-6;
         end
-        set(handles.vid_error_tag, 'String', '');
+    end
+
+    % Reset video error tag
+    set(handles.vid_error_tag, 'String', '');
+    track_n_toggled = get(handles.track_n, 'Value') == 1;
+    % Load specific variables and create the appropriate operation
+    if is_displacement_operation
+        load('displacement_variables.mat');
+        if track_n_toggled
+            operation = MultipleObjectDisplacementOperation(src, ...
+                pixel_precision, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, ...
+                draw, display);
+
+            % Get the max_x and max_y values that should be separated by commas
+            max_x_disps = textscan(max_x_displacement, '%f', 'Delimiter', ',');
+            max_y_disps = textscan(max_y_displacement, '%f', 'Delimiter', ',');
+            
+            max_x_disps = max_x_disps{1};
+            max_y_disps = max_y_disps{1};
+
+            % TODO: Assert that len(max_x_disps) == len(max_y_disps)
+            
+            n = length(max_x_disps) % Assumes that max_x and max_y have the same number of values
+
+            for idx = 1:n 
+                max_x = max_x_disps(idx);
+                max_y = max_y_disps(idx);
+                operation.crop_template(max_x, max_y)
+            end
+        else 
+            operation = DisplacementOperation(src, ...
+                pixel_precision, max_x_displacement, max_y_displacement, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, ...
+                draw, display);       
+        end
+    elseif is_velocity_operation
         load('velocity_variables.mat');
-        img_options = findobj('Tag', 'img_options');
-        src_type = img_options.UserData;
-        if(strcmp(src_type, 'stream'))
-            cam_name = getappdata(0, 'cam_name');
-            src = StreamSource(cam_name);    
-        else
-            path = getappdata(0, 'vid_path');
-            src = FileSource(path, res);
-        end
-        if get(handles.toggle_corner_detection, 'Value') == 1
-            operation = DisplacementFiber(src, handles.img_viewer, handles.data_table, ...
-                handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-                pixel_precision, res, draw, display, conversion_rate);
+
+        % Corner detection vs regular displacement
+        corner_detection          = get(handles.toggle_corner_detection, 'Value') == 1;
+        enable_rectangles         = get(handles.toggle_rectangles_velocity, 'Value') == 1;
+        if corner_detection
+            operation = DisplacementFiber(src, pixel_precision, res, ...
+                handles.img_viewer, handles.data_table, ...
+                handles.vid_error_tag, handles.image_cover, ...
+                draw, display, conversion_rate);
         else
             operation = Velocity(src, handles.img_viewer, handles.data_table, ...
-            handles.vid_error_tag, handles.image_cover, handles.pause_operation, ...
-            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display);
+            handles.vid_error_tag, handles.image_cover, ...
+            pixel_precision, max_x_displacement, max_y_displacement, res, conversion_rate, display, enable_rectangles);
         end
     end
+    % Add to Queue, Run queue to completetion
     q.add_to_queue(operation);
-    output_file_location = [getappdata(0, 'outputfolderpath') FileSystemParser.get_file_separator()];
-    if(get(handles.data_collect_check, 'Value'))
-        d = DataCollector(@displacement.check_stop, output_file_location, 'mat');
-        q.add_to_queue(d);
-    end
+    % If the second time, simply run to finish
     tic;
     q.run_to_finish();
     toc
-    if(q.finished())
-        q.delete();
-    end
+    q.delete();
 % hObject    handle to begin_operation_btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -976,9 +997,7 @@ function save_displacement_options_Callback(hObject, eventdata, handles)
 pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_edit_displacement, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_edit_displacement, 'String');
-full_path = which('persistent_settings_README.markdown'); 
-[parentdir, ~, ~] = fileparts(full_path);
-mat_file_path = [parentdir '/displacement_variables.mat'];
+mat_file_path = create_mat_for_ui_settings('displacement_variables');
 save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement');
 if(getappdata(0, 'wait_status'))
     uiresume;
@@ -1059,6 +1078,7 @@ elseif(is_cam_name(get(hObject, 'String')))
 end
 
 % --- Executes on button press in pause_operation.
+% Implement Currently does nothing
 function pause_operation_Callback(hObject, eventdata, handles)
 global q;
 if(~q.is_paused())
@@ -1132,7 +1152,7 @@ function end_operation_Callback(hObject, eventdata, handles)
 global q;
 q.stop_execution();
 
-function data_collect_check_Callback(hObject, eventdata, handles)
+function track_n_Callback(hObject, eventdata, handles)
 
 % --- Resets GUI to initial state. Does not clear settings
 function reset_button_Callback(hObject, eventdata, handles)
@@ -1166,9 +1186,7 @@ pixel_precision = get(handles.pixel_precision_edit_displacement, 'String');
 max_x_displacement = get(handles.maximum_x_displacement_velocity, 'String');
 max_y_displacement = get(handles.maximum_y_displacement_velocity, 'String');
 conversion_rate = get(handles.conversion_rate_velocity, 'String');
-full_path = which('persistent_settings_README.markdown'); 
-[parentdir, ~, ~] = fileparts(full_path);
-mat_file_path = [parentdir '/velocity_variables.mat'];
+mat_file_path = create_mat_for_ui_settings('velocity_variables');
 save(mat_file_path, 'pixel_precision', 'max_x_displacement', 'max_y_displacement', 'conversion_rate');
 if(getappdata(0, 'wait_status'))
     uiresume;
@@ -1216,3 +1234,12 @@ function toggle_corner_detection_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of toggle_corner_detection
+
+
+% --- Executes on button press in toggle_rectangles_velocity.
+function toggle_rectangles_velocity_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_rectangles_velocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_rectangles_velocity

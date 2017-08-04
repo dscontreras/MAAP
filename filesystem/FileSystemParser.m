@@ -20,30 +20,17 @@ classdef FileSystemParser
         
         %Brief: Retrieve which video formats this OS supports
         function vid_formats = get_supported_vid_formats()
-            if(strcmp(SysInfo.get_os(), 'Windows'))
+            if(ispc)
                 vid_formats = {'.avi'};
             else
                 vid_formats = {'.mov', '.avi'};
             end
         end
         
-        %Brief: Retrieve which picture formats this OS supports
-        function pic_formats = get_supported_pic_formats()
-            %If the OS is Windows
-            if(strcmp(SysInfo.get_os(), 'Windows'))
-                pic_formats = ['.bmp', '.cur', '.gif', '.hdf4', '.ico', '.jpeg', '.pbm', '.pcx',
-                    '.pgm', '.png', '.ppm', '.ras', '.tiff','.xwd']; 
-            %If the OS is non-Windows(Unix or what have you)
-            else
-                pic_formats = ['.cur', '.gif', '.hdf4', '.ico', '.jpeg', '.pbm',
-                    '.pgm', '.png', '.ppm', '.ras', '.tiff']; 
-            end
-        end
-        
         %Brief: Retrieve which separator this OS uses
         function separator = get_file_separator()
             %Use the Windows file separator if the OS is Windows.
-            if(strcmp(SysInfo.get_os(), 'Windows'))
+            if(ispc)
                 %separator = '\\';
                 separator = '\';
             %Use the unix file separator if the OS is Unix.
@@ -55,7 +42,7 @@ classdef FileSystemParser
         %Brief: Retrieve which carriage return characters this OS uses
         function carriage = get_carriage_return()
             %Use the Windows Carriage return if the OS is Windows
-            if(strcmp(SysInfo.get_os(), 'Windows'))
+            if(ispc)
                 carriage = '\r\n';
             %Use the unix file separator if the OS is unix
             else
@@ -66,7 +53,7 @@ classdef FileSystemParser
         %Brief: Get what the start of the OS's filesystem is
         function file_system_start_path = get_file_system_start_path()
             %Get the Windows start path if the filesystem is a Windows one
-            if(strcmp(SysInfo.get_os(), 'Windows'))
+            if(ispc)
                 file_system_start_path = 'C:\';
             %Use the unix start path if the OS is Unix.
             else
