@@ -50,7 +50,7 @@ function execute_script(video, template, rect, xtemp, ytemp, max_x_displacement,
         time = frameNum / fps;
         timeElapsed(frameNum) = time;
         xdisp(frameNum) = dispx;
-        ydisp(frameNum) = dispy;
+        ydisp(frameNum) = -1*dispy; % origin is top left
         
         frameNum = frameNum + 1;
     end
