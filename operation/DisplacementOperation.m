@@ -98,7 +98,7 @@ classdef DisplacementOperation < Operation
             % initialize algorithm must go these two set functions
             obj.initialize_algorithm();
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
-            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = zeros(size(obj.current_frame));
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
         end

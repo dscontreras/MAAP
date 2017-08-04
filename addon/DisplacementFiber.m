@@ -17,7 +17,7 @@ classdef DisplacementFiber < DisplacementOperation
         function startup(obj)
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
-            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = zeros(obj.current_frame);
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
         end

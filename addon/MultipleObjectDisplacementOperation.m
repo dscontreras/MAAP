@@ -6,7 +6,7 @@ classdef MultipleObjectDisplacementOperation < Operation
         number_of_objects;
         rects;
         template_matchers;
-        first_frame;
+        current_frame;
         res;
         xdiffs; ydiffs;
         
@@ -40,7 +40,7 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.valid = true;
             obj.draw = draw;
             obj.display = display;
-            obj.first_frame = grab_frame(obj.source);
+            obj.current_frame = grab_frame(obj.source);
             obj.template_matchers = {};
             obj.number_of_objects = 0;
             obj.data_save_path = create_csv_for_data('Displacement')
@@ -48,20 +48,20 @@ classdef MultipleObjectDisplacementOperation < Operation
 
         function add_template_matcher(obj, template, max_displacement_x, max_displacement_y)
             obj.number_of_objects = obj.number_of_objects + 1;
-            obj.template_matchers{obj.number_of_objects} = TemplateMatcher(obj.pixel_precision, max_displacement_x, max_displacement_y, template, 2, obj.first_frame);
+            obj.template_matchers{obj.number_of_objects} = TemplateMatcher(obj.pixel_precision, max_displacement_x, max_displacement_y, template, 2, obj.current_frame);
         end
 
         % For use with GUI, 
         % Let the user draw something. In general, should only be used at
         % the very beginning
         function crop_template(obj, max_x_disp, max_y_disp)
-            [vid_height, vid_width] = size(obj.first_frame);
-            [temp, rect] = get_template(obj.first_frame, obj.axes, vid_height, vid_width);
+            [vid_height, vid_width] = size(obj.current_frame);
+            [temp, rect] = get_template(obj.current_frame, obj.axes, vid_height, vid_width);
             obj.add_template_matcher(temp, max_x_disp, max_y_disp); 
         end
 
         function execute(obj)
-            img = obj.first_frame;
+            img = obj.current_frame;
             frame_num = 1;
             hrects = cell(1, obj.number_of_objects);
 
@@ -121,7 +121,7 @@ classdef MultipleObjectDisplacementOperation < Operation
             add_headers(obj.data_save_path, header_str);
 
             % Show on the image viewer in the GUI
-            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = zeros(obj.current_frame);
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
         end

@@ -107,7 +107,7 @@ classdef Velocity < Operation
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
             obj.initialize_algorithm();
-            obj.im = zeros(obj.source.get_num_pixels());
+            obj.im = zeros(obj.current_frame);
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
