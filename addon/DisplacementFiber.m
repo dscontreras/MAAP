@@ -12,14 +12,16 @@ classdef DisplacementFiber < DisplacementOperation
             % TODO: Change assumption that display = true
             %obj.microns_per_pixel = conversion_rate;
             obj.valid = true; % TODO: better valid. For now, however, we'll leave that to the user
+
+            % Set up the image viewer
+            set(obj.img_cover, 'Visible', 'Off');
+            set(obj.pause_button, 'Visible', 'On');
+            obj.im = zeros(size(obj.current_frame));
+            obj.im = imshow(obj.im);
+            colormap(gca, gray(256));
         end
         
         function startup(obj)
-            set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
-            obj.im = zeros(obj.current_frame);
-            obj.im = imshow(obj.im);
-            colormap(gca, gray(256));
         end
         
         function execute(obj)

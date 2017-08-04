@@ -43,6 +43,8 @@ classdef MultipleObjectDisplacementOperation < Operation
             obj.current_frame = grab_frame(obj.source);
             obj.template_matchers = {};
             obj.number_of_objects = 0;
+
+            % Set up csv to save data
             obj.data_save_path = create_csv_for_data('Displacement')
         end
 
@@ -106,7 +108,6 @@ classdef MultipleObjectDisplacementOperation < Operation
         end
 
         function startup(obj)
-            obj.valid = obj.validate();
             
             % xdiffs, ydiffs has to be initialzed after obj.number_of_objects is set
             obj.xdiffs = zeros(obj.number_of_objects);
@@ -121,9 +122,12 @@ classdef MultipleObjectDisplacementOperation < Operation
             add_headers(obj.data_save_path, header_str);
 
             % Show on the image viewer in the GUI
-            obj.im = zeros(obj.current_frame);
+            obj.im = zeros(size(obj.current_frame));
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
+            obj.current_frame = gather(rgb2gray(obj.current_frame))
+
+            obj.valid = obj.validate();
         end
 
         function valid = validate(obj)

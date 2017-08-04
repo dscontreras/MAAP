@@ -78,33 +78,37 @@ classdef DisplacementOperation < Operation
             obj.dispx = [];
             obj.dispy = [];
             obj.min_displacement = 2; % Default Value; TODO: make changeable
+            obj.valid = obj.validate();
 
+            % Set up the csv to save the data to
             obj.data_save_path = create_csv_for_data('Displacement')
             add_headers(obj.data_save_path, 'frame_num', 'dispx', 'dispy');
             if(nargin > 12) % 12 is the number of params for displacement
             % TODO: Better Error Handling
                 obj.error_report_handle = error_report_handle;
             end
+
+            % Graphical Setup
+            set(obj.img_cover, 'Visible', 'Off');
+            set(obj.pause_button, 'Visible', 'On');
+            obj.current_frame = obj.source.extractFrame(); % Get an rgb2gray value
+            obj.im = zeros(size(obj.current_frame));
+            colormap(gca, gray(256));
+            obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
+
+            % Creates Template Matcher
+            obj.current_frame = gather(rgb2gray(obj.current_frame));
+            obj.create_template_matcher();
+            
+            obj.im = imshow(obj.im);
         end
 
         %For carrying out one time method calls that should be done before
         %calling of execute
         function startup(obj)
-            %obj.valid = obj.validate(obj.error_tag);
-            % Hack to get the scripting side a little easier
-            obj.valid = obj.validate();
-            set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
-            % initialize algorithm must go these two set functions
-            obj.initialize_algorithm();
-            obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
-            obj.im = zeros(size(obj.current_frame));
-            obj.im = imshow(obj.im);
-            colormap(gca, gray(256));
         end
 
-        function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.source));
+        function create_template_matcher(obj)
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])

@@ -100,21 +100,25 @@ classdef Velocity < Operation
             obj.index = 1;
             obj.min_displacement = 2; % Default Value; TODO: make changeable
             obj.display = display;
-        end
 
-        function startup(obj)
             obj.valid = obj.validate();
             set(obj.img_cover, 'Visible', 'Off');
             set(obj.pause_button, 'Visible', 'On');
-            obj.initialize_algorithm();
-            obj.im = zeros(obj.current_frame);
-            obj.im = imshow(obj.im);
+            obj.im = zeros(size(obj.current_frame));
             colormap(gca, gray(256));
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
+
+            % Create template matcher
+            obj.current_frame = gather(rgb2gray(obj.current_frame));
+            obj.create_template_matcher();
+
+            obj.im = imshow(obj.im);
         end
 
-        function initialize_algorithm(obj)
-            obj.current_frame = gather(grab_frame(obj.source));
+        function startup(obj)
+        end
+
+        function create_template_matcher(obj)
             path = getappdata(0, 'img_path');
             % if template path is specified, use path. Else use user input%
             if ~strcmp(path,'') & ~isequal(path, [])
