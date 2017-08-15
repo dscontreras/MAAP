@@ -85,26 +85,6 @@
                 bool = false;
             end
         end
-        
-        function resolution = get_resolution(obj)
-            try
-                trigger(obj.inputcam);
-                frame = obj.extractFrame();
-                resolution = size(frame);
-            catch
-                error('StreamSource unable to extract frames.');
-            end
-        end
-        
-        function resolution = get_num_pixels(obj)
-            try
-                trigger(obj.inputcam);
-                frame = obj.extractFrame();
-                resolution = size(frame);
-            catch
-                error('StreamSource unable to extract frames.');
-            end
-        end
     end
     
 end

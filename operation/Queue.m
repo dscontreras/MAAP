@@ -55,33 +55,28 @@ classdef Queue < handle
         function add_to_queue(obj, operation)
             %TODO assert operation is of type operation
             obj.length = obj.length + 1;
-            %set the object in the queue's callback for error handling to
-            %this Queue's error handling function, so that the error can
-            %correctly propagate up the object hierarchy, from operation to
-            %queue to the data_gui itself
-            %If the object should be inserted at the start of the list
-            if(strcmp(operation.insertion_type, 'start'))
-                for i = obj.length:1
-                    obj.list{i + 1} = obj.list{i};
-                    obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
-                end
-                obj.list{1} = operation;
-                operation.queue_index = 1;
-                obj.add_to_map(operation, 1);
-            %Otherwise, insert it at the end
-            else
-                obj.list{obj.length} = operation;
-                operation.queue_index = obj.length;
-                obj.extend_map(operation);
-            end
-        end
 
-        function add_to_map(obj, operation, address_inserted)
-            obj.data_transfer_map{address_inserted} = operation.outputs;
-        end
-
-        function extend_map(obj, operation)
-            obj.data_transfer_map(operation.name) = operation.outputs;
+            % Much of this is unnecessary and ridiculous. Just add to the end
+            % %set the object in the queue's callback for error handling to
+            % %this Queue's error handling function, so that the error can
+            % %correctly propagate up the object hierarchy, from operation to
+            % %queue to the data_gui itself
+            % %If the object should be inserted at the start of the list
+            % if(strcmp(operation.insertion_type, 'start'))
+            %     for i = obj.length:1
+            %         obj.list{i + 1} = obj.list{i};
+            %         obj.list{i + 1}.queue_index = obj.list{i + 1}.queue_index + 1;
+            %     end
+            %     obj.list{1} = operation;
+            %     operation.queue_index = 1;
+            %     obj.add_to_map(operation, 1);
+            % %Otherwise, insert it at the end
+            % else
+            %     obj.list{obj.length} = operation;
+            %     operation.queue_index = obj.length;
+            %     obj.extend_map(operation);
+            % end
+            obj.list{obj.length} = operation;
         end
 
         function execute(obj, index)
@@ -97,11 +92,6 @@ classdef Queue < handle
                 end
             end
         end
-
-        function resume_execution(obj)
-            obj.run_to_finish(obj.pause_index);
-        end
-
 
         function successful = run_to_finish(obj, starting_index)
             % Because we aren't implementing pause/resume functionality,
@@ -122,49 +112,7 @@ classdef Queue < handle
             delete(obj);
         end
 
-        function l = fetch_list(obj)
-            l = obj.list;
-        end
-
-        function inputs = retrieve_operation_inputs(obj, operation)
-            inputs = {};
-            input_operation_names = operation.param_names(1, :);
-            params_to_get = operation.param_names(2, :);
-            for i = 1:length(input_operation_names)
-                map_to_retrieve_from = obj.data_transfer_map(input_operation_names{i});
-                inputs = [inputs map_to_retrieve_from(params_to_get{i})];
-            end
-        end
-
-        %determine the index of an operation in the queue list
-        function position = pos_in_queue(obj, operation)
-            position = {};
-            count = 0;
-            for i = 1:length(obj.list)
-                if(strcmp(operation.name, obj.list{i}.name))
-                    count = count + 1;
-                    position{count} = i;
-                end
-            end
-        end
-
-        function position = pos_in_queue_of_name(obj, name)
-            position = {};
-            count = 0;
-            for i = 1:length(obj.list)
-                if(strcmp(name, obj.list{i}.name))
-                    count = count + 1;
-                    position{count} = i;
-                end
-            end
-        end
-
-        function report_error(obj, error_msg)
-            obj.valid = false;
-            msg = strcat(obj.name, ': ', error_msg);
-            feval(obj.error_report_handle, msg);
-        end
-
+        % TODO: Actually Implement this
         function pause(obj)
             obj.paused = true;
         end
@@ -185,5 +133,8 @@ classdef Queue < handle
            obj.done = true;
         end
 
+        function length = get_length(obj)
+            length = obj.length;
+        end
     end
 end
