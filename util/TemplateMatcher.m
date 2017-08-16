@@ -1,6 +1,6 @@
 classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
     % Given a template and a File Source, finds the location of the template in each frame of the video
-
+    % This class has been tested and is found to work well. To do any normalized cross correlation, use an object of this class
     properties
         pixel_precision;
         max_displacement_x; max_displacement_y; min_displacement;

@@ -7,6 +7,7 @@ function [save_path] = create_mat_for_ui_settings(name)
             break;
         end
     end
-    save_path = [parentdir '/persistent_settings/' name '.mat'];
+    dir_separator = FileSystemParser.get_file_separator()
+    save_path = [parentdir dir_separator 'persistent_settings' dir_separator  name '.mat'];
     
 end

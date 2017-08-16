@@ -7,5 +7,6 @@ function [save_path] = create_csv_for_data(descriptor)
             break;
         end
     end
-    save_path = [parentdir '/saved_data/' descriptor '.' datestr(datetime('now')) '.csv'];
+    dir_separator = FileSystemParser.get_file_separator()
+    save_path = [parentdir dir_separator 'saved_data' dir_separator  descriptor '.' datestr(datetime('now')) '.csv'];
 end
