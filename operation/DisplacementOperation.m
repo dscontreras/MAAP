@@ -25,7 +25,7 @@ classdef DisplacementOperation < Operation
 
     properties
         % Inherited
-        source;
+        source; 
         
         dispx;
         dispy;
