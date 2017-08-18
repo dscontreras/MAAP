@@ -1,4 +1,5 @@
 function [save_path] = create_csv_for_data(descriptor)
+    % Creates and saves a csv file in the saved_data folder
     saved_data_folders = what('saved_data');
     for idx = 1:length(saved_data_folders)
         [parentdir, ~, ~] = fileparts(saved_data_folders(idx).path);
