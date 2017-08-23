@@ -86,7 +86,7 @@ classdef Queue < handle
                     obj.list{i}.startup();
                     obj.list{i}.execute();
                 else
-                    obj.report_error("Your operation is not valid");
+                    obj.report_error('Your operation is not valid');
                     obj.active = false;
                     break;
                 end
