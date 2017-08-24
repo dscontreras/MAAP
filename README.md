@@ -1,6 +1,6 @@
 # README
 
-MAAP is a set of tools used for tracking the movement of objects. 
+MAAP is a set of tools used for tracking the movement and displacement of objects. 
 
 ## Getting Started
 
