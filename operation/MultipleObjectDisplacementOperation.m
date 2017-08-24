@@ -67,7 +67,7 @@ classdef MultipleObjectDisplacementOperation < Operation
 
             % This is the data I'll be writing to the CSV
             data_to_save = zeros(1, obj.number_of_objects*2 + 1);
-            while ~obj.source.finished() & frame_num < 100
+            while ~obj.source.finished()
                 % TODO: remove assumption that the source is of type VideoSource
                 data_to_save(1) = frame_num;
                 for idx = 1:obj.number_of_objects
