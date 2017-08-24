@@ -1,0 +1,131 @@
+<h1 id="maap-documentation-and-reference">MAAP Documentation and Reference</h1>
+<p>This document is focused on explaining the application and its usage in detail as well as talk about the decision made when the appliation was coded.</p>
+<p>For documentation on the methods, functions, and variables present, refer to other documentation</p>
+<h2 id="project-overview">Project Overview</h2>
+<p>A quick overview of the folder structure of the project.</p>
+<ol style="list-style-type: decimal">
+<li>Deprecated:<br />
+Functions and classes that is not to be used but kept on the offchance someone would like to go back and look at the old code. In general, ignore this folder</li>
+<li>Documentation: Textfiles and images used to create the documentation (i.e. this document, README)</li>
+<li>FileSystem: When using the GUI, you'll notice a panel which is used to pick which video is to be analyzed. The filesystem refers to that panel</li>
+<li>Images: This is for use for the user. Here they can add images of the object they wish to track. This way, when analyzing multiple videos, they don't have to choose the template every time.
+<ul>
+<li>Note: For this to take effect, the image must be chosen in settings</li>
+</ul></li>
+<li>info: Some information relating to the code developemnt such as TODO, list of bugs, etc.</li>
+<li>operation: The operations such as measuring displacement or velocity</li>
+<li>saved_data: When an operation saves data (i.e. the location of an object throughout a video), it is automatically saved here</li>
+<li>sources: The types of sources the gui can take (such as either a File or a Stream)</li>
+<li>tests: Where tests would go but there aren't that many tests and the tests that do exist aren't very useful.</li>
+<li>ui: The code for most of the gui is located here</li>
+<li>util: Some utility functions that may be of use</li>
+<li>videos: A folder full of videos. Put the videos you would like to analyze here for easy access.</li>
+</ol>
+<h2 id="some-terms">Some Terms</h2>
+<p>The code has built up a bit of a vocabulary and this section will explain much of it here .</p>
+<p>Queue: A holding place for operations. We add to the queue and the queue deals with running the operation. Operation: The type of analysis that the user wants done Source: Where the images the operation is analyzing is coming from. In general, it will be a video. However, it is possible to stream the video as well.</p>
+<p>current_frame: The frame of the video to be analyzed search_area: The location in which to search within the img. This is necessary for speed concerns as it the relevant movement may only occur in a small portion of the frame</p>
+<h2 id="deprecated">Deprecated</h2>
+<p>A lot of the code in here should be and is currently being ignored. Although it is included, it is highly recommended that it is not included in the MATLAB path.</p>
+<h2 id="filesystem">FileSystem</h2>
+<p>The FileSystem abstracts away the filesystem for individual OS. When dealing with filenames or creating filenames, use methods found in the FileSystems.</p>
+<h2 id="the-operations">The Operations</h2>
+<p>First a quick overview of how this program works.</p>
+<div class="figure">
+<img src="../img/data_gui_displacement_begin.png" style="width:95.0%" />
+
+</div>
+<p>The user picks a video from the panel on the left and picks an <strong>operation</strong> that they would like to perform. They then draw a blue box on the image to the right to indicate what they would like to track.</p>
+<p>An operation is the type of analysis the user would like done. Currently two are supporte:</p>
+<ul>
+<li>Displacement: Tracks the movement of an object</li>
+<li>Velocity: Tracks the velocity of an object</li>
+</ul>
+<p>The other two listed (Capture Stills and Voltage) are not implemented.</p>
+<h3 id="some-gui-elements">Some GUI Elements</h3>
+<p>There are some GUI elements that generally exist for all Operations but are not included in the Operation superclass.</p>
+<p>This was decided in order to help with implementing scripting. However, this seems to only bloat the code and as such may change in the future. Until then, here is a description of those GUI elemnents.</p>
+<ul>
+<li>axes : The axes for the image viewer, the graphical element where each frame is displayed</li>
+<li>error_tag : A graphical element where error messages are displaced (Not generally used)</li>
+<li>table : The graphical element table element in the lower left corner of the GUI
+<ul>
+<li>use <code>updateTable</code> to show items in the table</li>
+</ul></li>
+<li>img_cover : A graphical element that hides the images shown on <code>axes</code>. This is generally set to be off in the constructor of the operation</li>
+<li>table_data : Sets the first column of the table (the header)</li>
+</ul>
+<h3 id="template-matcher">Template Matcher</h3>
+<p>The TemplateMatcher is a util class that is meant to abstract away the math. There are some terms used in the TemplateMatcher that must be understood.</p>
+<p>First: Peak vs Offset.</p>
+<p>If you look up <code>normxcorr2</code> function that is used in this file, the sample code provided uses Offset as the result of their algorithm. Here the code uses peak. The two are not the same. The peak represents where the algorithm believes the object is. Therefore, in a 100x100 image, if algorithm returns peak values of (30, 20), this means that the upper left corner of where the template was found is at column 30, row 20. The Offset is <code>peak - 1</code> and instead measures the distance from the first pixel.</p>
+<p><code>disp_x/y</code> is the displacement in pixels between where the template was in the first frame to where the template is in the current frame. There is no mention of resolution here. That is an additional step that should be taken by the coder after retrieiving these values.</p>
+<p>Finally, a quick lesson in how the coordinates work. In traditional math, the origin is in the lower left corner and the axes increase going up and going to the right. However, when working with images this is not true. Instead, the origin is at the top left corner and increases going down and going right. This means that to a pixel at (30, 50) is at column 30 and row 50 and is higher up than (30, 70) which is at row 70.</p>
+<div class="sourceCode"><pre class="sourceCode matlab"><code class="sourceCode matlab"><span class="co">% an example</span>
+A = FileSource(<span class="st">&#39;SomeVideoFilePath.avi&#39;</span>, <span class="fl">1</span>)
+pixel_precision=<span class="fl">0.5</span>
+m_d_x= <span class="fl">50</span>
+m_d_y= <span class="fl">0</span>
+template=imread(<span class="st">&#39;SomeTemplateImage.png&#39;</span>)
+min_d=<span class="fl">2</span> 
+first_frame=A.extractFrame()
+
+tm = TemplateMatcher(pixel_precision, m_d_x, m_d_y, template, min_d, first_frame)
+while ~A.finished()
+    [y_peak, x_peak, disp_y, disp_x] = tm.meas_displacement(A.extractFrame())
+    <span class="co">% Do stuff with y_peak</span>
+end</code></pre></div>
+<h3 id="displacement">Displacement</h3>
+<p>There are several types of DisplacementOperations.</p>
+<ul>
+<li>DisplacementFiber</li>
+<li>DisplacementOperation</li>
+<li>MultipleObjectDisplacementOperation</li>
+</ul>
+<p>The difference between DisplacementOperation is that it tracks 1 item while MultipleObjectDisplacementOperation tracks more than 1. For an example of how they should be used, look at where they are instantiated in <code>data_gui.m</code></p>
+<div class="sourceCode"><pre class="sourceCode matlab"><code class="sourceCode matlab"><span class="co">% Example on how to add a template to MultipleObjectDisplacementOperation</span>
+mOperation = MultipleObjectDisplacementOperation( ... )
+mOperation.crop_template(max_x, max_y)
+mOperation.crop_template(max_x2, max_y2)
+...</code></pre></div>
+<p>DisplacementFiber is unique. This was created because in order to track the movement of a very thin wire, normalized cross correlation would not work. As such, in general, this is not recommended to be used.</p>
+<h3 id="velocity">Velocity</h3>
+<h2 id="queue">Queue</h2>
+<p>The Queue is largely incomplete. When the applicatinon was first coded, there was hope for granular control of the operations and the Queue was supposed to give that control. However, this feature has not been implemented.</p>
+<p>As such, the queue is an unnecessary middlestep that should either be removed or whose features be completely implemented. Currently it's used as follows</p>
+<div class="sourceCode"><pre class="sourceCode matlab"><code class="sourceCode matlab">global q; <span class="co">% a global variable in data_gui.m</span>
+operation = SomeOperation( ... )
+q.add_to_queue(operation)
+q.run_to_finish()</code></pre></div>
+<h2 id="saved_data">saved_data</h2>
+<p>Here we save all the data captured in each Operation. We suggest that you add to the <code>saved_data</code> folder using the <code>create_csv_for_data</code>, <code>add_headers</code>, and <code>add_to_csv</code> functions</p>
+<div class="sourceCode"><pre class="sourceCode matlab"><code class="sourceCode matlab">file_created = create_csv_for_data(<span class="st">&#39;DescriptionOfOperation&#39;</span>)
+
+header = <span class="st">&#39;Var1,Var2,Var3&#39;</span> <span class="co">% Make sure there are no spaces</span>
+add_headers(file_created, header)
+
+Var1 = <span class="fl">0</span>
+Var2 = <span class="fl">0</span>
+Var3 = <span class="fl">0</span>
+while SomeBooleanVar
+    <span class="co">% Do some calculation </span>
+    Var1, Var2, Var3 = some_calculation_function()
+    data = [Var1, Var2, Var3]
+    add_to_csv(file_created, data)
+end</code></pre></div>
+<h2 id="sources">sources</h2>
+<p>An abstraction to deal with either a video file or a stream.</p>
+<p>In general, you'll only be dealing with a <code>FileSource</code>.</p>
+<p>While the source files have a <code>resolution_meters</code> variable, this is generally ignored.</p>
+<div class="sourceCode"><pre class="sourceCode matlab"><code class="sourceCode matlab">src = FileSource(<span class="st">&#39;SomeVideoFilePath&#39;</span>, <span class="fl">1</span>);
+while ~src.finished()
+    img = rgb2gray(src.extractFrame());
+    <span class="co">% Do some analysis on img</span>
+end</code></pre></div>
+<h2 id="ui">ui</h2>
+<p>The important files here are <code>data_gui</code>, <code>ListboxOperations</code>, and <code>settings_gui</code>.</p>
+<p><code>data_gui</code> describes the main graphical interface and what each button press/button toggle does.</p>
+<p><code>settings_gui</code> does the same but for the settings graphical interface</p>
+<p><code>ListboxOperations</code> is the file picker we see in the main graphical interface.</p>
+<h2 id="videos">videos</h2>
+<p>A simple place to put videos that the user would want to analyze</p>

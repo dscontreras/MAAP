@@ -8,14 +8,13 @@ classdef DisplacementFiber < DisplacementOperation
     methods
         function obj = DisplacementFiber(src, pixel_precision, resolution, axes, table, error, img_cover, draw, conversion_rate, error_report_handle)
             obj = obj@DisplacementOperation(src, pixel_precision, 0, 0, resolution, ...
-                axes, table, error, img_cover, draw, true, error_report_handle);
+                axes, table, error, img_cover, draw, true, false, error_report_handle);
             % TODO: Change assumption that display = true
             %obj.microns_per_pixel = conversion_rate;
             obj.valid = true; % TODO: better valid. For now, however, we'll leave that to the user
 
             % Set up the image viewer
             set(obj.img_cover, 'Visible', 'Off');
-            set(obj.pause_button, 'Visible', 'On');
             obj.im = zeros(size(obj.current_frame));
             obj.im = imshow(obj.im);
             colormap(gca, gray(256));
@@ -68,15 +67,16 @@ classdef DisplacementFiber < DisplacementOperation
                 velocity = [velocity instVelocity];
 
                 % Save data
-                full_path = which('saved_data_README.markdown'); 
-                [parentdir, ~, ~] = fileparts(full_path);
+                % TODO
+                full_path = what('saved_data'); 
+                [parentdir, ~, ~] = fileparts(full_path.path);
                 mat_file_path = [parentdir '/velocity2.mat'];
                 save(mat_file_path, 'displacement', 'time', 'velocity');
                 prevXPos = xPos;
                 prevXPixel = xPixel;
                 prevSecondsElapsed = secondsElapsed;
                 hold on;
-                %plot(xPixel, obj.search_rect(2), 'r*');
+                plot(xPixel, obj.search_rect(2), 'r*');
                 
                 % To have GUI table update continuously, remove nocallbacks
                 drawnow limitrate nocallbacks;

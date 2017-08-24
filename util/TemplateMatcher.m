@@ -1,6 +1,6 @@
 classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
     % Given a template and a File Source, finds the location of the template in each frame of the video
-
+    % This class has been tested and is found to work well. To do any normalized cross correlation, use an object of this class
     properties
         pixel_precision;
         max_displacement_x; max_displacement_y; min_displacement;
@@ -101,7 +101,8 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 interp_search_area = obj.interpolate(search_area, obj.pixel_precision, search_area_width, search_area_height);
                 c = normxcorr2(obj.interp_template, interp_search_area);
                 [y, x] = find(c==max(c(:)));
-                xOffset = x - size(obj.interp_template, 2);
+                % Remove padding that normxcorr creates
+                xOffset = x - size(obj.interp_template, 2); 
                 yOffset = y - size(obj.interp_template, 1);
                 xOffset = xOffset/(1/obj.pixel_precision);
                 yOffset = yOffset/(1/obj.pixel_precision);
@@ -109,6 +110,7 @@ classdef TemplateMatcher < handle & matlab.mixin.Heterogeneous
                 c = normxcorr2(im2uint8(obj.template), search_area);
 
                 [y, x] = find(c==max(c(:)));
+                % Remove padding that normxcorr creates
                 yOffset = y - obj.template_height;
                 xOffset = x - obj.template_width;
             end

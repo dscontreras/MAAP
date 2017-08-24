@@ -1,5 +1,8 @@
 %% TODO: Subtract mean of template from template and firstFrame to account for light intensity %%
 function rect = find_rect(frame, template)
+    % Uses phase correlation to quickly find the frame in the template
+    % Only to be used in the first frame for a rought idea of where the template exist
+    % In general, we suggest using TemplateMatcher
     if length(size(frame)) == 3
         frame = rgb2gray(frame);
     end

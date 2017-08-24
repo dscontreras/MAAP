@@ -25,7 +25,7 @@ classdef DisplacementOperation < Operation
 
     properties
         % Inherited
-        source;
+        source; 
         
         dispx;
         dispy;
@@ -41,7 +41,7 @@ classdef DisplacementOperation < Operation
         function obj = DisplacementOperation(src, pixel_precision, max_x_displacement, ...
                 max_y_displacement, resolution, ...
                 axes, table, error, img_cover, ...
-                draw, display, error_report_handle)
+                draw, display, template_matcher, error_report_handle)
             obj.source = src;
             obj.axes = axes;
             obj.table = table;
@@ -75,10 +75,12 @@ classdef DisplacementOperation < Operation
             obj.table_data = {'DispX'; 'DispY'; 'Velocity'};
 
             % Creates Template Matcher
-            obj.current_frame = gather(rgb2gray(obj.current_frame));
-            obj.create_template_matcher();
+            if template_matcher
+                obj.current_frame = gather(rgb2gray(obj.current_frame));
+                obj.create_template_matcher();
             
-            obj.im = imshow(obj.im);
+                obj.im = imshow(obj.im);
+            end
         end
 
         %For carrying out one time method calls that should be done before
@@ -132,7 +134,7 @@ classdef DisplacementOperation < Operation
                 obj.dispy = [obj.dispy dispy];
 
                 % To have GUI table update continuously, remove nocallbacks
-                drawnow limitrate; % nocallbacks; % Uncomment this if you don't need every frame displacement
+                drawnow limitrate nocallbacks; % Uncomment this if you don't need every frame displacement
                 if obj.draw
                     delete(hrect);
                 end

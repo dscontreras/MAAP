@@ -7,7 +7,7 @@
 Click on the <code>Home</code> tab, and the <code>Set Path</code> button will be in the <code>Environment</code> section.</p>
 <p>Note: It is suggested that you do not add the entire directory in order to avoid the .git directory that would be added.</p>
 <h2 id="usage">Usage</h2>
-<p>In order to start the gui,</p>
+<p>In order to start the gui, run the <code>ui/data_gui.m</code> file</p>
 <p>There are currently two operations that are currently supported</p>
 <ul>
 <li>Displacement</li>
@@ -49,4 +49,10 @@ Click on the <code>Home</code> tab, and the <code>Set Path</code> button will be
 <img src="documentation/img/data_gui_velocity_selected.png" style="width:50.0%" />
 
 </div>
+<p>The only difference is the <strong>um/Pixel</strong> rate. - <strong>um/Pixel</strong>: The conversin rate from pixel to micrometers. If this isn't of concern and you would only like to know the movement in relation to pixel, simply put in <code>1</code>. While the velocity values will be wholly incorrect (as it'll treat 1pixel=1um), you can simply do multiply by a conversion rate later.</p>
+<p>There are several options at your disposal - <code>Enable rectangles</code> is the same as before - <code>Corner dtection?</code> is a specific implementation for use in the Swarm Lab. In general, don't use it.</p>
 <h3 id="seeing-the-video">Seeing the video</h3>
+<p>By default, the application won't show you the video as it records data. In order to see it, simply toggle the <code>Display video</code> button.</p>
+<h2 id="the-data">The Data</h2>
+<p>After the application is complete, the data is saved in the <code>saved_data</code> directory with the following format:</p>
+<p><code>OperationName.DD-Mon-YYYY HH:MM:SS.csv</code></p>

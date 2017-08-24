@@ -1,6 +1,6 @@
 # README
 
-MAAP is a set of tools used for tracking the movement of objects. 
+MAAP is a set of tools used for tracking the movement and displacement of objects. 
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ Note: It is suggested that you do not add the entire directory in order to avoid
 
 ## Usage
 
-In order to start the gui, 
+In order to start the gui, run the `ui/data_gui.m` file 
 
 There are currently two operations that are currently supported
 
